@@ -32,6 +32,7 @@ public class UpdateLiquidityProvisionTask extends TradingTask {
     private final LiquidityProvisionStore liquidityProvisionStore;
     private final VegaApiClient vegaApiClient;
     private final String marketId;
+    private final PricingUtils pricingUtils;
 
     public UpdateLiquidityProvisionTask(@Value("${vega.market.id}") String marketId,
                                         MarketService marketService,
@@ -40,7 +41,8 @@ public class UpdateLiquidityProvisionTask extends TradingTask {
                                         AppConfigStore appConfigStore,
                                         VegaApiClient vegaApiClient,
                                         ReferencePriceStore referencePriceStore,
-                                        LiquidityProvisionStore liquidityProvisionStore) {
+                                        LiquidityProvisionStore liquidityProvisionStore,
+                                        PricingUtils pricingUtils) {
         this.marketService = marketService;
         this.accountService = accountService;
         this.positionService = positionService;
@@ -49,6 +51,7 @@ public class UpdateLiquidityProvisionTask extends TradingTask {
         this.liquidityProvisionStore = liquidityProvisionStore;
         this.vegaApiClient = vegaApiClient;
         this.marketId = marketId;
+        this.pricingUtils = pricingUtils;
     }
 
     @Override
@@ -68,14 +71,14 @@ public class UpdateLiquidityProvisionTask extends TradingTask {
         BigDecimal bidPoolSize = balance.multiply(BigDecimal.valueOf(0.5));
         BigDecimal askPoolSize = bidPoolSize.divide(referencePrice, 4, RoundingMode.HALF_DOWN);
         BigDecimal openVolumeRatio = exposure.divide(askPoolSize, 4, RoundingMode.HALF_DOWN);
-        double offerScalingFactor = PricingUtils.getAskScalingFactor(
+        double offerScalingFactor = pricingUtils.getAskScalingFactor(
                 exposure.longValue(), openVolumeRatio.doubleValue());
-        double bidScalingFactor = PricingUtils.getBidScalingFactor(
+        double bidScalingFactor = pricingUtils.getBidScalingFactor(
                 exposure.longValue(), openVolumeRatio.doubleValue());
-        List<DistributionStep> askDistribution = PricingUtils.getAskDistribution(
+        List<DistributionStep> askDistribution = pricingUtils.getAskDistribution(
                 offerScalingFactor, bidPoolSize.doubleValue(), askPoolSize.doubleValue(),
                 config.getAskQuoteRange() * 2, 1);
-        List<DistributionStep> bidDistribution = PricingUtils.getBidDistribution(
+        List<DistributionStep> bidDistribution = pricingUtils.getBidDistribution(
                 bidScalingFactor, bidPoolSize.doubleValue(), askPoolSize.doubleValue(),
                 config.getBidQuoteRange() * 2, 1);
         BigDecimal commitment = BigDecimal.valueOf((config.getAskQuoteRange() + config.getBidQuoteRange()) / 4)

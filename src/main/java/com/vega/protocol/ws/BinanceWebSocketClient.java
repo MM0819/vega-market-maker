@@ -26,6 +26,9 @@ public class BinanceWebSocketClient extends WebSocketClient {
         this.referencePriceStore = referencePriceStore;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void onOpen(ServerHandshake handshake) {
         try {
@@ -39,6 +42,9 @@ public class BinanceWebSocketClient extends WebSocketClient {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void onMessage(String message) {
         try {
@@ -63,11 +69,17 @@ public class BinanceWebSocketClient extends WebSocketClient {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void onClose(int code, String reason, boolean remote) {
         log.error(reason);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void onError(Exception e) {
         log.error(e.getMessage(), e);

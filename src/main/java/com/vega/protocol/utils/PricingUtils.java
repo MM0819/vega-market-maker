@@ -2,14 +2,14 @@ package com.vega.protocol.utils;
 
 import com.vega.protocol.model.DistributionStep;
 import org.apache.commons.collections4.ListUtils;
+import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public final class PricingUtils {
-
-    private PricingUtils() {}
+@Component
+public class PricingUtils {
 
     /**
      * Calculates the bid size for a given trade size and scaling factor
@@ -21,7 +21,7 @@ public final class PricingUtils {
      *
      * @return the bid asset received for the ask size
      */
-    public static double getBidSize(
+    public double getBidSize(
             final double askSize,
             final double askPoolSize,
             final double bidPoolSize,
@@ -40,7 +40,7 @@ public final class PricingUtils {
      *
      * @return the ask asset received for the bid size
      */
-    public static double getAskSize(
+    public double getAskSize(
             final double bidSize,
             final double askPoolSize,
             final double bidPoolSize,
@@ -62,7 +62,7 @@ public final class PricingUtils {
      *
      * @return {@link List} of {@link DistributionStep}
      */
-    public static List<DistributionStep> getBidDistribution(
+    public List<DistributionStep> getBidDistribution(
             double bidPoolSize,
             double askPoolSize,
             double askSize,
@@ -101,7 +101,7 @@ public final class PricingUtils {
      *
      * @return {@link List} of {@link DistributionStep}
      */
-    public static List<DistributionStep> getAskDistribution(
+    public List<DistributionStep> getAskDistribution(
             double bidPoolSize,
             double askPoolSize,
             double bidSize,
@@ -135,7 +135,7 @@ public final class PricingUtils {
      *
      * @return {@link List<DistributionStep>}
      */
-    private static List<DistributionStep> aggregateDistribution(
+    private List<DistributionStep> aggregateDistribution(
             List<DistributionStep> distribution,
             int orderCount
     ) {
@@ -161,7 +161,7 @@ public final class PricingUtils {
      *
      * @return the bid scaling factor (a number between 0 and 1)
      */
-    public static double getBidScalingFactor(
+    public double getBidScalingFactor(
             final long openVolume,
             final double openVolumeRatio
     ) {
@@ -176,7 +176,7 @@ public final class PricingUtils {
      *
      * @return the ask scaling factor (a number between 1 and infinity)
      */
-    public static double getAskScalingFactor(
+    public double getAskScalingFactor(
             final long openVolume,
             final double openVolumeRatio
     ) {
@@ -194,7 +194,7 @@ public final class PricingUtils {
      *
      * @return {@link List} of {@link DistributionStep}
      */
-    public static List<DistributionStep> getBidDistribution(
+    public List<DistributionStep> getBidDistribution(
             final double scalingFactor,
             final double bidPoolSize,
             final double askPoolSize,
@@ -203,7 +203,7 @@ public final class PricingUtils {
     ) {
         double price = bidPoolSize / askPoolSize;
         double cutoff = price * (1 - bidQuoteRange);
-        return PricingUtils.getBidDistribution(bidPoolSize, askPoolSize, 1 / price,
+        return getBidDistribution(bidPoolSize, askPoolSize, 1 / price,
                 cutoff, 0.1, scalingFactor, orderCount);
     }
 
@@ -218,7 +218,7 @@ public final class PricingUtils {
      *
      * @return {@link List} of {@link DistributionStep}
      */
-    public static List<DistributionStep> getAskDistribution(
+    public List<DistributionStep> getAskDistribution(
             final double scalingFactor,
             final double bidPoolSize,
             final double askPoolSize,
@@ -226,7 +226,7 @@ public final class PricingUtils {
             final int orderCount
     ) {
         double cutoff = (bidPoolSize / askPoolSize) * (1 + askQuoteRange);
-        return PricingUtils.getAskDistribution(bidPoolSize, askPoolSize, 1,
+        return getAskDistribution(bidPoolSize, askPoolSize, 1,
                 cutoff, 0.1, scalingFactor, orderCount);
     }
 }

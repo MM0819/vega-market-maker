@@ -39,6 +39,7 @@ public class UpdateQuotesTask extends TradingTask {
     private final MarketService marketService;
     private final AccountService accountService;
     private final PositionService positionService;
+    private final PricingUtils pricingUtils;
 
     public UpdateQuotesTask(@Value("${vega.market.id}") String marketId,
                             ReferencePriceStore referencePriceStore,
@@ -47,7 +48,8 @@ public class UpdateQuotesTask extends TradingTask {
                             VegaApiClient vegaApiClient,
                             MarketService marketService,
                             AccountService accountService,
-                            PositionService positionService) {
+                            PositionService positionService,
+                            PricingUtils pricingUtils) {
         this.appConfigStore = appConfigStore;
         this.marketId = marketId;
         this.referencePriceStore = referencePriceStore;
@@ -56,6 +58,7 @@ public class UpdateQuotesTask extends TradingTask {
         this.marketService = marketService;
         this.accountService = accountService;
         this.positionService = positionService;
+        this.pricingUtils = pricingUtils;
     }
 
     /**
@@ -81,14 +84,14 @@ public class UpdateQuotesTask extends TradingTask {
         BigDecimal bidPoolSize = balance.multiply(BigDecimal.valueOf(0.5));
         BigDecimal askPoolSize = bidPoolSize.divide(referencePrice, market.getDecimalPlaces(), RoundingMode.HALF_DOWN);
         BigDecimal openVolumeRatio = exposure.divide(askPoolSize, market.getDecimalPlaces(), RoundingMode.HALF_DOWN);
-        double offerScalingFactor = PricingUtils.getAskScalingFactor(
+        double offerScalingFactor = pricingUtils.getAskScalingFactor(
                 exposure.longValue(), openVolumeRatio.doubleValue());
-        double bidScalingFactor = PricingUtils.getBidScalingFactor(
+        double bidScalingFactor = pricingUtils.getBidScalingFactor(
                 exposure.longValue(), openVolumeRatio.doubleValue());
-        List<DistributionStep> askDistribution = PricingUtils.getAskDistribution(
+        List<DistributionStep> askDistribution = pricingUtils.getAskDistribution(
                 offerScalingFactor,bidPoolSize.doubleValue(), askPoolSize.doubleValue(),
                 config.getAskQuoteRange(), config.getOrderCount());
-        List<DistributionStep> bidDistribution = PricingUtils.getBidDistribution(
+        List<DistributionStep> bidDistribution = pricingUtils.getBidDistribution(
                 bidScalingFactor, bidPoolSize.doubleValue(), askPoolSize.doubleValue(),
                 config.getBidQuoteRange(), config.getOrderCount());
         List<Order> bids = bidDistribution.stream().map(d ->

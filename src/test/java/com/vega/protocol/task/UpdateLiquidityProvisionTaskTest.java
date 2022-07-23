@@ -2,22 +2,21 @@ package com.vega.protocol.task;
 
 import com.vega.protocol.api.VegaApiClient;
 import com.vega.protocol.constant.ErrorCode;
-import com.vega.protocol.model.AppConfig;
-import com.vega.protocol.model.LiquidityProvision;
-import com.vega.protocol.model.Market;
-import com.vega.protocol.model.ReferencePrice;
+import com.vega.protocol.model.*;
 import com.vega.protocol.service.AccountService;
 import com.vega.protocol.service.MarketService;
 import com.vega.protocol.service.PositionService;
 import com.vega.protocol.store.AppConfigStore;
 import com.vega.protocol.store.LiquidityProvisionStore;
 import com.vega.protocol.store.ReferencePriceStore;
+import com.vega.protocol.utils.PricingUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 
 public class UpdateLiquidityProvisionTaskTest {
@@ -33,11 +32,13 @@ public class UpdateLiquidityProvisionTaskTest {
     private final PositionService positionService = Mockito.mock(PositionService.class);
     private final LiquidityProvisionStore liquidityProvisionStore = Mockito.mock(LiquidityProvisionStore.class);
     private final VegaApiClient vegaApiClient = Mockito.mock(VegaApiClient.class);
+    private final PricingUtils pricingUtils = Mockito.mock(PricingUtils.class);
 
     @BeforeEach
     public void setup() {
         updateLiquidityProvisionTask = new UpdateLiquidityProvisionTask(MARKET_ID, marketService, accountService,
-                positionService, appConfigStore, vegaApiClient, referencePriceStore, liquidityProvisionStore);
+                positionService, appConfigStore, vegaApiClient,
+                referencePriceStore, liquidityProvisionStore, pricingUtils);
     }
 
     @Test
@@ -49,9 +50,17 @@ public class UpdateLiquidityProvisionTaskTest {
         Mockito.when(referencePriceStore.get()).thenReturn(Optional.of(
                 new ReferencePrice().setMidPrice(BigDecimal.valueOf(20000))));
         Mockito.when(liquidityProvisionStore.get()).thenReturn(Optional.empty());
+        Mockito.when(pricingUtils.getBidScalingFactor(Mockito.anyLong(), Mockito.anyDouble())).thenReturn(1d);
+        Mockito.when(pricingUtils.getAskScalingFactor(Mockito.anyLong(), Mockito.anyDouble())).thenReturn(1d);
+        Mockito.when(pricingUtils.getBidDistribution(
+                Mockito.anyDouble(), Mockito.anyDouble(), Mockito.anyDouble(), Mockito.anyDouble(), Mockito.anyInt()))
+                .thenReturn(List.of(new DistributionStep().setPrice(1d).setSize(1d)));
+        Mockito.when(pricingUtils.getAskDistribution(
+                Mockito.anyDouble(), Mockito.anyDouble(), Mockito.anyDouble(), Mockito.anyDouble(), Mockito.anyInt()))
+                .thenReturn(List.of(new DistributionStep().setPrice(1d).setSize(1d)));
         updateLiquidityProvisionTask.execute();
         Mockito.verify(vegaApiClient, Mockito.times(1))
-                .submitLiquidityProvision(Mockito.any(LiquidityProvision.class));
+                .submitLiquidityProvision(Mockito.any(LiquidityProvision.class)); // TODO - fix assertion
     }
 
     @Test
@@ -65,7 +74,7 @@ public class UpdateLiquidityProvisionTaskTest {
         Mockito.when(liquidityProvisionStore.get()).thenReturn(Optional.empty());
         updateLiquidityProvisionTask.execute();
         Mockito.verify(vegaApiClient, Mockito.times(1))
-                .submitLiquidityProvision(Mockito.any(LiquidityProvision.class));
+                .submitLiquidityProvision(Mockito.any(LiquidityProvision.class)); // TODO - fix assertion
     }
 
     @Test
@@ -79,7 +88,7 @@ public class UpdateLiquidityProvisionTaskTest {
         Mockito.when(liquidityProvisionStore.get()).thenReturn(Optional.of(new LiquidityProvision()));
         updateLiquidityProvisionTask.execute();
         Mockito.verify(vegaApiClient, Mockito.times(1))
-                .amendLiquidityProvision(Mockito.any(LiquidityProvision.class));
+                .amendLiquidityProvision(Mockito.any(LiquidityProvision.class)); // TODO - fix assertion
     }
 
     @Test
