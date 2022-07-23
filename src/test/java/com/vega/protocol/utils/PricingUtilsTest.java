@@ -11,40 +11,28 @@ public class PricingUtilsTest {
     private final PricingUtils pricingUtils = new PricingUtils();
 
     @Test
-    public void testGetBidScalingFactor() {
-        double scalingFactor = pricingUtils.getBidScalingFactor(0L, 0);
+    public void testGetScalingFactor() {
+        double scalingFactor = pricingUtils.getScalingFactor(0L, 0);
         Assertions.assertEquals(scalingFactor, 1.0);
     }
 
     @Test
-    public void testGetAskScalingFactor() {
-        double scalingFactor = pricingUtils.getAskScalingFactor(0L, 0);
-        Assertions.assertEquals(scalingFactor, 1.0);
-    }
-
-    @Test
-    public void testGetBidScalingFactorWithOpenVolume() {
-        double scalingFactor = pricingUtils.getBidScalingFactor(-10000L, 0.5);
+    public void testGetScalingFactorWithOpenVolume() {
+        double scalingFactor = pricingUtils.getScalingFactor(10000L, 0.5);
         Assertions.assertEquals(scalingFactor, 0.5);
     }
-
-    @Test
-    public void testGetAskScalingFactorWithOpenVolume() {
-        double scalingFactor = pricingUtils.getAskScalingFactor(10000L, 0.5);
-        Assertions.assertEquals(scalingFactor, 2.0);
-    }
-
-    private void getBidDistribution(int expectedSize, int maxSize, double expectedVolume) {
+    
+    private void getBidDistribution(int expectedSize, int maxSize, double expectedVolume, double scalingFactor) {
         List<DistributionStep> distribution = pricingUtils.getBidDistribution(
-                1.0d, 50000d, 2.5d, 0.05d, maxSize);
+                scalingFactor, 50000d, 2.5d, 0.05d, maxSize);
         Assertions.assertEquals(distribution.size(), expectedSize);
         double volume = distribution.stream().mapToDouble(DistributionStep::getSize).sum();
         Assertions.assertEquals(volume, expectedVolume, 0.01);
     }
 
-    private void getAskDistribution(int expectedSize, int maxSize, double expectedVolume) {
+    private void getAskDistribution(int expectedSize, int maxSize, double expectedVolume, double scalingFactor) {
         List<DistributionStep> distribution = pricingUtils.getAskDistribution(
-                1.0d, 50000d, 2.5d, 0.05d, maxSize);
+                scalingFactor, 50000d, 2.5d, 0.05d, maxSize);
         Assertions.assertEquals(distribution.size(), expectedSize);
         double volume = distribution.stream().mapToDouble(DistributionStep::getSize).sum();
         Assertions.assertEquals(volume, expectedVolume, 0.01);
@@ -52,21 +40,31 @@ public class PricingUtilsTest {
 
     @Test
     public void testGetBidDistribution() {
-        getBidDistribution(10, 10, 0.05);
+        getBidDistribution(10, 10, 0.05, 1.0);
     }
 
     @Test
     public void testGetAskDistribution() {
-        getAskDistribution(10, 10, 0.05);
+        getAskDistribution(10, 10, 0.05, 1.0);
+    }
+
+    @Test
+    public void testGetBidDistributionWithScalingApplied() {
+        getBidDistribution(10, 10, 0.02, 0.5);
+    }
+
+    @Test
+    public void testGetAskDistributionWithScalingApplied() {
+        getAskDistribution(10, 10, 0.02, 0.5);
     }
 
     @Test
     public void testGetBidDistributionWithoutAggregation() {
-        getBidDistribution(52, 100, 0.07);
+        getBidDistribution(52, 100, 0.07, 1.0);
     }
 
     @Test
     public void testGetAskDistributionWithoutAggregation() {
-        getAskDistribution(51, 100, 0.07);
+        getAskDistribution(51, 100, 0.07, 1.0);
     }
 }

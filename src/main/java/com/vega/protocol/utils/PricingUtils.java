@@ -154,33 +154,18 @@ public class PricingUtils {
     }
 
     /**
-     * Get the bid scaling factor, used to push bids out from the mid price
+     * Get the scaling factor, used to push orders out from the mid-price
      *
      * @param openVolume the current open volume of our party
      * @param openVolumeRatio the % of total collateral allocated to our open volume
      *
-     * @return the bid scaling factor (a number between 0 and 1)
+     * @return the scaling factor (a number between 0 and 1)
      */
-    public double getBidScalingFactor(
+    public double getScalingFactor(
             final long openVolume,
             final double openVolumeRatio
     ) {
-        return openVolume < 0 ? 1 - Math.abs(openVolumeRatio) : 1;
-    }
-
-    /**
-     * Get the ask scaling factor, used to push asks out from the mid-price
-     *
-     * @param openVolume the current open volume of our party
-     * @param openVolumeRatio the % of total collateral allocated to our open volume
-     *
-     * @return the ask scaling factor (a number between 1 and infinity)
-     */
-    public double getAskScalingFactor(
-            final long openVolume,
-            final double openVolumeRatio
-    ) {
-        return openVolume > 0 ? 1 / (1 - openVolumeRatio) : 1;
+        return openVolume > 0 ? 1 - Math.abs(openVolumeRatio) : 1;
     }
 
     /**
