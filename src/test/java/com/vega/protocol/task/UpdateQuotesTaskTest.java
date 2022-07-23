@@ -37,12 +37,11 @@ public class UpdateQuotesTaskTest {
     private final MarketService marketService = Mockito.mock(MarketService.class);
     private final AccountService accountService = Mockito.mock(AccountService.class);
     private final PositionService positionService = Mockito.mock(PositionService.class);
-    private final OrderService orderService = Mockito.mock(OrderService.class);
 
     @BeforeEach
     public void setup() {
         updateQuotesTask = new UpdateQuotesTask(MARKET_ID, referencePriceStore, appConfigStore, orderStore,
-                vegaApiClient, marketService, accountService, positionService, orderService);
+                vegaApiClient, marketService, accountService, positionService);
     }
 
     private void execute(int orderCount, int createdOrders) {

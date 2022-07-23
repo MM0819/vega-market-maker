@@ -17,8 +17,7 @@ import java.math.BigDecimal;
 import java.util.Optional;
 
 public class UpdateLiquidityProvisionTaskTest {
-
-
+    
     private static final String MARKET_ID = "1";
     private static final String USDT = "USDT";
 
