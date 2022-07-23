@@ -8,6 +8,7 @@ import com.vega.protocol.service.AccountService;
 import com.vega.protocol.service.MarketService;
 import com.vega.protocol.service.PositionService;
 import com.vega.protocol.store.AppConfigStore;
+import com.vega.protocol.store.LiquidityProvisionStore;
 import com.vega.protocol.store.ReferencePriceStore;
 import com.vega.protocol.utils.PricingUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -28,6 +29,7 @@ public class UpdateLiquidityProvisionTask extends TradingTask {
     private final PositionService positionService;
     private final AppConfigStore appConfigStore;
     private final ReferencePriceStore referencePriceStore;
+    private final LiquidityProvisionStore liquidityProvisionStore;
     private final VegaApiClient vegaApiClient;
     private final String marketId;
 
@@ -37,12 +39,14 @@ public class UpdateLiquidityProvisionTask extends TradingTask {
                                         PositionService positionService,
                                         AppConfigStore appConfigStore,
                                         VegaApiClient vegaApiClient,
-                                        ReferencePriceStore referencePriceStore) {
+                                        ReferencePriceStore referencePriceStore,
+                                        LiquidityProvisionStore liquidityProvisionStore) {
         this.marketService = marketService;
         this.accountService = accountService;
         this.positionService = positionService;
         this.appConfigStore = appConfigStore;
         this.referencePriceStore = referencePriceStore;
+        this.liquidityProvisionStore = liquidityProvisionStore;
         this.vegaApiClient = vegaApiClient;
         this.marketId = marketId;
     }
@@ -88,9 +92,13 @@ public class UpdateLiquidityProvisionTask extends TradingTask {
                 .collect(Collectors.toList());
         LiquidityProvision liquidityProvision = new LiquidityProvision()
                 .setCommitment(commitment)
-                .setFee(BigDecimal.valueOf(0.001)) // TODO - where should this come from?
+                .setFee(BigDecimal.valueOf(config.getFee()))
                 .setBids(liquidityProvisionBids)
                 .setAsks(liquidityProvisionAsks);
-        vegaApiClient.submitLiquidityProvision(liquidityProvision); // TODO - amend if we already have LP order
+        if(liquidityProvisionStore.get().isPresent()) {
+            vegaApiClient.amendLiquidityProvision(liquidityProvision);
+        } else {
+            vegaApiClient.submitLiquidityProvision(liquidityProvision);
+        }
     }
 }

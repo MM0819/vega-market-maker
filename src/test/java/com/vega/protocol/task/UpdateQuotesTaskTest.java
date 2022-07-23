@@ -9,7 +9,6 @@ import com.vega.protocol.model.Order;
 import com.vega.protocol.model.ReferencePrice;
 import com.vega.protocol.service.AccountService;
 import com.vega.protocol.service.MarketService;
-import com.vega.protocol.service.OrderService;
 import com.vega.protocol.service.PositionService;
 import com.vega.protocol.store.AppConfigStore;
 import com.vega.protocol.store.OrderStore;

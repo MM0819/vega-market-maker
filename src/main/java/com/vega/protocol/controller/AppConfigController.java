@@ -3,9 +3,9 @@ package com.vega.protocol.controller;
 import com.vega.protocol.model.AppConfig;
 import com.vega.protocol.store.AppConfigStore;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/app-config")
@@ -22,5 +22,11 @@ public class AppConfigController {
         return ResponseEntity.of(appConfigStore.get());
     }
 
-    // TODO - add endpoint to edit config (some validation will be needed?)
+    @PutMapping
+    public ResponseEntity<AppConfig> update(
+            @RequestBody AppConfig config
+    ) {
+        appConfigStore.update(config);
+        return ResponseEntity.of(Optional.of(config));
+    }
 }

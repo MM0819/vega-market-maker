@@ -13,6 +13,14 @@ import java.util.Collections;
 @Slf4j
 public class VegaWebSocketClient extends WebSocketClient {
 
+    // TODO - subscribe to LP orders
+    // TODO - subscribe to orders
+    // TODO - subscribe to positions
+
+    private static final String LP_ORDERS_QUERY = "";
+    private static final String ORDERS_QUERY = "";
+    private static final String POSITIONS_QUERY = "";
+
     private static final String MARKETS_QUERY =
     """
         subscription {
@@ -28,11 +36,19 @@ public class VegaWebSocketClient extends WebSocketClient {
         }
     """;
 
+    /**
+     * Create a websocket client for Vega
+     *
+     * @param uri the websocket URI
+     */
     public VegaWebSocketClient(URI uri) {
         super(uri, new Draft_6455(Collections.emptyList(),
                 Collections.singletonList(new Protocol("graphql-ws"))));
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void onOpen(ServerHandshake handshake) {
         try {
@@ -52,16 +68,25 @@ public class VegaWebSocketClient extends WebSocketClient {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void onMessage(String message) {
         log.info(message);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void onClose(int code, String reason, boolean remote) {
         log.error(reason);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void onError(Exception e) {
         log.error(e.getMessage());

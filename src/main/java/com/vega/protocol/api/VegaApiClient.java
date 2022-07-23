@@ -9,28 +9,44 @@ import org.springframework.stereotype.Component;
 @Component
 public class VegaApiClient {
 
+    /**
+     * Cancel an order
+     *
+     * @param id the order ID
+     */
     public void cancelOrder(
             final String id
     ) {
 
     }
 
+    /**
+     * Submit a new order
+     *
+     * @param order {@link Order}
+     */
     public void submitOrder(
             final Order order
     ) {
 
     }
 
-    public void amendOrder() {
-
-    }
-
+    /**
+     * Submit a new liquidity commitment
+     *
+     * @param liquidityProvision {@link LiquidityProvision}
+     */
     public void submitLiquidityProvision(
             LiquidityProvision liquidityProvision
     ) {
 
     }
 
+    /**
+     * Amend existing liquidity commitment
+     *
+     * @param liquidityProvision {@link LiquidityProvision}
+     */
     public void amendLiquidityProvision(
             LiquidityProvision liquidityProvision
     ) {
