@@ -71,9 +71,10 @@
                 <version>0.8.8</version>
                 <configuration>
                     <excludes>
+                        <exclude>**/*com/vega/protocol/Application**</exclude>
                         <exclude>**/*com/vega/protocol/constant/**</exclude>
                         <exclude>**/*com/vega/protocol/model/**</exclude>
-                        <exclude>**/*com/vega/protocol/Application**</exclude>
+                        <exclude>**/*com/vega/protocol/response/**</exclude>
                     </excludes>
                 </configuration>
                 <executions>
