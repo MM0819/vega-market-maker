@@ -21,7 +21,7 @@ public class PricingUtils {
      *
      * @return the bid asset received for the ask size
      */
-    public double getBidSize(
+    private double getBidSize(
             final double askSize,
             final double askPoolSize,
             final double bidPoolSize,
@@ -40,7 +40,7 @@ public class PricingUtils {
      *
      * @return the ask asset received for the bid size
      */
-    public double getAskSize(
+    private double getAskSize(
             final double bidSize,
             final double askPoolSize,
             final double bidPoolSize,
@@ -62,7 +62,7 @@ public class PricingUtils {
      *
      * @return {@link List} of {@link DistributionStep}
      */
-    public List<DistributionStep> getBidDistribution(
+    private List<DistributionStep> getBidDistribution(
             double bidPoolSize,
             double askPoolSize,
             double askSize,
@@ -101,7 +101,7 @@ public class PricingUtils {
      *
      * @return {@link List} of {@link DistributionStep}
      */
-    public List<DistributionStep> getAskDistribution(
+    private List<DistributionStep> getAskDistribution(
             double bidPoolSize,
             double askPoolSize,
             double bidSize,
