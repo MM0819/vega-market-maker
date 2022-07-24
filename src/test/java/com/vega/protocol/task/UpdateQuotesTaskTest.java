@@ -42,11 +42,10 @@ public class UpdateQuotesTaskTest {
                 vegaApiClient, marketService, accountService, positionService, pricingUtils);
     }
 
-    @Test
-    public void testExecute() {
+    private void execute(BigDecimal exposure) {
         Mockito.when(marketService.getById(MARKET_ID)).thenReturn(new Market().setSettlementAsset(USDT));
         Mockito.when(accountService.getTotalBalance(USDT)).thenReturn(BigDecimal.valueOf(100000));
-        Mockito.when(positionService.getExposure(MARKET_ID)).thenReturn(BigDecimal.ZERO);
+        Mockito.when(positionService.getExposure(MARKET_ID)).thenReturn(exposure);
         Mockito.when(appConfigStore.get()).thenReturn(Optional.of(new AppConfig()));
         Mockito.when(referencePriceStore.get()).thenReturn(Optional.of(
                 new ReferencePrice().setMidPrice(BigDecimal.valueOf(20000))));
@@ -66,10 +65,10 @@ public class UpdateQuotesTaskTest {
         Mockito.when(orderStore.getItems()).thenReturn(currentOrders);
         Mockito.when(pricingUtils.getScalingFactor(Mockito.anyLong(), Mockito.anyDouble())).thenReturn(1d);
         Mockito.when(pricingUtils.getBidDistribution(
-                Mockito.anyDouble(), Mockito.anyDouble(), Mockito.anyDouble(), Mockito.anyDouble(), Mockito.anyInt()))
+                        Mockito.anyDouble(), Mockito.anyDouble(), Mockito.anyDouble(), Mockito.anyDouble(), Mockito.anyInt()))
                 .thenReturn(List.of(new DistributionStep().setPrice(1d).setSize(1d)));
         Mockito.when(pricingUtils.getAskDistribution(
-                Mockito.anyDouble(), Mockito.anyDouble(), Mockito.anyDouble(), Mockito.anyDouble(), Mockito.anyInt()))
+                        Mockito.anyDouble(), Mockito.anyDouble(), Mockito.anyDouble(), Mockito.anyDouble(), Mockito.anyInt()))
                 .thenReturn(List.of(
                         new DistributionStep().setPrice(1d).setSize(1d),
                         new DistributionStep().setPrice(1d).setSize(1d),
@@ -84,6 +83,21 @@ public class UpdateQuotesTaskTest {
         for(Order order : currentOrders.stream().filter(o -> o.getSide().equals(MarketSide.SELL)).toList()) {
             Mockito.verify(vegaApiClient, Mockito.times(1)).cancelOrder(order.getId());
         }
+    }
+
+    @Test
+    public void testExecute() {
+        execute(BigDecimal.ZERO);
+    }
+
+    @Test
+    public void testExecuteLongPosition() {
+        execute(BigDecimal.valueOf(1000L));
+    }
+
+    @Test
+    public void testExecuteShortPosition() {
+        execute(BigDecimal.valueOf(-1000L));
     }
 
     @Test

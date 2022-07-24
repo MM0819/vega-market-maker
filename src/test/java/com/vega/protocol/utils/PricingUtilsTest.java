@@ -21,7 +21,7 @@ public class PricingUtilsTest {
         double scalingFactor = pricingUtils.getScalingFactor(10000L, 0.5);
         Assertions.assertEquals(scalingFactor, 0.5);
     }
-    
+
     private void getBidDistribution(int expectedSize, int maxSize, double expectedVolume, double scalingFactor) {
         List<DistributionStep> distribution = pricingUtils.getBidDistribution(
                 scalingFactor, 50000d, 2.5d, 0.05d, maxSize);
