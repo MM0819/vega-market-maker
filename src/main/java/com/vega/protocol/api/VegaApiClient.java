@@ -3,7 +3,6 @@ package com.vega.protocol.api;
 import com.mashape.unirest.http.HttpResponse;
 import com.mashape.unirest.http.JsonNode;
 import com.mashape.unirest.http.Unirest;
-import com.mashape.unirest.http.exceptions.UnirestException;
 import com.vega.protocol.constant.ErrorCode;
 import com.vega.protocol.constant.MarketSide;
 import com.vega.protocol.constant.OrderStatus;
@@ -14,7 +13,6 @@ import com.vega.protocol.model.Market;
 import com.vega.protocol.model.Order;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -66,7 +64,7 @@ public class VegaApiClient {
                     .setId(marketId)
                     .setStatus(marketObject.getString("state").replace("STATE_", ""));
             return Optional.of(market);
-        } catch(UnirestException | JSONException e) {
+        } catch(Exception e) {
             log.error(e.getMessage(), e);
         }
         return Optional.empty();
@@ -114,7 +112,7 @@ public class VegaApiClient {
                 }
             }
             return orders;
-        } catch(UnirestException | JSONException e) {
+        } catch(Exception e) {
             log.error(e.getMessage(), e);
         }
         return Collections.emptyList();
@@ -149,7 +147,7 @@ public class VegaApiClient {
                     .asJson();
             String txHash = response.getBody().getObject().getString("txHash");
             return Optional.of(txHash);
-        } catch (UnirestException | JSONException e) {
+        } catch (Exception e) {
             log.error(e.getMessage(), e);
         }
         return Optional.empty();
@@ -190,7 +188,7 @@ public class VegaApiClient {
                     .asJson();
             String txHash = response.getBody().getObject().getString("txHash");
             return Optional.of(txHash);
-        } catch (UnirestException | JSONException e) {
+        } catch (Exception e) {
             log.error(e.getMessage(), e);
         }
         return Optional.empty();
@@ -231,7 +229,7 @@ public class VegaApiClient {
      *
      * @return {@link Optional<String>}
      */
-    private Optional<String> getToken() {
+    public Optional<String> getToken() {
         try {
             JSONObject request = new JSONObject()
                     .put("wallet", walletUser)
@@ -240,7 +238,7 @@ public class VegaApiClient {
                     .body(request)
                     .asJson();
             return Optional.of(response.getBody().getObject().getString("token"));
-        } catch (UnirestException | JSONException e) {
+        } catch (Exception e) {
             log.error(e.getMessage(), e);
         }
         return Optional.empty();

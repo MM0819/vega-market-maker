@@ -1,12 +1,16 @@
 package com.vega.protocol.api;
 
+import com.mashape.unirest.http.Unirest;
 import com.vega.protocol.constant.MarketSide;
 import com.vega.protocol.constant.OrderType;
 import com.vega.protocol.model.LiquidityProvision;
+import com.vega.protocol.model.Market;
 import com.vega.protocol.model.Order;
 import com.vega.protocol.utils.SleepUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -27,14 +31,15 @@ public class VegaApiClientTest {
             WALLET_URL, WALLET_USER, WALLET_PASSWORD, NODE_URL, MARKET_ID
     );
 
-    private void submitOrder() {
+    // TODO - we should run the wallet from within this test so that it works on CI
+
+    private Optional<String> submitOrder() {
         Order order = new Order()
                 .setSide(MarketSide.BUY)
                 .setSize(BigDecimal.ONE)
                 .setPrice(BigDecimal.ONE)
                 .setType(OrderType.LIMIT);
-        Optional<String> txHash = vegaApiClient.submitOrder(order, PARTY_ID);
-        Assertions.assertTrue(txHash.isPresent());
+        return vegaApiClient.submitOrder(order, PARTY_ID);
     }
 
     private void cancelOrders() {
@@ -47,7 +52,8 @@ public class VegaApiClientTest {
 
     @Test
     public void testSubmitAndCancelOrders() {
-        submitOrder();
+        Optional<String> txHash = submitOrder();
+        Assertions.assertTrue(txHash.isPresent());
         sleepUtils.sleep(5000L);
         cancelOrders();
         sleepUtils.sleep(5000L);
@@ -63,5 +69,50 @@ public class VegaApiClientTest {
     @Test
     public void testAmendLiquidityProvision() {
         vegaApiClient.amendLiquidityProvision(new LiquidityProvision(), PARTY_ID);
+    }
+
+    @Test
+    public void testGetTokenWithError() {
+        try(MockedStatic<Unirest> mockStatic = Mockito.mockStatic(Unirest.class)) {
+            Assertions.assertNotNull(mockStatic);
+            Optional<String> token = vegaApiClient.getToken();
+            Assertions.assertTrue(token.isEmpty());
+        }
+    }
+
+    @Test
+    public void testSubmitOrderWithError() {
+        try(MockedStatic<Unirest> mockStatic = Mockito.mockStatic(Unirest.class)) {
+            Assertions.assertNotNull(mockStatic);
+            Optional<String> txHash = submitOrder();
+            Assertions.assertTrue(txHash.isEmpty());
+        }
+    }
+
+    @Test
+    public void testCancelOrderWithError() {
+        try(MockedStatic<Unirest> mockStatic = Mockito.mockStatic(Unirest.class)) {
+            Assertions.assertNotNull(mockStatic);
+            Optional<String> txHash = vegaApiClient.cancelOrder("1", PARTY_ID);
+            Assertions.assertTrue(txHash.isEmpty());
+        }
+    }
+
+    @Test
+    public void testGetOrdersWithError() {
+        try(MockedStatic<Unirest> mockStatic = Mockito.mockStatic(Unirest.class)) {
+            Assertions.assertNotNull(mockStatic);
+            List<Order> orders = vegaApiClient.getOpenOrders(PARTY_ID);
+            Assertions.assertEquals(0, orders.size());
+        }
+    }
+
+    @Test
+    public void testGetMarketWithError() {
+        try(MockedStatic<Unirest> mockStatic = Mockito.mockStatic(Unirest.class)) {
+            Assertions.assertNotNull(mockStatic);
+            Optional<Market> market = vegaApiClient.getMarket(MARKET_ID);
+            Assertions.assertTrue(market.isEmpty());
+        }
     }
 }
