@@ -22,6 +22,7 @@ import java.util.Optional;
 public class UpdateLiquidityProvisionTaskTest {
 
     private static final String MARKET_ID = "1";
+    private static final String PARTY_ID = "1";
     private static final String USDT = "USDT";
 
     private UpdateLiquidityProvisionTask updateLiquidityProvisionTask;
@@ -36,8 +37,8 @@ public class UpdateLiquidityProvisionTaskTest {
 
     @BeforeEach
     public void setup() {
-        updateLiquidityProvisionTask = new UpdateLiquidityProvisionTask(MARKET_ID, marketService, accountService,
-                positionService, appConfigStore, vegaApiClient,
+        updateLiquidityProvisionTask = new UpdateLiquidityProvisionTask(MARKET_ID, PARTY_ID, marketService,
+                accountService, positionService, appConfigStore, vegaApiClient,
                 referencePriceStore, liquidityProvisionStore, pricingUtils);
     }
 
@@ -59,7 +60,7 @@ public class UpdateLiquidityProvisionTaskTest {
                 .thenReturn(List.of(new DistributionStep().setPrice(1d).setSize(1d)));
         updateLiquidityProvisionTask.execute();
         Mockito.verify(vegaApiClient, Mockito.times(1))
-                .submitLiquidityProvision(Mockito.any(LiquidityProvision.class)); // TODO - fix assertion
+                .submitLiquidityProvision(Mockito.any(LiquidityProvision.class), Mockito.anyString()); // TODO - fix assertion
     }
 
     @Test
@@ -73,7 +74,7 @@ public class UpdateLiquidityProvisionTaskTest {
         Mockito.when(liquidityProvisionStore.get()).thenReturn(Optional.empty());
         updateLiquidityProvisionTask.execute();
         Mockito.verify(vegaApiClient, Mockito.times(1))
-                .submitLiquidityProvision(Mockito.any(LiquidityProvision.class)); // TODO - fix assertion
+                .submitLiquidityProvision(Mockito.any(LiquidityProvision.class), Mockito.anyString()); // TODO - fix assertion
     }
 
     @Test
@@ -87,7 +88,7 @@ public class UpdateLiquidityProvisionTaskTest {
         Mockito.when(liquidityProvisionStore.get()).thenReturn(Optional.of(new LiquidityProvision()));
         updateLiquidityProvisionTask.execute();
         Mockito.verify(vegaApiClient, Mockito.times(1))
-                .amendLiquidityProvision(Mockito.any(LiquidityProvision.class)); // TODO - fix assertion
+                .amendLiquidityProvision(Mockito.any(LiquidityProvision.class), Mockito.anyString()); // TODO - fix assertion
     }
 
     @Test

@@ -11,4 +11,5 @@ public class ErrorCode {
     public static final String ORDER_COUNT_MANDATORY = "Mandatory field: 'orderCount'";
     public static final String SPREAD_MANDATORY = "Mandatory field: 'spread'";
     public static final String FEE_MANDATORY = "Mandatory field: 'fee'";
+    public static final String GET_VEGA_TOKEN_FAILED = "Could not get Vega token.";
 }

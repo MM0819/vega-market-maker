@@ -40,8 +40,10 @@ public class UpdateQuotesTask extends TradingTask {
     private final AccountService accountService;
     private final PositionService positionService;
     private final PricingUtils pricingUtils;
+    private final String partyId;
 
     public UpdateQuotesTask(@Value("${vega.market.id}") String marketId,
+                            @Value("${vega.party.id}") String partyId,
                             ReferencePriceStore referencePriceStore,
                             AppConfigStore appConfigStore,
                             OrderStore orderStore,
@@ -59,6 +61,7 @@ public class UpdateQuotesTask extends TradingTask {
         this.accountService = accountService;
         this.positionService = positionService;
         this.pricingUtils = pricingUtils;
+        this.partyId = partyId;
     }
 
     /**
@@ -95,7 +98,7 @@ public class UpdateQuotesTask extends TradingTask {
                 new Order()
                         .setSize(BigDecimal.valueOf(d.getSize() * config.getBidSizeFactor()))
                         .setPrice(BigDecimal.valueOf(d.getPrice()))
-                        .setStatus(OrderStatus.NEW)
+                        .setStatus(OrderStatus.ACTIVE)
                         .setSide(MarketSide.BUY)
                         .setType(OrderType.LIMIT)
         ).collect(Collectors.toList());
@@ -103,7 +106,7 @@ public class UpdateQuotesTask extends TradingTask {
                 new Order()
                         .setSize(BigDecimal.valueOf(d.getSize() * config.getAskSizeFactor()))
                         .setPrice(BigDecimal.valueOf(d.getPrice()))
-                        .setStatus(OrderStatus.NEW)
+                        .setStatus(OrderStatus.ACTIVE)
                         .setSide(MarketSide.SELL)
                         .setType(OrderType.LIMIT)
         ).collect(Collectors.toList());
@@ -138,10 +141,10 @@ public class UpdateQuotesTask extends TradingTask {
     ) {
         for(int i=0; i<count; i++) {
             if(i < newOrders.size()) {
-                vegaApiClient.submitOrder(newOrders.get(i));
+                vegaApiClient.submitOrder(newOrders.get(i), partyId);
             }
             if(i < currentOrders.size()) {
-                vegaApiClient.cancelOrder(currentOrders.get(i).getId());
+                vegaApiClient.cancelOrder(currentOrders.get(i).getId(), partyId);
             }
         }
     }

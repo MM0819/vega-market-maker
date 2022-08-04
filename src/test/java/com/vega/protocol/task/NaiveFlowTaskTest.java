@@ -48,14 +48,14 @@ public class NaiveFlowTaskTest {
                     .thenReturn(i % 2 == 0 ? MarketSide.BUY : MarketSide.SELL);
             naiveFlowTask.execute();
         }
-        Mockito.verify(vegaApiClient, Mockito.times(count)).submitOrder(Mockito.any(Order.class));
+        Mockito.verify(vegaApiClient, Mockito.times(count)).submitOrder(Mockito.any(Order.class), Mockito.anyString());
     }
 
     @Test
     public void testExecuteDisabled() {
         naiveFlowTask = getNaiveFlowTask(false);
         naiveFlowTask.execute();
-        Mockito.verify(vegaApiClient, Mockito.times(0)).submitOrder(Mockito.any(Order.class));
+        Mockito.verify(vegaApiClient, Mockito.times(0)).submitOrder(Mockito.any(Order.class), Mockito.anyString());
     }
 
     @Test

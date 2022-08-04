@@ -24,6 +24,7 @@ import java.util.Optional;
 public class UpdateQuotesTaskTest {
 
     private static final String MARKET_ID = "1";
+    private static final String PARTY_ID = "1";
     private static final String USDT = "USDT";
 
     private UpdateQuotesTask updateQuotesTask;
@@ -38,7 +39,7 @@ public class UpdateQuotesTaskTest {
 
     @BeforeEach
     public void setup() {
-        updateQuotesTask = new UpdateQuotesTask(MARKET_ID, referencePriceStore, appConfigStore, orderStore,
+        updateQuotesTask = new UpdateQuotesTask(MARKET_ID, PARTY_ID, referencePriceStore, appConfigStore, orderStore,
                 vegaApiClient, marketService, accountService, positionService, pricingUtils);
     }
 
@@ -76,12 +77,12 @@ public class UpdateQuotesTaskTest {
                         new DistributionStep().setPrice(1d).setSize(1d)
                 ));
         updateQuotesTask.execute();
-        Mockito.verify(vegaApiClient, Mockito.times(5)).submitOrder(Mockito.any(Order.class)); // TODO - fix assertion
+        Mockito.verify(vegaApiClient, Mockito.times(5)).submitOrder(Mockito.any(Order.class), Mockito.anyString()); // TODO - fix assertion
         for(Order order : currentOrders.stream().filter(o -> o.getSide().equals(MarketSide.BUY)).toList()) {
-            Mockito.verify(vegaApiClient, Mockito.times(1)).cancelOrder(order.getId());
+            Mockito.verify(vegaApiClient, Mockito.times(1)).cancelOrder(order.getId(), PARTY_ID);
         }
         for(Order order : currentOrders.stream().filter(o -> o.getSide().equals(MarketSide.SELL)).toList()) {
-            Mockito.verify(vegaApiClient, Mockito.times(1)).cancelOrder(order.getId());
+            Mockito.verify(vegaApiClient, Mockito.times(1)).cancelOrder(order.getId(), PARTY_ID);
         }
     }
 

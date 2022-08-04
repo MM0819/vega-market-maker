@@ -33,8 +33,10 @@ public class UpdateLiquidityProvisionTask extends TradingTask {
     private final VegaApiClient vegaApiClient;
     private final String marketId;
     private final PricingUtils pricingUtils;
+    private final String partyId;
 
     public UpdateLiquidityProvisionTask(@Value("${vega.market.id}") String marketId,
+                                        @Value("${vega.party.id}") String partyId,
                                         MarketService marketService,
                                         AccountService accountService,
                                         PositionService positionService,
@@ -52,6 +54,7 @@ public class UpdateLiquidityProvisionTask extends TradingTask {
         this.vegaApiClient = vegaApiClient;
         this.marketId = marketId;
         this.pricingUtils = pricingUtils;
+        this.partyId = partyId;
     }
 
     @Override
@@ -96,9 +99,9 @@ public class UpdateLiquidityProvisionTask extends TradingTask {
                 .setBids(liquidityProvisionBids)
                 .setAsks(liquidityProvisionAsks);
         if(liquidityProvisionStore.get().isPresent()) {
-            vegaApiClient.amendLiquidityProvision(liquidityProvision);
+            vegaApiClient.amendLiquidityProvision(liquidityProvision, partyId);
         } else {
-            vegaApiClient.submitLiquidityProvision(liquidityProvision);
+            vegaApiClient.submitLiquidityProvision(liquidityProvision, partyId);
         }
     }
 }

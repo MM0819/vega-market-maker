@@ -66,16 +66,16 @@ public class NaiveFlowTask extends TradingTask {
         }
         Market market = marketService.getById(marketId);
         BigDecimal balance = accountService.getTotalBalance(market.getSettlementAsset());
-        BigDecimal size = BigDecimal.valueOf(DEFAULT_SIZE)
+        BigDecimal size = BigDecimal.valueOf(DEFAULT_SIZE) // TODO - this depends on the decimals of the market?
                 .multiply(BigDecimal.valueOf(new Random().nextDouble())).multiply(balance);
         Order order = new Order()
                 .setType(OrderType.MARKET)
-                .setStatus(OrderStatus.NEW)
+                .setStatus(OrderStatus.ACTIVE)
                 .setSide(side)
                 .setSize(size)
                 .setMarket(market)
                 .setPartyId(partyId);
-        vegaApiClient.submitOrder(order);
+        vegaApiClient.submitOrder(order, partyId);
     }
 
     private void updateBias() {
