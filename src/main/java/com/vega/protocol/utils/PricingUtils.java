@@ -11,6 +11,8 @@ import java.util.stream.Collectors;
 @Component
 public class PricingUtils {
 
+    private static final double STEP_SIZE = 0.1;
+
     /**
      * Calculates the bid size for a given trade size and scaling factor
      *
@@ -52,35 +54,33 @@ public class PricingUtils {
     /**
      * Returns the distribution of the bid
      *
+     * @param scalingFactor the scaling factor used, which shifts the bids further out from the mid-price
      * @param bidPoolSize the size of the bid pool
      * @param askPoolSize the size of the ask pool
-     * @param askSize the initial ask size (first aggressive trade)
-     * @param priceCutOff the price at which the distribution is complete
-     * @param stepSize increase the ask size by this much on each iteration (should be a %, e.g. 0.1 = 10%)
-     * @param scalingFactor the scaling factor used, which shifts the bids further out from the mid-price
+     * @param quoteRange depth of quoted prices
      * @param orderCount the target order count
      *
      * @return {@link List} of {@link DistributionStep}
      */
-    private List<DistributionStep> getBidDistribution(
+    public List<DistributionStep> getBidDistribution(
+            double scalingFactor,
             double bidPoolSize,
             double askPoolSize,
-            double askSize,
-            double priceCutOff,
-            double stepSize,
-            double scalingFactor,
+            double quoteRange,
             int orderCount
     ) {
         double price = bidPoolSize / askPoolSize;
+        double cutoff = price * (1 - quoteRange);
+        double askSize = 1 / price;
         List<DistributionStep> distribution = new ArrayList<>();
-        while(price >= priceCutOff) {
+        while(price >= cutoff) {
             double bidSize = getBidSize(askSize, askPoolSize, bidPoolSize, scalingFactor);
             DistributionStep order = new DistributionStep().setPrice(price).setSize(askSize);
             distribution.add(order);
             bidPoolSize -= bidSize;
             askPoolSize += askSize;
             price = bidPoolSize / askPoolSize;
-            askSize = askSize * (1 + stepSize);
+            askSize = askSize * (1 + STEP_SIZE);
         }
         if(distribution.size() > orderCount) {
             distribution = aggregateDistribution(distribution, orderCount);
@@ -89,37 +89,35 @@ public class PricingUtils {
     }
 
     /**
-     * Returns the distribution of the ask
+     * Get the ask distribution
      *
-     * @param bidPoolSize the size of the bid pool
-     * @param askPoolSize the size of the ask pool
-     * @param bidSize the initial bid size (first aggressive trade)
-     * @param priceCutOff the price at which the distribution is complete
-     * @param stepSize increase the bid size by this much on each iteration (should be a %, e.g. 0.1 = 10%)
-     * @param scalingFactor the scaling factor used, which shifts the asks further out from the mid-price
-     * @param orderCount the target order count
+     * @param scalingFactor scaling factor, used to push asks out from mid-price
+     * @param bidPoolSize the size of our bid pool (i.e. total collateral)
+     * @param askPoolSize the size of our ask pool (derived from bid pool and reference price)
+     * @param askQuoteRange the depth of asks
+     * @param orderCount the number of orders
      *
      * @return {@link List} of {@link DistributionStep}
      */
-    private List<DistributionStep> getAskDistribution(
+    public List<DistributionStep> getAskDistribution(
+            double scalingFactor,
             double bidPoolSize,
             double askPoolSize,
-            double bidSize,
-            double priceCutOff,
-            double stepSize,
-            double scalingFactor,
+            double askQuoteRange,
             int orderCount
     ) {
+        double bidSize = 1.0;
         double price = bidPoolSize / askPoolSize;
+        double cutoff = price * (1 + askQuoteRange);
         List<DistributionStep> distribution = new ArrayList<>();
-        while(price <= priceCutOff) {
+        while(price <= cutoff) {
             double askSize = getAskSize(bidSize, askPoolSize, bidPoolSize, scalingFactor);
             DistributionStep order = new DistributionStep().setPrice(price).setSize(askSize);
             distribution.add(order);
             bidPoolSize += bidSize;
             askPoolSize -= askSize;
             price = bidPoolSize / askPoolSize;
-            bidSize = bidSize * (1 + stepSize);
+            bidSize = bidSize * (1 + STEP_SIZE);
         }
         if(distribution.size() > orderCount) {
             distribution = aggregateDistribution(distribution, orderCount);
@@ -156,62 +154,13 @@ public class PricingUtils {
     /**
      * Get the scaling factor, used to push orders out from the mid-price
      *
-     * @param openVolume the current open volume of our party
      * @param openVolumeRatio the % of total collateral allocated to our open volume
      *
      * @return the scaling factor (a number between 0 and 1)
      */
     public double getScalingFactor(
-            final long openVolume,
             final double openVolumeRatio
     ) {
-        return openVolume > 0 ? 1 - Math.abs(openVolumeRatio) : 1;
-    }
-
-    /**
-     * Get the bid distribution
-     *
-     * @param scalingFactor scaling factor, used to push bids out from mid-price
-     * @param bidPoolSize the size of our bid pool (i.e. total collateral)
-     * @param askPoolSize the size of our ask pool (derived from bid pool and reference price)
-     * @param bidQuoteRange the depth of bids
-     * @param orderCount the number of orders
-     *
-     * @return {@link List} of {@link DistributionStep}
-     */
-    public List<DistributionStep> getBidDistribution(
-            final double scalingFactor,
-            final double bidPoolSize,
-            final double askPoolSize,
-            final double bidQuoteRange,
-            final int orderCount
-    ) {
-        double price = bidPoolSize / askPoolSize;
-        double cutoff = price * (1 - bidQuoteRange);
-        return getBidDistribution(bidPoolSize, askPoolSize, 1 / price,
-                cutoff, 0.1, scalingFactor, orderCount);
-    }
-
-    /**
-     * Get the ask distribution
-     *
-     * @param scalingFactor scaling factor, used to push asks out from mid-price
-     * @param bidPoolSize the size of our bid pool (i.e. total collateral)
-     * @param askPoolSize the size of our ask pool (derived from bid pool and reference price)
-     * @param askQuoteRange the depth of asks
-     * @param orderCount the number of orders
-     *
-     * @return {@link List} of {@link DistributionStep}
-     */
-    public List<DistributionStep> getAskDistribution(
-            final double scalingFactor,
-            final double bidPoolSize,
-            final double askPoolSize,
-            final double askQuoteRange,
-            final int orderCount
-    ) {
-        double cutoff = (bidPoolSize / askPoolSize) * (1 + askQuoteRange);
-        return getAskDistribution(bidPoolSize, askPoolSize, 1,
-                cutoff, 0.1, scalingFactor, orderCount);
+        return 1 - Math.abs(openVolumeRatio);
     }
 }

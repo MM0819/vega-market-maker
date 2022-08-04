@@ -12,13 +12,13 @@ public class PricingUtilsTest {
 
     @Test
     public void testGetScalingFactor() {
-        double scalingFactor = pricingUtils.getScalingFactor(0L, 0);
+        double scalingFactor = pricingUtils.getScalingFactor(0);
         Assertions.assertEquals(scalingFactor, 1.0);
     }
 
     @Test
     public void testGetScalingFactorWithOpenVolume() {
-        double scalingFactor = pricingUtils.getScalingFactor(10000L, 0.5);
+        double scalingFactor = pricingUtils.getScalingFactor(0.5);
         Assertions.assertEquals(scalingFactor, 0.5);
     }
 

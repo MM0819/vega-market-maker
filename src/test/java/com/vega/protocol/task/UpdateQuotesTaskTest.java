@@ -63,7 +63,7 @@ public class UpdateQuotesTaskTest {
                     .setPrice(BigDecimal.ONE));
         }
         Mockito.when(orderStore.getItems()).thenReturn(currentOrders);
-        Mockito.when(pricingUtils.getScalingFactor(Mockito.anyLong(), Mockito.anyDouble())).thenReturn(1d);
+        Mockito.when(pricingUtils.getScalingFactor(Mockito.anyDouble())).thenReturn(1d);
         Mockito.when(pricingUtils.getBidDistribution(
                         Mockito.anyDouble(), Mockito.anyDouble(), Mockito.anyDouble(), Mockito.anyDouble(), Mockito.anyInt()))
                 .thenReturn(List.of(new DistributionStep().setPrice(1d).setSize(1d)));

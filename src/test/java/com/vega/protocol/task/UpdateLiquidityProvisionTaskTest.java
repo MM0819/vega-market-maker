@@ -50,7 +50,7 @@ public class UpdateLiquidityProvisionTaskTest {
         Mockito.when(referencePriceStore.get()).thenReturn(Optional.of(
                 new ReferencePrice().setMidPrice(BigDecimal.valueOf(20000))));
         Mockito.when(liquidityProvisionStore.get()).thenReturn(Optional.empty());
-        Mockito.when(pricingUtils.getScalingFactor(Mockito.anyLong(), Mockito.anyDouble())).thenReturn(1d);
+        Mockito.when(pricingUtils.getScalingFactor(Mockito.anyDouble())).thenReturn(1d);
         Mockito.when(pricingUtils.getBidDistribution(
                 Mockito.anyDouble(), Mockito.anyDouble(), Mockito.anyDouble(), Mockito.anyDouble(), Mockito.anyInt()))
                 .thenReturn(List.of(new DistributionStep().setPrice(1d).setSize(1d)));

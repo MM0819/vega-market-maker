@@ -71,8 +71,7 @@ public class UpdateLiquidityProvisionTask extends TradingTask {
         BigDecimal bidPoolSize = balance.multiply(BigDecimal.valueOf(0.5));
         BigDecimal askPoolSize = bidPoolSize.divide(referencePrice, 4, RoundingMode.HALF_DOWN);
         BigDecimal openVolumeRatio = exposure.divide(askPoolSize, 4, RoundingMode.HALF_DOWN);
-        double scalingFactor = pricingUtils.getScalingFactor(
-                exposure.abs().longValue(), openVolumeRatio.doubleValue());
+        double scalingFactor = pricingUtils.getScalingFactor(openVolumeRatio.doubleValue());
         List<DistributionStep> askDistribution = pricingUtils.getAskDistribution(
                 exposure.doubleValue() < 0 ? scalingFactor : 1.0, bidPoolSize.doubleValue(), askPoolSize.doubleValue(),
                 config.getAskQuoteRange(), config.getOrderCount());
