@@ -2,6 +2,7 @@ package com.vega.protocol.utils;
 
 import com.vega.protocol.model.DistributionStep;
 import org.apache.commons.collections4.ListUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -11,7 +12,13 @@ import java.util.stream.Collectors;
 @Component
 public class PricingUtils {
 
-    private static final double STEP_SIZE = 0.1;
+    private final Double stepSize;
+
+    public PricingUtils(
+            @Value("${pricing.step.size}") Double stepSize
+    ) {
+        this.stepSize = stepSize;
+    }
 
     /**
      * Calculates the bid size for a given trade size and scaling factor
@@ -80,7 +87,7 @@ public class PricingUtils {
             bidPoolSize -= bidSize;
             askPoolSize += askSize;
             price = bidPoolSize / askPoolSize;
-            askSize = askSize * (1 + STEP_SIZE);
+            askSize = askSize * (1 + stepSize);
         }
         if(distribution.size() > orderCount) {
             distribution = aggregateDistribution(distribution, orderCount);
@@ -117,7 +124,7 @@ public class PricingUtils {
             bidPoolSize += bidSize;
             askPoolSize -= askSize;
             price = bidPoolSize / askPoolSize;
-            bidSize = bidSize * (1 + STEP_SIZE);
+            bidSize = bidSize * (1 + stepSize);
         }
         if(distribution.size() > orderCount) {
             distribution = aggregateDistribution(distribution, orderCount);

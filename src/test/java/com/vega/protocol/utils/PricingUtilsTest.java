@@ -8,7 +8,7 @@ import java.util.List;
 
 public class PricingUtilsTest {
 
-    private final PricingUtils pricingUtils = new PricingUtils();
+    private final PricingUtils pricingUtils = new PricingUtils(0.1);
 
     @Test
     public void testGetScalingFactor() {
