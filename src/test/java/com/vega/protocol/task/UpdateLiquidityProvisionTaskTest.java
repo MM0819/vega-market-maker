@@ -35,6 +35,18 @@ public class UpdateLiquidityProvisionTaskTest {
     private final VegaApiClient vegaApiClient = Mockito.mock(VegaApiClient.class);
     private final PricingUtils pricingUtils = Mockito.mock(PricingUtils.class);
 
+    private AppConfig getAppConfig() {
+        return new AppConfig()
+                .setFee(0.001)
+                .setSpread(0.005)
+                .setOrderCount(10)
+                .setBidSizeFactor(1.0)
+                .setBidQuoteRange(0.05)
+                .setAskSizeFactor(1.0)
+                .setAskQuoteRange(0.05)
+                .setPricingStepSize(0.1);
+    }
+
     @BeforeEach
     public void setup() {
         updateLiquidityProvisionTask = new UpdateLiquidityProvisionTask(MARKET_ID, PARTY_ID, marketService,
@@ -47,7 +59,7 @@ public class UpdateLiquidityProvisionTaskTest {
         Mockito.when(marketService.getById(MARKET_ID)).thenReturn(new Market().setSettlementAsset(USDT));
         Mockito.when(accountService.getTotalBalance(USDT)).thenReturn(BigDecimal.valueOf(100000));
         Mockito.when(positionService.getExposure(MARKET_ID)).thenReturn(BigDecimal.ZERO);
-        Mockito.when(appConfigStore.get()).thenReturn(Optional.of(new AppConfig()));
+        Mockito.when(appConfigStore.get()).thenReturn(Optional.of(getAppConfig()));
         Mockito.when(referencePriceStore.get()).thenReturn(Optional.of(
                 new ReferencePrice().setMidPrice(BigDecimal.valueOf(20000))));
         Mockito.when(liquidityProvisionStore.get()).thenReturn(Optional.empty());
@@ -68,7 +80,7 @@ public class UpdateLiquidityProvisionTaskTest {
         Mockito.when(marketService.getById(MARKET_ID)).thenReturn(new Market().setSettlementAsset(USDT));
         Mockito.when(accountService.getTotalBalance(USDT)).thenReturn(BigDecimal.valueOf(100000));
         Mockito.when(positionService.getExposure(MARKET_ID)).thenReturn(BigDecimal.valueOf(2000));
-        Mockito.when(appConfigStore.get()).thenReturn(Optional.of(new AppConfig()));
+        Mockito.when(appConfigStore.get()).thenReturn(Optional.of(getAppConfig()));
         Mockito.when(referencePriceStore.get()).thenReturn(Optional.of(
                 new ReferencePrice().setMidPrice(BigDecimal.valueOf(20000))));
         Mockito.when(liquidityProvisionStore.get()).thenReturn(Optional.empty());
@@ -82,7 +94,7 @@ public class UpdateLiquidityProvisionTaskTest {
         Mockito.when(marketService.getById(MARKET_ID)).thenReturn(new Market().setSettlementAsset(USDT));
         Mockito.when(accountService.getTotalBalance(USDT)).thenReturn(BigDecimal.valueOf(100000));
         Mockito.when(positionService.getExposure(MARKET_ID)).thenReturn(BigDecimal.valueOf(-2000));
-        Mockito.when(appConfigStore.get()).thenReturn(Optional.of(new AppConfig()));
+        Mockito.when(appConfigStore.get()).thenReturn(Optional.of(getAppConfig()));
         Mockito.when(referencePriceStore.get()).thenReturn(Optional.of(
                 new ReferencePrice().setMidPrice(BigDecimal.valueOf(20000))));
         Mockito.when(liquidityProvisionStore.get()).thenReturn(Optional.of(new LiquidityProvision()));
@@ -109,7 +121,7 @@ public class UpdateLiquidityProvisionTaskTest {
         Mockito.when(marketService.getById(MARKET_ID)).thenReturn(new Market().setSettlementAsset(USDT));
         Mockito.when(accountService.getTotalBalance(USDT)).thenReturn(BigDecimal.valueOf(100000));
         Mockito.when(positionService.getExposure(MARKET_ID)).thenReturn(BigDecimal.ZERO);
-        Mockito.when(appConfigStore.get()).thenReturn(Optional.of(new AppConfig()));
+        Mockito.when(appConfigStore.get()).thenReturn(Optional.of(getAppConfig()));
         try {
             updateLiquidityProvisionTask.execute();
             Assertions.fail();

@@ -37,6 +37,18 @@ public class UpdateQuotesTaskTest {
     private final PositionService positionService = Mockito.mock(PositionService.class);
     private final PricingUtils pricingUtils = Mockito.mock(PricingUtils.class);
 
+    private AppConfig getAppConfig() {
+        return new AppConfig()
+                .setFee(0.001)
+                .setSpread(0.005)
+                .setOrderCount(10)
+                .setBidSizeFactor(1.0)
+                .setBidQuoteRange(0.05)
+                .setAskSizeFactor(1.0)
+                .setAskQuoteRange(0.05)
+                .setPricingStepSize(0.1);
+    }
+
     @BeforeEach
     public void setup() {
         updateQuotesTask = new UpdateQuotesTask(MARKET_ID, PARTY_ID, referencePriceStore, appConfigStore, orderStore,
@@ -47,7 +59,7 @@ public class UpdateQuotesTaskTest {
         Mockito.when(marketService.getById(MARKET_ID)).thenReturn(new Market().setSettlementAsset(USDT));
         Mockito.when(accountService.getTotalBalance(USDT)).thenReturn(BigDecimal.valueOf(100000));
         Mockito.when(positionService.getExposure(MARKET_ID)).thenReturn(exposure);
-        Mockito.when(appConfigStore.get()).thenReturn(Optional.of(new AppConfig()));
+        Mockito.when(appConfigStore.get()).thenReturn(Optional.of(getAppConfig()));
         Mockito.when(referencePriceStore.get()).thenReturn(Optional.of(
                 new ReferencePrice().setMidPrice(BigDecimal.valueOf(20000))));
         List<Order> currentOrders = new ArrayList<>();
@@ -119,7 +131,7 @@ public class UpdateQuotesTaskTest {
         Mockito.when(marketService.getById(MARKET_ID)).thenReturn(new Market().setSettlementAsset(USDT));
         Mockito.when(accountService.getTotalBalance(USDT)).thenReturn(BigDecimal.valueOf(100000));
         Mockito.when(positionService.getExposure(MARKET_ID)).thenReturn(BigDecimal.ZERO);
-        Mockito.when(appConfigStore.get()).thenReturn(Optional.of(new AppConfig()));
+        Mockito.when(appConfigStore.get()).thenReturn(Optional.of(getAppConfig()));
         try {
             updateQuotesTask.execute();
             Assertions.fail();

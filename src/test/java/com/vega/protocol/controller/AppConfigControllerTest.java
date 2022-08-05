@@ -7,7 +7,6 @@ import com.vega.protocol.model.AppConfig;
 import com.vega.protocol.response.ErrorResponse;
 import com.vega.protocol.store.AppConfigStore;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -34,25 +33,34 @@ public class AppConfigControllerTest {
 
     private final ObjectMapper mapper = new ObjectMapper();
 
-    @BeforeEach
-    public void setup() {
+    private AppConfig getAppConfig() {
+        return new AppConfig()
+                .setFee(0.001)
+                .setSpread(0.005)
+                .setOrderCount(10)
+                .setBidSizeFactor(1.0)
+                .setBidQuoteRange(0.05)
+                .setAskSizeFactor(1.0)
+                .setAskQuoteRange(0.05)
+                .setPricingStepSize(0.1);
     }
 
     @Test
     public void testGetAppConfig() throws Exception {
+        store.update(getAppConfig());
         MvcResult result = mvc.perform(MockMvcRequestBuilders.get("/app-config"))
                 .andExpect(status().isOk())
                 .andReturn();
         String body = result.getResponse().getContentAsString();
         AppConfig config = mapper.readValue(body, AppConfig.class);
-        Assertions.assertEquals(config, new AppConfig());
+        Assertions.assertEquals(config, getAppConfig());
         Assertions.assertTrue(store.get().isPresent());
         Assertions.assertEquals(store.get().get(), config);
     }
 
     @Test
     public void testUpdateAppConfig() throws Exception {
-        AppConfig config = new AppConfig()
+        AppConfig config = getAppConfig()
                 .setFee(0.0005);
         MvcResult result = mvc.perform(MockMvcRequestBuilders.put("/app-config")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -68,7 +76,7 @@ public class AppConfigControllerTest {
 
     @Test
     public void testUpdateAppConfigMissingFee() throws Exception {
-        AppConfig config = new AppConfig()
+        AppConfig config = getAppConfig()
                 .setFee(null);
         MvcResult result = mvc.perform(MockMvcRequestBuilders.put("/app-config")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -82,7 +90,7 @@ public class AppConfigControllerTest {
 
     @Test
     public void testUpdateAppConfigMissingOrderCount() throws Exception {
-        AppConfig config = new AppConfig()
+        AppConfig config = getAppConfig()
                 .setOrderCount(null);
         MvcResult result = mvc.perform(MockMvcRequestBuilders.put("/app-config")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -96,7 +104,7 @@ public class AppConfigControllerTest {
 
     @Test
     public void testUpdateAppConfigMissingSpread() throws Exception {
-        AppConfig config = new AppConfig()
+        AppConfig config = getAppConfig()
                 .setSpread(null);
         MvcResult result = mvc.perform(MockMvcRequestBuilders.put("/app-config")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -110,7 +118,7 @@ public class AppConfigControllerTest {
 
     @Test
     public void testUpdateAppConfigMissingBidQuoteRange() throws Exception {
-        AppConfig config = new AppConfig()
+        AppConfig config = getAppConfig()
                 .setBidQuoteRange(null);
         MvcResult result = mvc.perform(MockMvcRequestBuilders.put("/app-config")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -124,7 +132,7 @@ public class AppConfigControllerTest {
 
     @Test
     public void testUpdateAppConfigMissingAskQuoteRange() throws Exception {
-        AppConfig config = new AppConfig()
+        AppConfig config = getAppConfig()
                 .setAskQuoteRange(null);
         MvcResult result = mvc.perform(MockMvcRequestBuilders.put("/app-config")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -138,7 +146,7 @@ public class AppConfigControllerTest {
 
     @Test
     public void testUpdateAppConfigMissingBidSizeFactor() throws Exception {
-        AppConfig config = new AppConfig()
+        AppConfig config = getAppConfig()
                 .setBidSizeFactor(null);
         MvcResult result = mvc.perform(MockMvcRequestBuilders.put("/app-config")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -152,7 +160,7 @@ public class AppConfigControllerTest {
 
     @Test
     public void testUpdateAppConfigMissingAskSizeFactor() throws Exception {
-        AppConfig config = new AppConfig()
+        AppConfig config = getAppConfig()
                 .setAskSizeFactor(null);
         MvcResult result = mvc.perform(MockMvcRequestBuilders.put("/app-config")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -160,6 +168,7 @@ public class AppConfigControllerTest {
                 .andExpect(status().isInternalServerError())
                 .andReturn();
         String body = result.getResponse().getContentAsString();
-        Assertions.assertEquals(body, mapper.writeValueAsString(new ErrorResponse().setError(ErrorCode.ASK_SIZE_FACTOR_MANDATORY)));
+        Assertions.assertEquals(body, mapper.writeValueAsString(new ErrorResponse()
+                .setError(ErrorCode.ASK_SIZE_FACTOR_MANDATORY)));
     }
 }

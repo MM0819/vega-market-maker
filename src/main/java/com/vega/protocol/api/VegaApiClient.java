@@ -119,17 +119,22 @@ public class VegaApiClient {
     }
 
     /**
-     * Cancel an order
+     * Cancel order with recursive retry
      *
      * @param id the order ID
      * @param partyId the party ID
+     * @param attempt the attempt count
      *
      * @return {@link Optional<String>}
      */
-    public Optional<String> cancelOrder(
+    private Optional<String> cancelOrder(
             final String id,
-            final String partyId
+            final String partyId,
+            final int attempt
     ) {
+        if(attempt >= 10) {
+            return Optional.empty();
+        }
         try {
             JSONObject orderCancellation = new JSONObject()
                     .put("marketId", marketId)
@@ -145,6 +150,10 @@ public class VegaApiClient {
                     .headers(headers)
                     .body(cancellation)
                     .asJson();
+            // TODO - remove this recursion when wallet issue is fixed
+            if(response.getBody().toString().contains("couldn't get last block height")) {
+                return cancelOrder(id, partyId, attempt+1);
+            }
             String txHash = response.getBody().getObject().getString("txHash");
             return Optional.of(txHash);
         } catch (Exception e) {
@@ -154,17 +163,22 @@ public class VegaApiClient {
     }
 
     /**
-     * Submit a new order
+     * Create order with recursive retry
      *
-     * @param order {@link Order}
+     * @param order the order
      * @param partyId the party ID
+     * @param attempt the attempt count
      *
      * @return {@link Optional<String>}
      */
     public Optional<String> submitOrder(
             final Order order,
-            final String partyId
+            final String partyId,
+            final int attempt
     ) {
+        if(attempt >= 10) {
+            return Optional.empty();
+        }
         try {
             String reference = String.format("%s-%s", partyId, UUID.randomUUID());
             JSONObject orderSubmission = new JSONObject()
@@ -186,12 +200,46 @@ public class VegaApiClient {
                     .headers(headers)
                     .body(submission)
                     .asJson();
+            // TODO - remove this recursion when wallet issue is fixed
+            if(response.getBody().toString().contains("couldn't get last block height")) {
+                return submitOrder(order, partyId, attempt+1);
+            }
             String txHash = response.getBody().getObject().getString("txHash");
             return Optional.of(txHash);
         } catch (Exception e) {
             log.error(e.getMessage(), e);
         }
         return Optional.empty();
+    }
+
+    /**
+     * Cancel an order
+     *
+     * @param id the order ID
+     * @param partyId the party ID
+     *
+     * @return {@link Optional<String>}
+     */
+    public Optional<String> cancelOrder(
+            final String id,
+            final String partyId
+    ) {
+        return cancelOrder(id, partyId, 1);
+    }
+
+    /**
+     * Submit a new order
+     *
+     * @param order {@link Order}
+     * @param partyId the party ID
+     *
+     * @return {@link Optional<String>}
+     */
+    public Optional<String> submitOrder(
+            final Order order,
+            final String partyId
+    ) {
+        return submitOrder(order, partyId, 1);
     }
 
     /**
