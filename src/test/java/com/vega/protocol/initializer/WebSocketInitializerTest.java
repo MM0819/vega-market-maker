@@ -1,6 +1,7 @@
 package com.vega.protocol.initializer;
 
 import com.vega.protocol.constant.ReferencePriceSource;
+import com.vega.protocol.store.MarketStore;
 import com.vega.protocol.store.ReferencePriceStore;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -11,6 +12,7 @@ public class WebSocketInitializerTest {
 
     private WebSocketInitializer webSocketInitializer;
     private final ReferencePriceStore referencePriceStore = Mockito.mock(ReferencePriceStore.class);
+    private final MarketStore marketStore = Mockito.mock(MarketStore.class);
 
     private WebSocketInitializer getWebSocketInitializer(boolean enabled, ReferencePriceSource source) {
         return new WebSocketInitializer(
@@ -18,7 +20,7 @@ public class WebSocketInitializerTest {
                 "wss://stream.binance.com:9443/stream",
                 "wss://socket.polygon.io/stocks",
                 enabled, enabled, enabled, "BTCUSDT",
-                source, referencePriceStore
+                source, referencePriceStore, marketStore
         );
     }
 

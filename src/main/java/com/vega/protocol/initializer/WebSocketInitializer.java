@@ -1,6 +1,7 @@
 package com.vega.protocol.initializer;
 
 import com.vega.protocol.constant.ReferencePriceSource;
+import com.vega.protocol.store.MarketStore;
 import com.vega.protocol.store.ReferencePriceStore;
 import com.vega.protocol.ws.BinanceWebSocketClient;
 import com.vega.protocol.ws.PolygonWebSocketClient;
@@ -26,6 +27,7 @@ public class WebSocketInitializer {
     private final String referencePriceMarket;
     private final ReferencePriceSource referencePriceSource;
     private final ReferencePriceStore referencePriceStore;
+    private final MarketStore marketStore;
 
     public WebSocketInitializer(@Value("${vega.ws.url}") String vegaWsUrl,
                                 @Value("${binance.ws.url}") String binanceWsUrl,
@@ -35,7 +37,8 @@ public class WebSocketInitializer {
                                 @Value("${polygon.ws.enabled}") Boolean polygonWsEnabled,
                                 @Value("${reference.price.market}") String referencePriceMarket,
                                 @Value("${reference.price.source}") ReferencePriceSource referencePriceSource,
-                                ReferencePriceStore referencePriceStore) {
+                                ReferencePriceStore referencePriceStore,
+                                MarketStore marketStore) {
         this.vegaWsUrl = vegaWsUrl;
         this.binanceWsUrl = binanceWsUrl;
         this.polygonWsUrl = polygonWsUrl;
@@ -45,6 +48,7 @@ public class WebSocketInitializer {
         this.referencePriceMarket = referencePriceMarket;
         this.referencePriceSource = referencePriceSource;
         this.referencePriceStore = referencePriceStore;
+        this.marketStore = marketStore;
     }
 
     @Getter
@@ -71,7 +75,7 @@ public class WebSocketInitializer {
 
     private void initializeVega() {
         log.info("Connecting to Vega Web Socket...");
-        vegaWebSocketClient = new VegaWebSocketClient(URI.create(vegaWsUrl));
+        vegaWebSocketClient = new VegaWebSocketClient(marketStore, URI.create(vegaWsUrl));
         vegaWebSocketClient.connect();
         log.info("Connected to {}", vegaWebSocketClient.getURI().toString());
         vegaWebSocketsInitialized = true;

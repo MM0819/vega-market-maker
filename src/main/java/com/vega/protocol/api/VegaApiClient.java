@@ -11,6 +11,7 @@ import com.vega.protocol.exception.TradingException;
 import com.vega.protocol.model.LiquidityProvision;
 import com.vega.protocol.model.Market;
 import com.vega.protocol.model.Order;
+import com.vega.protocol.store.MarketStore;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -29,45 +30,20 @@ public class VegaApiClient {
     private final String walletPassword;
     private final String nodeUrl;
     private final String marketId;
+    private final MarketStore marketStore;
 
     public VegaApiClient(@Value("${vega.wallet.url}") String walletUrl,
                          @Value("${vega.wallet.user}") String walletUser,
                          @Value("${vega.wallet.password}") String walletPassword,
                          @Value("${vega.node.url}") String nodeUrl,
-                         @Value("${vega.market.id}") String marketId) {
+                         @Value("${vega.market.id}") String marketId,
+                         MarketStore marketStore) {
         this.walletUrl = walletUrl;
         this.walletUser = walletUser;
         this.walletPassword = walletPassword;
         this.nodeUrl = nodeUrl;
         this.marketId = marketId;
-    }
-
-    /**
-     * Get market by ID
-     *
-     * @param marketId the market ID
-     *
-     * @return {@link Optional<Market>}
-     */
-    public Optional<Market> getMarket(
-            final String marketId
-    ) {
-        try {
-            HttpResponse<JsonNode> response = Unirest.get(String.format("%s/markets/%s", nodeUrl, marketId)).asJson();
-            JSONObject marketObject = response.getBody().getObject().getJSONObject("market");
-            JSONObject tradableInstrument = marketObject.getJSONObject("tradableInstrument");
-            Market market = new Market()
-                    .setName(tradableInstrument.getJSONObject("instrument").getString("name"))
-                    .setSettlementAsset(tradableInstrument.getJSONObject("instrument")
-                            .getJSONObject("future").getString("quoteName"))
-                    .setDecimalPlaces(marketObject.getInt("decimalPlaces"))
-                    .setId(marketId)
-                    .setStatus(marketObject.getString("state").replace("STATE_", ""));
-            return Optional.of(market);
-        } catch(Exception e) {
-            log.error(e.getMessage(), e);
-        }
-        return Optional.empty();
+        this.marketStore = marketStore;
     }
 
     /**
@@ -85,15 +61,10 @@ public class VegaApiClient {
                     .asJson();
             List<Order> orders = new ArrayList<>();
             JSONArray ordersArray = response.getBody().getObject().getJSONArray("orders");
-            Map<String, Market> marketsById = new HashMap<>();
             for(int i=0; i<ordersArray.length(); i++) {
                 JSONObject orderObject = ordersArray.getJSONObject(i);
                 String marketId = orderObject.getString("marketId");
-                Market market = marketsById.get(marketId);
-                if(market == null) {
-                    market = getMarket(marketId).orElse(null);
-                    marketsById.put(marketId, market);
-                }
+                Market market = marketStore.getById(marketId).orElse(null);
                 Order order = new Order()
                         .setType(OrderType.valueOf(orderObject.getString("type")
                                 .replace("TYPE_", "")))

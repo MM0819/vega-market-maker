@@ -4,8 +4,8 @@ import com.mashape.unirest.http.Unirest;
 import com.vega.protocol.constant.MarketSide;
 import com.vega.protocol.constant.OrderType;
 import com.vega.protocol.model.LiquidityProvision;
-import com.vega.protocol.model.Market;
 import com.vega.protocol.model.Order;
+import com.vega.protocol.store.MarketStore;
 import com.vega.protocol.utils.SleepUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -26,9 +26,10 @@ public class VegaApiClientTest {
     private static final String NODE_URL = "https://lb.testnet.vega.xyz/datanode/rest";
     private static final String MARKET_ID = "10c4b1114d2f6fda239b73d018bca55888b6018f0ac70029972a17fea0a6a56e";
     private static final String PARTY_ID = "6817f2b4d9464716c6756d2827d893872b1d33839e211c27a650629e428dc35c";
+    private final MarketStore marketStore = Mockito.mock(MarketStore.class);
 
     private final VegaApiClient vegaApiClient = new VegaApiClient(
-            WALLET_URL, WALLET_USER, WALLET_PASSWORD, NODE_URL, MARKET_ID
+            WALLET_URL, WALLET_USER, WALLET_PASSWORD, NODE_URL, MARKET_ID, marketStore
     );
 
     // TODO - we should run the wallet from within this test so that it works on CI
@@ -104,15 +105,6 @@ public class VegaApiClientTest {
             Assertions.assertNotNull(mockStatic);
             List<Order> orders = vegaApiClient.getOpenOrders(PARTY_ID);
             Assertions.assertEquals(0, orders.size());
-        }
-    }
-
-    @Test
-    public void testGetMarketWithError() {
-        try(MockedStatic<Unirest> mockStatic = Mockito.mockStatic(Unirest.class)) {
-            Assertions.assertNotNull(mockStatic);
-            Optional<Market> market = vegaApiClient.getMarket(MARKET_ID);
-            Assertions.assertTrue(market.isEmpty());
         }
     }
 }
