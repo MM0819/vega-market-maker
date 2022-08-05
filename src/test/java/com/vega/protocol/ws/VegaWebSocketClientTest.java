@@ -1,6 +1,7 @@
 package com.vega.protocol.ws;
 
 import com.vega.protocol.store.MarketStore;
+import com.vega.protocol.store.OrderStore;
 import org.java_websocket.handshake.HandshakeImpl1Server;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -12,10 +13,13 @@ public class VegaWebSocketClientTest {
 
     private VegaWebSocketClient vegaWebSocketClient;
     private final MarketStore marketStore = Mockito.mock(MarketStore.class);
+    private final OrderStore orderStore = Mockito.mock(OrderStore.class);
+    private static final String PARTY_ID = "1";
 
     @BeforeEach
     public void setup() {
-        vegaWebSocketClient = new VegaWebSocketClient(marketStore, URI.create("wss://lb.testnet.vega.xyz/query"));
+        vegaWebSocketClient = new VegaWebSocketClient(
+                PARTY_ID, marketStore, orderStore, URI.create("wss://lb.testnet.vega.xyz/query"));
     }
 
     @Test

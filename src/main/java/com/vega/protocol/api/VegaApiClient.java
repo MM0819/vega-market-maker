@@ -47,6 +47,35 @@ public class VegaApiClient {
     }
 
     /**
+     * Get markets
+     *
+     * @return {@link List<Market>}
+     */
+    public List<Market> getMarkets() {
+        try {
+            HttpResponse<JsonNode> response = Unirest.get(String.format("%s/markets", nodeUrl)).asJson();
+            JSONArray marketsArray = response.getBody().getObject().getJSONArray("markets");
+            List<Market> markets = new ArrayList<>();
+            for(int i=0; i<marketsArray.length(); i++) {
+                JSONObject marketObject = marketsArray.getJSONObject(i);
+                JSONObject tradableInstrument = marketObject.getJSONObject("tradableInstrument");
+                Market market = new Market()
+                        .setName(tradableInstrument.getJSONObject("instrument").getString("name"))
+                        .setSettlementAsset(tradableInstrument.getJSONObject("instrument")
+                                .getJSONObject("future").getString("quoteName"))
+                        .setDecimalPlaces(marketObject.getInt("decimalPlaces"))
+                        .setId(marketId)
+                        .setStatus(marketObject.getString("state").replace("STATE_", ""));
+                markets.add(market);
+            }
+            return markets;
+        } catch(Exception e) {
+            log.error(e.getMessage(), e);
+        }
+        return Collections.emptyList();
+    }
+
+    /**
      * Get all open orders
      *
      * @param partyId the party ID

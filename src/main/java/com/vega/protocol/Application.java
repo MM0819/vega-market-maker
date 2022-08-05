@@ -1,5 +1,6 @@
 package com.vega.protocol;
 
+import com.vega.protocol.initializer.DataInitializer;
 import com.vega.protocol.initializer.WebSocketInitializer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
@@ -13,9 +14,12 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 public class Application implements CommandLineRunner {
 
     private final WebSocketInitializer webSocketInitializer;
+    private final DataInitializer dataInitializer;
 
-    public Application(WebSocketInitializer webSocketInitializer) {
+    public Application(WebSocketInitializer webSocketInitializer,
+                       DataInitializer dataInitializer) {
         this.webSocketInitializer = webSocketInitializer;
+        this.dataInitializer = dataInitializer;
     }
 
     public static void main(String[] args) {
@@ -26,5 +30,6 @@ public class Application implements CommandLineRunner {
     public void run(String... args) {
         log.info("Starting simple market maker...");
         webSocketInitializer.initialize();
+        dataInitializer.initialize();
     }
 }

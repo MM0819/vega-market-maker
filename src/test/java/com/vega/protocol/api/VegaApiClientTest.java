@@ -4,6 +4,7 @@ import com.mashape.unirest.http.Unirest;
 import com.vega.protocol.constant.MarketSide;
 import com.vega.protocol.constant.OrderType;
 import com.vega.protocol.model.LiquidityProvision;
+import com.vega.protocol.model.Market;
 import com.vega.protocol.model.Order;
 import com.vega.protocol.store.MarketStore;
 import com.vega.protocol.utils.SleepUtils;
@@ -73,6 +74,12 @@ public class VegaApiClientTest {
     }
 
     @Test
+    public void testGetMarkets() {
+        List<Market> markets = vegaApiClient.getMarkets();
+        Assertions.assertTrue(markets.size() > 0);
+    }
+
+    @Test
     public void testGetTokenWithError() {
         try(MockedStatic<Unirest> mockStatic = Mockito.mockStatic(Unirest.class)) {
             Assertions.assertNotNull(mockStatic);
@@ -105,6 +112,15 @@ public class VegaApiClientTest {
             Assertions.assertNotNull(mockStatic);
             List<Order> orders = vegaApiClient.getOpenOrders(PARTY_ID);
             Assertions.assertEquals(0, orders.size());
+        }
+    }
+
+    @Test
+    public void testGetMarketsWithError() {
+        try(MockedStatic<Unirest> mockStatic = Mockito.mockStatic(Unirest.class)) {
+            Assertions.assertNotNull(mockStatic);
+            List<Market> markets = vegaApiClient.getMarkets();
+            Assertions.assertEquals(0, markets.size());
         }
     }
 }
