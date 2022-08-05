@@ -61,7 +61,7 @@ First you need to configure your secret environment variables (see [.env.sample]
 
 Setup your environment: 
 
-`./setup.sh`
+`./setup-env.sh`
 
 Start the app: 
 
