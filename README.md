@@ -1,5 +1,9 @@
 # Vega Protocol - Market Maker
 
+## :construction: :construction_worker_man: :construction:
+
+**This is a new project and under active development. Some of the contents of this README might describe functionality that has not been implemented yet. When the first version is available for use, it will be published to the releases section of this repository as well as to Docker Hub.**
+
 ## Overview
 
 This application implements an active market maker for Vega Protocol. The market maker can be configured to trade on a single market by tracking an external reference price and posting quotes on Vega around that price. The market maker updates its quotes once every 15 seconds.
