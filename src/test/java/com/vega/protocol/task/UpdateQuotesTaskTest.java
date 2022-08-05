@@ -3,6 +3,7 @@ package com.vega.protocol.task;
 import com.vega.protocol.api.VegaApiClient;
 import com.vega.protocol.constant.ErrorCode;
 import com.vega.protocol.constant.MarketSide;
+import com.vega.protocol.constant.MarketTradingMode;
 import com.vega.protocol.model.*;
 import com.vega.protocol.service.AccountService;
 import com.vega.protocol.service.MarketService;
@@ -56,7 +57,9 @@ public class UpdateQuotesTaskTest {
     }
 
     private void execute(BigDecimal exposure) {
-        Mockito.when(marketService.getById(MARKET_ID)).thenReturn(new Market().setSettlementAsset(USDT));
+        Mockito.when(marketService.getById(MARKET_ID)).thenReturn(new Market()
+                .setSettlementAsset(USDT)
+                .setTradingMode(MarketTradingMode.CONTINUOUS));
         Mockito.when(accountService.getTotalBalance(USDT)).thenReturn(BigDecimal.valueOf(100000));
         Mockito.when(positionService.getExposure(MARKET_ID)).thenReturn(exposure);
         Mockito.when(appConfigStore.get()).thenReturn(Optional.of(getAppConfig()));
@@ -115,7 +118,9 @@ public class UpdateQuotesTaskTest {
 
     @Test
     public void testExecuteAppConfigNotFound() {
-        Mockito.when(marketService.getById(MARKET_ID)).thenReturn(new Market().setSettlementAsset(USDT));
+        Mockito.when(marketService.getById(MARKET_ID)).thenReturn(new Market()
+                .setSettlementAsset(USDT)
+                .setTradingMode(MarketTradingMode.CONTINUOUS));
         Mockito.when(accountService.getTotalBalance(USDT)).thenReturn(BigDecimal.valueOf(100000));
         Mockito.when(positionService.getExposure(MARKET_ID)).thenReturn(BigDecimal.ZERO);
         try {
@@ -128,7 +133,9 @@ public class UpdateQuotesTaskTest {
 
     @Test
     public void testExecuteReferencePriceNotFound() {
-        Mockito.when(marketService.getById(MARKET_ID)).thenReturn(new Market().setSettlementAsset(USDT));
+        Mockito.when(marketService.getById(MARKET_ID)).thenReturn(new Market()
+                .setSettlementAsset(USDT)
+                .setTradingMode(MarketTradingMode.CONTINUOUS));
         Mockito.when(accountService.getTotalBalance(USDT)).thenReturn(BigDecimal.valueOf(100000));
         Mockito.when(positionService.getExposure(MARKET_ID)).thenReturn(BigDecimal.ZERO);
         Mockito.when(appConfigStore.get()).thenReturn(Optional.of(getAppConfig()));
