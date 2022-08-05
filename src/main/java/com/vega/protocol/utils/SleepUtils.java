@@ -6,6 +6,12 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 public class SleepUtils {
+
+    /**
+     * Sleep for given milliseconds
+     *
+     * @param millis sleep duration
+     */
     public void sleep(long millis) {
         try {
             Thread.sleep(millis);

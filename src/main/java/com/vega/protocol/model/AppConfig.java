@@ -6,11 +6,12 @@ import lombok.experimental.Accessors;
 @Data
 @Accessors(chain = true)
 public class AppConfig {
-    private Double bidQuoteRange = 0.05;
-    private Double askQuoteRange = 0.05;
-    private Double bidSizeFactor = 1.0;
-    private Double askSizeFactor = 1.0;
-    private Integer orderCount = 10;
-    private Double spread = 0.005;
-    private Double fee = 0.001;
+    private Double bidQuoteRange;
+    private Double askQuoteRange;
+    private Double bidSizeFactor;
+    private Double askSizeFactor;
+    private Integer orderCount;
+    private Double spread;
+    private Double fee;
+    private Double pricingStepSize;
 }

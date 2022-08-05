@@ -1,14 +1,25 @@
 package com.vega.protocol.utils;
 
+import com.vega.protocol.model.AppConfig;
 import com.vega.protocol.model.DistributionStep;
+import com.vega.protocol.store.AppConfigStore;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 import java.util.List;
+import java.util.Optional;
 
 public class PricingUtilsTest {
 
-    private final PricingUtils pricingUtils = new PricingUtils(0.1);
+    private final AppConfigStore appConfigStore = Mockito.mock(AppConfigStore.class);
+    private final PricingUtils pricingUtils = new PricingUtils(appConfigStore);
+
+    @BeforeEach
+    public void setup() {
+        Mockito.when(appConfigStore.get()).thenReturn(Optional.of(new AppConfig().setPricingStepSize(0.1)));
+    }
 
     @Test
     public void testGetScalingFactor() {

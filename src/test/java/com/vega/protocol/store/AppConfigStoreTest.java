@@ -1,8 +1,6 @@
 package com.vega.protocol.store;
 
 import com.vega.protocol.model.AppConfig;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
 
 public class AppConfigStoreTest extends SingleItemStoreTest<AppConfig, AppConfigStore> {
 
@@ -16,11 +14,5 @@ public class AppConfigStoreTest extends SingleItemStoreTest<AppConfig, AppConfig
     @Override
     public AppConfig getItem() {
         return new AppConfig();
-    }
-
-    @Test
-    public void testInitialize() {
-        store.initialize();
-        Assertions.assertTrue(getStore().get().isPresent());
     }
 }

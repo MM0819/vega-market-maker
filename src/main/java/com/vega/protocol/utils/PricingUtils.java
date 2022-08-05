@@ -1,8 +1,10 @@
 package com.vega.protocol.utils;
 
+import com.vega.protocol.constant.ErrorCode;
+import com.vega.protocol.exception.TradingException;
 import com.vega.protocol.model.DistributionStep;
+import com.vega.protocol.store.AppConfigStore;
 import org.apache.commons.collections4.ListUtils;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -12,12 +14,10 @@ import java.util.stream.Collectors;
 @Component
 public class PricingUtils {
 
-    private final Double stepSize;
+    private final AppConfigStore appConfigStore;
 
-    public PricingUtils(
-            @Value("${pricing.step.size}") Double stepSize
-    ) {
-        this.stepSize = stepSize;
+    public PricingUtils(AppConfigStore appConfigStore) {
+        this.appConfigStore = appConfigStore;
     }
 
     /**
@@ -80,6 +80,9 @@ public class PricingUtils {
         double cutoff = price * (1 - quoteRange);
         double askSize = 1 / price;
         List<DistributionStep> distribution = new ArrayList<>();
+        double stepSize = appConfigStore.get()
+                .orElseThrow(() -> new TradingException(ErrorCode.APP_CONFIG_NOT_FOUND))
+                .getPricingStepSize();
         while(price >= cutoff) {
             double bidSize = getBidSize(askSize, askPoolSize, bidPoolSize, scalingFactor);
             DistributionStep order = new DistributionStep().setPrice(price).setSize(askSize);
@@ -117,6 +120,9 @@ public class PricingUtils {
         double price = bidPoolSize / askPoolSize;
         double cutoff = price * (1 + askQuoteRange);
         List<DistributionStep> distribution = new ArrayList<>();
+        double stepSize = appConfigStore.get()
+                .orElseThrow(() -> new TradingException(ErrorCode.APP_CONFIG_NOT_FOUND))
+                .getPricingStepSize();
         while(price <= cutoff) {
             double askSize = getAskSize(bidSize, askPoolSize, bidPoolSize, scalingFactor);
             DistributionStep order = new DistributionStep().setPrice(price).setSize(askSize);

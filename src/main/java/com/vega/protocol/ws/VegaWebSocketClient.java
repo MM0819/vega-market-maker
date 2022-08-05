@@ -24,7 +24,6 @@ import java.util.Collections;
 public class VegaWebSocketClient extends WebSocketClient {
 
     // TODO - subscribe to LP orders
-    // TODO - subscribe to orders
     // TODO - subscribe to positions
 
     private static final String LP_ORDERS_QUERY = "";
@@ -78,6 +77,9 @@ public class VegaWebSocketClient extends WebSocketClient {
     /**
      * Create a websocket client for Vega
      *
+     * @param partyId the Vega party ID
+     * @param marketStore {@link MarketStore}
+     * @param orderStore {@link OrderStore}
      * @param uri the websocket URI
      */
     public VegaWebSocketClient(
@@ -136,11 +138,33 @@ public class VegaWebSocketClient extends WebSocketClient {
                     handleMarkets(data.getJSONArray("marketsData"));
                 } else if(id.equals("orders")) {
                     handleOrders(data.getJSONArray("orders"));
+                } else if(id.equals("positions")) {
+                    handlePositions(data.getJSONArray("positions"));
+                } else if(id.equals("liquidityProvision")) {
+                    handleLiquidityProvision(data.getJSONArray("liquidityProvision"));
                 }
             }
         } catch(Exception e) {
             log.error(e.getMessage(), e);
         }
+    }
+
+    /**
+     * Handle JSON array of positions
+     *
+     * @param positionsArray {@link JSONArray}
+     */
+    private void handlePositions(JSONArray positionsArray) {
+        // TODO - handle positions
+    }
+
+    /**
+     * Handle JSON array of LP orders
+     *
+     * @param liquidityProvisionArray {@link JSONArray}
+     */
+    private void handleLiquidityProvision(JSONArray liquidityProvisionArray) {
+        // TODO - handle liquidity provision
     }
 
     /**
@@ -171,7 +195,7 @@ public class VegaWebSocketClient extends WebSocketClient {
                         .setPartyId(partyId)
                         .setMarket(market)
                         .setSide(side);
-                orderStore.add(order);
+                orderStore.update(order);
             } catch(Exception e) {
                 log.error(e.getMessage(), e);
             }
@@ -202,7 +226,7 @@ public class VegaWebSocketClient extends WebSocketClient {
                         .setStatus(state)
                         .setDecimalPlaces(decimalPlaces)
                         .setSettlementAsset(quoteName);
-                marketStore.add(market);
+                marketStore.update(market);
             } catch(Exception e) {
                 log.error(e.getMessage(), e);
             }
