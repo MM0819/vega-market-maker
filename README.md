@@ -1,5 +1,12 @@
 # Vega Protocol - Market Maker
 
+[![Build Status](https://app.travis-ci.com/MM0819/vega-market-maker.svg?branch=main)](https://app.travis-ci.com/MM0819/vega-market-maker) 
+[![License](https://img.shields.io/github/license/MM0819/vega-market-maker.svg)](https://github.com/MM0819/vega-market-maker/blob/main/LICENSE)
+[![Coverage](https://codecov.io/gh/MM0819/vega-market-maker/branch/main/graph/badge.svg)](https://app.codecov.io/gh/MM0819/vega-market-maker)
+
+
+[![Twitter URL](https://img.shields.io/twitter/url/https/twitter.com/bitcoin__bill.svg?style=social&label=Follow%20%40bitcoin__bill)](https://twitter.com/bitcoin__bill)
+
 ## :construction: :construction_worker_man: :construction:
 
 **This is a new project and under active development. Some of the contents of this README might describe functionality that has not been implemented yet. When the first version is available for use, it will be published to the releases section of this repository as well as to Docker Hub.**
