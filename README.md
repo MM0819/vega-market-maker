@@ -41,7 +41,7 @@ The following configuration parameters control the operation of your market make
 
 `[TODO - insert table]`
 
-The default values can be found in `{project_dir}/src/main/resources/application.properties`. To override these values, simply set an environment variable with the corresponding name. For example, to override `vega.ws.enabled=true`, you should define the environment variable `VEGA_WS_ENABLED=false`.
+The default values can be found in the [application.properties](https://github.com/MM0819/vega-market-maker/blob/main/src/main/resources/application.properties) file. To override these values, simply set an environment variable with the corresponding name. For example, to override `vega.ws.enabled=true`, you should define the environment variable `VEGA_WS_ENABLED=false`.
 
 ### Running the Market Maker
 
