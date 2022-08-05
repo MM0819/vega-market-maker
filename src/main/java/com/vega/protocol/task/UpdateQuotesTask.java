@@ -1,10 +1,7 @@
 package com.vega.protocol.task;
 
 import com.vega.protocol.api.VegaApiClient;
-import com.vega.protocol.constant.ErrorCode;
-import com.vega.protocol.constant.MarketSide;
-import com.vega.protocol.constant.OrderStatus;
-import com.vega.protocol.constant.OrderType;
+import com.vega.protocol.constant.*;
 import com.vega.protocol.exception.TradingException;
 import com.vega.protocol.model.AppConfig;
 import com.vega.protocol.model.DistributionStep;
@@ -97,6 +94,8 @@ public class UpdateQuotesTask extends TradingTask {
         List<DistributionStep> bidDistribution = pricingUtils.getBidDistribution(
                 exposure.doubleValue() > 0 ? scalingFactor : 1.0, bidPoolSize.doubleValue(), askPoolSize.doubleValue(),
                 config.getBidQuoteRange(), config.getOrderCount());
+        TimeInForce tif = market.getTradingMode().equals(MarketTradingMode.CONTINUOUS) ?
+                TimeInForce.GTC : TimeInForce.GFA;
         List<Order> bids = bidDistribution.stream().map(d ->
                 new Order()
                         .setSize(BigDecimal.valueOf(d.getSize() * config.getBidSizeFactor()))
@@ -104,6 +103,7 @@ public class UpdateQuotesTask extends TradingTask {
                         .setStatus(OrderStatus.ACTIVE)
                         .setSide(MarketSide.BUY)
                         .setType(OrderType.LIMIT)
+                        .setTimeInForce(tif)
         ).collect(Collectors.toList());
         List<Order> asks = askDistribution.stream().map(d ->
                 new Order()
@@ -112,6 +112,7 @@ public class UpdateQuotesTask extends TradingTask {
                         .setStatus(OrderStatus.ACTIVE)
                         .setSide(MarketSide.SELL)
                         .setType(OrderType.LIMIT)
+                        .setTimeInForce(tif)
         ).collect(Collectors.toList());
         List<Order> currentOrders = orderStore.getItems();
         List<Order> currentBids = currentOrders.stream()

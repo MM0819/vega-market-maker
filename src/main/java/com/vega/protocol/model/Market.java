@@ -1,5 +1,7 @@
 package com.vega.protocol.model;
 
+import com.vega.protocol.constant.MarketState;
+import com.vega.protocol.constant.MarketTradingMode;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -10,7 +12,8 @@ import lombok.experimental.Accessors;
 public class Market extends UniqueItem {
     private String id;
     private String name;
-    private String status;
+    private MarketState state;
+    private MarketTradingMode tradingMode;
     private String settlementAsset;
     private int decimalPlaces;
 }

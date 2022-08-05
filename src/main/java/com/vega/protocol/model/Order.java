@@ -3,6 +3,7 @@ package com.vega.protocol.model;
 import com.vega.protocol.constant.MarketSide;
 import com.vega.protocol.constant.OrderStatus;
 import com.vega.protocol.constant.OrderType;
+import com.vega.protocol.constant.TimeInForce;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -22,4 +23,5 @@ public class Order extends UniqueItem {
     private MarketSide side;
     private OrderStatus status;
     private OrderType type;
+    private TimeInForce timeInForce;
 }

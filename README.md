@@ -19,7 +19,7 @@ By implementing an AMM curve, which distributes inventory between a price of 0 a
 
 To better understand how the market maker quotes prices, you should review the [PricingUtils](https://github.com/MM0819/vega-market-maker/blob/main/src/main/java/com/vega/protocol/utils/PricingUtils.java) class, which implements the AMM curve. In future, these docs will be updated with some graphical examples demonstrating how the pricing strategy works.
 
-### Configuration
+### Trading Configuration
 
 You're able to override a variety of configuration parameters to control the behaviour of your market making strategy. This might typically be something you'd want to do if your market maker is accumulating too much unwanted exposure in a given direction, for example. 
 
@@ -28,6 +28,14 @@ The table below provides an extensive explanation of the purpose of each configu
 `[TODO - insert table]`
 
 You can edit your market maker's configuration by visiting [http://localhost:7777](http://localhost:7777) in your web browser (if you are running the strategy on your local machine).
+
+### Application Configuration
+
+The following configuration parameters control the operation of your market maker:
+
+`[TODO - insert table]`
+
+The default values can be found in `{project_dir}/src/main/resources/application.properties`. To override these values, simply set an environment variable with the corresponding name. For example, to override `vega.ws.enabled=true`, you should define the environment variable `VEGA_WS_ENABLED=false`.
 
 ### Running the Market Maker
 
