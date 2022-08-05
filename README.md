@@ -25,7 +25,7 @@ You're able to override a variety of configuration parameters to control the beh
 
 The table below provides an extensive explanation of the purpose of each configuration parameter:
 
-[insert table]
+`[TODO - insert table]`
 
 You can edit your market maker's configuration by visiting [http://localhost:7777](http://localhost:7777) in your web browser (if you are running the strategy on your local machine).
 
