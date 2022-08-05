@@ -39,7 +39,7 @@ Execute the command below to start the market maker with default confgiuration:
 
 ## Development
 
-This application is built using Java 16, Maven and Spring Boot (`version 2.4.x`). The following instructions explain how to build the application for the purpose of running a market making strategy or contributing changes to the code base.
+This application is built using [Java 16](https://www.oracle.com/java/technologies/javase/jdk16-archive-downloads.html), [Maven](https://maven.apache.org) and [Spring Boot](https://spring.io/projects/spring-boot) (`version 2.4.x`). The following instructions explain how to build the application for the purpose of running a market making strategy or contributing to the code base. Before you're able to run the application, you will also need to install and configure a [Vega wallet](https://github.com/vegaprotocol/vegawallet).
 
 ### Build
 
