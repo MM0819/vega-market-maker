@@ -10,6 +10,7 @@ import com.vega.protocol.store.MarketStore;
 import com.vega.protocol.utils.SleepUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
@@ -17,6 +18,7 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
+@DisabledIfEnvironmentVariable(named = "TRAVIS_CI", matches = "true")
 public class VegaApiClientTest {
 
     private final SleepUtils sleepUtils = new SleepUtils();
