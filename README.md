@@ -17,7 +17,7 @@ The trading strategy implements a dynamic AMM curve, which is adapted based on t
 
 By implementing an AMM curve, which distributes inventory between a price of 0 and infinity, we're able to ensure that (in theory) the market maker can never become distressed and is always able to quote prices on the given market. In practise, however, because positions on Vega are leveraged, it might happen that a trader becomes over exposed and in that scenario they should look to reduce their position size manually. Positions can be reduced by execute market orders on Vega against the orders of other market makers to reduce open volume, or, in the scenario where you are the dominate liquidity provider of a market, you would need to use an external market to hedge your position on Vega (e.g. if you are accumulating long BTCUSDT exposure on Vega, you could hedge on Binance with an equal-sized short position).
 
-To better understand how the market maker quotes prices, you should review the [PricingUtils](https://github.com/MM0819/vega-market-maker/blob/main/src/main/java/com/vega/protocol/utils/PricingUtils.java) class, which implements the AMM curve. In future, these docs will be updated with some graphical examples demonstrating how the pricing strategy works.
+To better understand how the market maker quotes prices, you should review the [PricingUtils](https://github.com/MM0819/vega-market-maker/blob/main/src/main/java/com/vega/protocol/utils/PricingUtils.java) class, which implements the AMM curve. In the future, these docs will be updated with some graphical examples demonstrating how the pricing strategy works.
 
 ### Trading Configuration
 

@@ -1,8 +1,6 @@
 package com.vega.protocol.ws;
 
-import com.vega.protocol.constant.MarketSide;
-import com.vega.protocol.constant.OrderStatus;
-import com.vega.protocol.constant.OrderType;
+import com.vega.protocol.constant.*;
 import com.vega.protocol.model.Market;
 import com.vega.protocol.model.Order;
 import com.vega.protocol.store.MarketStore;
@@ -214,7 +212,10 @@ public class VegaWebSocketClient extends WebSocketClient {
                 String id = marketsObject.getString("id");
                 String name = marketsObject.getString("name");
                 int decimalPlaces = marketsObject.getInt("decimalPlaces");
-                String state = marketsObject.getString("state").toUpperCase();
+                MarketState state = MarketState.valueOf(marketsObject.getString("state")
+                        .replaceAll("([a-z])([A-Z])", "$1_$2").toUpperCase());
+                MarketTradingMode tradingMode = MarketTradingMode.valueOf(marketsObject.getString("tradingMode")
+                        .replaceAll("([a-z])([A-Z])", "$1_$2").toUpperCase());
                 String quoteName = marketsObject
                         .getJSONObject("tradableInstrument")
                         .getJSONObject("instrument")
@@ -223,7 +224,8 @@ public class VegaWebSocketClient extends WebSocketClient {
                 Market market = new Market()
                         .setId(id)
                         .setName(name)
-                        .setStatus(state)
+                        .setState(state)
+                        .setTradingMode(tradingMode)
                         .setDecimalPlaces(decimalPlaces)
                         .setSettlementAsset(quoteName);
                 marketStore.update(market);

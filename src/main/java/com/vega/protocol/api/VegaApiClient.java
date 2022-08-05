@@ -3,10 +3,7 @@ package com.vega.protocol.api;
 import com.mashape.unirest.http.HttpResponse;
 import com.mashape.unirest.http.JsonNode;
 import com.mashape.unirest.http.Unirest;
-import com.vega.protocol.constant.ErrorCode;
-import com.vega.protocol.constant.MarketSide;
-import com.vega.protocol.constant.OrderStatus;
-import com.vega.protocol.constant.OrderType;
+import com.vega.protocol.constant.*;
 import com.vega.protocol.exception.TradingException;
 import com.vega.protocol.model.LiquidityProvision;
 import com.vega.protocol.model.Market;
@@ -65,7 +62,10 @@ public class VegaApiClient {
                                 .getJSONObject("future").getString("quoteName"))
                         .setDecimalPlaces(marketObject.getInt("decimalPlaces"))
                         .setId(marketId)
-                        .setStatus(marketObject.getString("state").replace("STATE_", ""));
+                        .setState(MarketState.valueOf(marketObject.getString("state")
+                                .replace("STATE_", "")))
+                        .setTradingMode(MarketTradingMode.valueOf(marketObject.getString("tradingMode")
+                                .replace("TRADING_MODE_", "")));
                 markets.add(market);
             }
             return markets;
