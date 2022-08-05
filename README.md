@@ -9,13 +9,15 @@ You can track external prices from two sources:
 * Crypto prices are taken from [Binance](https://binance.com)
 * Non-crypto prices (e.g. equities, FX and commodities) are taken from [Polygon](https://polygon.io)
 
-*Note: Support will be added for Uniswap v3 in the near future.*
+*Note: Support for Uniswap v3 will be added in the near future.*
 
 ### Pricing Strategy
 
 The trading strategy implements a dynamic AMM curve, which is adapted based on the trader's open volume. The objective of the market maker is to quote prices with a spread around the external reference price while remaining neutral over a large sample trades. In order to achieve this goal, the algorithm skews its orders depending on whether it accumulates long or short exposure. If the trader accumulates long exposure, then bids will be quoted further away from the mid-price than asks, and if it accumulates short exposure, then asks will be quoted further away than bids.
 
-By implementing an AMM curve, which distributes inventory between a price of 0 and infinity, we're able to ensure that (in theory) the market maker can never become distressed and is always able to quote prices on the given market. In practise, however, because positions on Vega are leveraged, it might happen that a trader becomes over exposed and in that scenario they should look to reduce their position size manually. Positions can be reduced by execute market orders on Vega against the orders of other market makers to reduce open volume, or, in the scenario where you are the dominate liquidity provider of a market, you would need to use an external market to hedge your position on Vega (e.g. if you are accumulating long BTCUSDT exposure on Vega, you could hedge on Binance with an equal-sized short position).
+By implementing an AMM curve, which distributes inventory between a price of 0 and infinity, we're able to ensure that (in theory) the market maker can never become distressed and is always able to quote prices on the given market. In practise, however, because positions on Vega are leveraged, it might happen that a trader becomes over exposed and in that scenario they should look to reduce their position size manually. 
+
+Positions can be reduced by executing market orders on Vega against the orders of other market makers to reduce open volume, or, in the scenario where you are the dominate liquidity provider of a market, you would need to use an external market to hedge your position on Vega (e.g. if you are accumulating long BTCUSDT exposure on Vega, you could hedge on Binance with an equal-sized short position).
 
 To better understand how the market maker quotes prices, you should review the [PricingUtils](https://github.com/MM0819/vega-market-maker/blob/main/src/main/java/com/vega/protocol/utils/PricingUtils.java) class, which implements the AMM curve. In the future, these docs will be updated with some graphical examples demonstrating how the pricing strategy works.
 
