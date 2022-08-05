@@ -2,7 +2,7 @@
 
 ## Overview
 
-This application implements a simple active market maker for Vega Protocol. The market maker can be configured to trade on a single market by tracking an external reference price and posting quotes on Vega around that price. The market maker updates its quotes once every 15 seconds.
+This application implements an active market maker for Vega Protocol. The market maker can be configured to trade on a single market by tracking an external reference price and posting quotes on Vega around that price. The market maker updates its quotes once every 15 seconds.
 
 You can track external prices from two sources:
 
