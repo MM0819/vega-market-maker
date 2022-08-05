@@ -61,7 +61,9 @@ To run the tests:
 
 `mvn clean install`
 
-You can access the code coverage report at :`{project_dir}/target/site/jacoco/index.html`
+You can access the code coverage report at:
+
+`{project_dir}/target/site/jacoco/index.html`
 
 ### Running the Application
 

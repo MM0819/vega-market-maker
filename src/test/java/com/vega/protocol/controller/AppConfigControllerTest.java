@@ -5,6 +5,7 @@ import com.vega.protocol.constant.ErrorCode;
 import com.vega.protocol.exception.GlobalExceptionHandler;
 import com.vega.protocol.model.AppConfig;
 import com.vega.protocol.response.ErrorResponse;
+import com.vega.protocol.service.AppConfigService;
 import com.vega.protocol.store.AppConfigStore;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -21,7 +22,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @AutoConfigureMockMvc
-@ContextConfiguration(classes = {AppConfigController.class, AppConfigStore.class})
+@ContextConfiguration(classes = {AppConfigController.class, AppConfigService.class, AppConfigStore.class})
 @WebMvcTest
 @Import(GlobalExceptionHandler.class)
 public class AppConfigControllerTest {
