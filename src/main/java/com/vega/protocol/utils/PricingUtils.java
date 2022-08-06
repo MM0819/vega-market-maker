@@ -174,6 +174,6 @@ public class PricingUtils {
     public double getScalingFactor(
             final double openVolumeRatio
     ) {
-        return 1 - Math.abs(openVolumeRatio);
+        return Math.min(0, 1 - Math.abs(openVolumeRatio));
     }
 }
