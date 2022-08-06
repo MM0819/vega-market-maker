@@ -4,12 +4,10 @@ import com.vega.protocol.store.ReferencePriceStore;
 import org.java_websocket.handshake.HandshakeImpl1Server;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.mockito.Mockito;
 
 import java.net.URI;
 
-@EnabledIfEnvironmentVariable(named = "INT_TESTING_ENABLED", matches = "true")
 public class PolygonWebSocketClientTest {
 
     private static final String SYMBOL = "AAPL";
@@ -20,14 +18,6 @@ public class PolygonWebSocketClientTest {
     public void setup() {
         polygonWebSocketClient = new PolygonWebSocketClient(
                 URI.create("wss://socket.polygon.io/stocks"), SYMBOL, referencePriceStore);
-    }
-
-    @Test
-    public void testConnectAndClose() throws InterruptedException {
-        polygonWebSocketClient.connect();
-        Thread.sleep(5000L);
-        polygonWebSocketClient.close();
-        Thread.sleep(1000L);
     }
 
     @Test

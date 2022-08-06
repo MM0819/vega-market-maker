@@ -31,36 +31,6 @@ public class VegaWebSocketClientTest {
                 PARTY_ID, marketStore, orderStore, URI.create("wss://lb.testnet.vega.xyz/query"));
     }
 
-//    private void connectAndClose() throws InterruptedException {
-//        vegaWebSocketClient.connect();
-//        Thread.sleep(10000L);
-//        vegaApiClient.submitOrder(new Order()
-//                .setSide(MarketSide.BUY)
-//                .setPrice(BigDecimal.ONE)
-//                .setSize(BigDecimal.ONE)
-//                .setType(OrderType.LIMIT)
-//                .setTimeInForce(TimeInForce.GTC), PARTY_ID);
-//        Thread.sleep(10000L);
-//        Mockito.verify(marketStore, Mockito.atLeast(1)).update(Mockito.any(Market.class));
-//        Mockito.verify(orderStore, Mockito.atLeast(1)).update(Mockito.any(Order.class));
-//        vegaApiClient.getOpenOrders(PARTY_ID).forEach(o -> vegaApiClient.cancelOrder(o.getId(), PARTY_ID));
-//        Thread.sleep(10000L);
-//        vegaWebSocketClient.close();
-//        Thread.sleep(1000L);
-//    }
-//
-//    @Test
-//    public void testConnectAndClose() throws InterruptedException {
-//        connectAndClose();
-//    }
-//
-//    @Test
-//    public void testHandleErrors() throws InterruptedException {
-//        Mockito.doThrow(RuntimeException.class).when(marketStore).update(Mockito.any(Market.class));
-//        Mockito.doThrow(RuntimeException.class).when(orderStore).update(Mockito.any(Order.class));
-//        connectAndClose();
-//    }
-
     @Test
     public void testHandleMarkets() {
         try(InputStream is = getClass().getClassLoader().getResourceAsStream("vega-markets-ws.json")) {
