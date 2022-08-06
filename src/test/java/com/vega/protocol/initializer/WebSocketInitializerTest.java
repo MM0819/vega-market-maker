@@ -10,7 +10,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.mockito.Mockito;
 
-@EnabledIfEnvironmentVariable(named = "INT_TESTING_ENABLED", matches = "true")
 public class WebSocketInitializerTest {
 
     private WebSocketInitializer webSocketInitializer;
@@ -47,7 +46,7 @@ public class WebSocketInitializerTest {
     public void testInitializePolygon() throws InterruptedException {
         webSocketInitializer = getWebSocketInitializer(true, ReferencePriceSource.POLYGON);
         webSocketInitializer.initialize();
-        Thread.sleep(2000L);
+        Thread.sleep(500L);
         Assertions.assertNull(webSocketInitializer.getBinanceWebSocketClient());
         Assertions.assertTrue(webSocketInitializer.getVegaWebSocketClient().isOpen());
         Assertions.assertTrue(webSocketInitializer.getPolygonWebSocketClient().isOpen());
@@ -57,7 +56,7 @@ public class WebSocketInitializerTest {
     public void testInitializeDisabled() throws InterruptedException {
         webSocketInitializer = getWebSocketInitializer(false, ReferencePriceSource.BINANCE);
         webSocketInitializer.initialize();
-        Thread.sleep(2000L);
+        Thread.sleep(200L);
         Assertions.assertNull(webSocketInitializer.getPolygonWebSocketClient());
         Assertions.assertNull(webSocketInitializer.getBinanceWebSocketClient());
         Assertions.assertNull(webSocketInitializer.getVegaWebSocketClient());
@@ -85,9 +84,9 @@ public class WebSocketInitializerTest {
     public void testKeepAlivePolygonClosed() throws InterruptedException {
         webSocketInitializer = getWebSocketInitializer(true, ReferencePriceSource.POLYGON);
         webSocketInitializer.initialize();
-        Thread.sleep(2000L);
+        Thread.sleep(500L);
         webSocketInitializer.getPolygonWebSocketClient().close();
-        Thread.sleep(2000L);
+        Thread.sleep(500L);
         webSocketInitializer.keepWebSocketsAlive();
     }
 
@@ -95,9 +94,9 @@ public class WebSocketInitializerTest {
     public void testKeepAliveBinanceClosed() throws InterruptedException {
         webSocketInitializer = getWebSocketInitializer(true, ReferencePriceSource.BINANCE);
         webSocketInitializer.initialize();
-        Thread.sleep(2000L);
+        Thread.sleep(1000L);
         webSocketInitializer.getBinanceWebSocketClient().close();
-        Thread.sleep(2000L);
+        Thread.sleep(1000L);
         webSocketInitializer.keepWebSocketsAlive();
     }
 
@@ -105,9 +104,9 @@ public class WebSocketInitializerTest {
     public void testKeepAliveVegaClosed() throws InterruptedException {
         webSocketInitializer = getWebSocketInitializer(true, ReferencePriceSource.BINANCE);
         webSocketInitializer.initialize();
-        Thread.sleep(2000L);
+        Thread.sleep(500L);
         webSocketInitializer.getVegaWebSocketClient().close();
-        Thread.sleep(2000L);
+        Thread.sleep(500L);
         webSocketInitializer.keepWebSocketsAlive();
     }
 }
