@@ -1,5 +1,6 @@
 package com.vega.protocol.service;
 
+import com.vega.protocol.constant.MarketSide;
 import com.vega.protocol.model.Position;
 import com.vega.protocol.store.PositionStore;
 import org.springframework.stereotype.Service;
@@ -26,6 +27,14 @@ public class PositionService {
     ) {
         Optional<Position> positionOptional = positionStore.getItems().stream()
                 .filter(p -> p.getMarketId().equals(marketId)).findFirst();
-        return positionOptional.orElse(new Position().setSize(BigDecimal.ZERO)).getSize();
+        if(positionOptional.isPresent()) {
+            Position position = positionOptional.get();
+            BigDecimal exposure = position.getSize();
+            if(position.getSide().equals(MarketSide.SELL)) {
+                return exposure.multiply(BigDecimal.valueOf(-1));
+            }
+            return exposure;
+        }
+        return BigDecimal.ZERO;
     }
 }
