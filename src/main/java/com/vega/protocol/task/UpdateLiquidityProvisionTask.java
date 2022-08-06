@@ -76,13 +76,14 @@ public class UpdateLiquidityProvisionTask extends TradingTask {
                 .orElseThrow(() -> new TradingException(ErrorCode.REFERENCE_PRICE_NOT_FOUND)).getMidPrice();
         BigDecimal bidPoolSize = balance.multiply(BigDecimal.valueOf(0.5));
         BigDecimal askPoolSize = bidPoolSize.divide(referencePrice, market.getDecimalPlaces(), RoundingMode.HALF_DOWN);
-        BigDecimal openVolumeRatio = exposure.divide(askPoolSize, market.getDecimalPlaces(), RoundingMode.HALF_DOWN);
+        BigDecimal openVolumeRatio = exposure.abs().divide(askPoolSize,
+                market.getDecimalPlaces(), RoundingMode.HALF_DOWN);
         double scalingFactor = pricingUtils.getScalingFactor(openVolumeRatio.doubleValue());
-        List<DistributionStep> askDistribution = pricingUtils.getAskDistribution(scalingFactor,
-                bidPoolSize.doubleValue(), askPoolSize.doubleValue(),
+        List<DistributionStep> askDistribution = pricingUtils.getAskDistribution(
+                exposure.doubleValue() < 0 ? scalingFactor : 1.0, bidPoolSize.doubleValue(), askPoolSize.doubleValue(),
                 config.getAskQuoteRange(), config.getOrderCount());
-        List<DistributionStep> bidDistribution = pricingUtils.getBidDistribution(scalingFactor,
-                bidPoolSize.doubleValue(), askPoolSize.doubleValue(),
+        List<DistributionStep> bidDistribution = pricingUtils.getBidDistribution(
+                exposure.doubleValue() > 0 ? scalingFactor : 1.0, bidPoolSize.doubleValue(), askPoolSize.doubleValue(),
                 config.getBidQuoteRange(), config.getOrderCount());
         BigDecimal commitment = BigDecimal.valueOf((config.getAskQuoteRange() + config.getBidQuoteRange()) / 4)
                 .multiply(balance);
