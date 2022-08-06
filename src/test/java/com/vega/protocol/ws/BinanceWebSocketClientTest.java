@@ -4,10 +4,12 @@ import com.vega.protocol.store.ReferencePriceStore;
 import org.java_websocket.handshake.HandshakeImpl1Server;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.mockito.Mockito;
 
 import java.net.URI;
 
+@EnabledIfEnvironmentVariable(named = "INT_TESTING_ENABLED", matches = "true")
 public class BinanceWebSocketClientTest {
 
     private static final String SYMBOL = "BTCUSDT";
