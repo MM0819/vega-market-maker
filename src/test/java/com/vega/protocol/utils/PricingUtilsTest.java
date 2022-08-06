@@ -1,5 +1,7 @@
 package com.vega.protocol.utils;
 
+import com.vega.protocol.constant.ErrorCode;
+import com.vega.protocol.exception.TradingException;
 import com.vega.protocol.model.AppConfig;
 import com.vega.protocol.model.DistributionStep;
 import com.vega.protocol.store.AppConfigStore;
@@ -13,11 +15,13 @@ import java.util.Optional;
 
 public class PricingUtilsTest {
 
-    private final AppConfigStore appConfigStore = Mockito.mock(AppConfigStore.class);
-    private final PricingUtils pricingUtils = new PricingUtils(appConfigStore);
+    private AppConfigStore appConfigStore;
+    private PricingUtils pricingUtils;
 
     @BeforeEach
     public void setup() {
+        appConfigStore = Mockito.mock(AppConfigStore.class);
+        pricingUtils = new PricingUtils(appConfigStore);
         Mockito.when(appConfigStore.get()).thenReturn(Optional.of(new AppConfig().setPricingStepSize(0.1)));
     }
 
@@ -57,6 +61,28 @@ public class PricingUtilsTest {
     @Test
     public void testGetAskDistribution() {
         getAskDistribution(10, 10, 0.05, 1.0);
+    }
+
+    @Test
+    public void testGetBidDistributionMissingConfig() {
+        Mockito.when(appConfigStore.get()).thenReturn(Optional.empty());
+        try {
+            getBidDistribution(10, 10, 0.05, 1.0);
+            Assertions.fail();
+        } catch(TradingException e) {
+            Assertions.assertEquals(e.getMessage(), ErrorCode.APP_CONFIG_NOT_FOUND);
+        }
+    }
+
+    @Test
+    public void testGetAskDistributionMissingConfig() {
+        Mockito.when(appConfigStore.get()).thenReturn(Optional.empty());
+        try {
+            getAskDistribution(10, 10, 0.05, 1.0);
+            Assertions.fail();
+        } catch(TradingException e) {
+            Assertions.assertEquals(e.getMessage(), ErrorCode.APP_CONFIG_NOT_FOUND);
+        }
     }
 
     @Test

@@ -34,6 +34,7 @@ public class VegaWebSocketClient extends WebSocketClient {
                 side
                 type
                 size
+                remaining
                 status
                 market {
                     id

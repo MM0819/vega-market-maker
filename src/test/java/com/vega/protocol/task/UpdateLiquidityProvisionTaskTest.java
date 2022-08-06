@@ -76,6 +76,16 @@ public class UpdateLiquidityProvisionTaskTest {
     }
 
     @Test
+    public void testExecuteZeroBalance() {
+        Mockito.when(marketService.getById(MARKET_ID)).thenReturn(new Market().setSettlementAsset(USDT));
+        Mockito.when(accountService.getTotalBalance(USDT)).thenReturn(BigDecimal.ZERO);
+        Mockito.when(positionService.getExposure(MARKET_ID)).thenReturn(BigDecimal.ZERO);
+        updateLiquidityProvisionTask.execute();
+        Mockito.verify(vegaApiClient, Mockito.times(0))
+                .submitLiquidityProvision(Mockito.any(LiquidityProvision.class), Mockito.anyString());
+    }
+
+    @Test
     public void testExecuteLongPosition() {
         Mockito.when(marketService.getById(MARKET_ID)).thenReturn(new Market().setSettlementAsset(USDT));
         Mockito.when(accountService.getTotalBalance(USDT)).thenReturn(BigDecimal.valueOf(100000));

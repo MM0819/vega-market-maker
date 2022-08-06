@@ -56,11 +56,15 @@ public class UpdateQuotesTaskTest {
                 vegaApiClient, marketService, accountService, positionService, pricingUtils);
     }
 
-    private void execute(BigDecimal exposure) {
+    private void execute(
+            final BigDecimal exposure,
+            final BigDecimal balance,
+            final MarketTradingMode tradingMode
+    ) {
         Mockito.when(marketService.getById(MARKET_ID)).thenReturn(new Market()
                 .setSettlementAsset(USDT)
-                .setTradingMode(MarketTradingMode.CONTINUOUS));
-        Mockito.when(accountService.getTotalBalance(USDT)).thenReturn(BigDecimal.valueOf(100000));
+                .setTradingMode(tradingMode));
+        Mockito.when(accountService.getTotalBalance(USDT)).thenReturn(balance);
         Mockito.when(positionService.getExposure(MARKET_ID)).thenReturn(exposure);
         Mockito.when(appConfigStore.get()).thenReturn(Optional.of(getAppConfig()));
         Mockito.when(referencePriceStore.get()).thenReturn(Optional.of(
@@ -92,28 +96,37 @@ public class UpdateQuotesTaskTest {
                         new DistributionStep().setPrice(1d).setSize(1d)
                 ));
         updateQuotesTask.execute();
-        Mockito.verify(vegaApiClient, Mockito.times(5)).submitOrder(Mockito.any(Order.class), Mockito.anyString()); // TODO - fix assertion
+        int modifier = 1;
+        if(balance.doubleValue() == 0) {
+            modifier = 0;
+        }
+        Mockito.verify(vegaApiClient, Mockito.times(5 * modifier)).submitOrder(Mockito.any(Order.class), Mockito.anyString()); // TODO - fix assertion
         for(Order order : currentOrders.stream().filter(o -> o.getSide().equals(MarketSide.BUY)).toList()) {
-            Mockito.verify(vegaApiClient, Mockito.times(1)).cancelOrder(order.getId(), PARTY_ID);
+            Mockito.verify(vegaApiClient, Mockito.times(modifier)).cancelOrder(order.getId(), PARTY_ID);
         }
         for(Order order : currentOrders.stream().filter(o -> o.getSide().equals(MarketSide.SELL)).toList()) {
-            Mockito.verify(vegaApiClient, Mockito.times(1)).cancelOrder(order.getId(), PARTY_ID);
+            Mockito.verify(vegaApiClient, Mockito.times(modifier)).cancelOrder(order.getId(), PARTY_ID);
         }
     }
 
     @Test
     public void testExecute() {
-        execute(BigDecimal.ZERO);
+        execute(BigDecimal.ZERO, BigDecimal.valueOf(100000), MarketTradingMode.CONTINUOUS);
+    }
+
+    @Test
+    public void testExecuteZerBalance() {
+        execute(BigDecimal.ZERO, BigDecimal.ZERO, MarketTradingMode.CONTINUOUS);
     }
 
     @Test
     public void testExecuteLongPosition() {
-        execute(BigDecimal.valueOf(1000L));
+        execute(BigDecimal.valueOf(1000L), BigDecimal.valueOf(100000), MarketTradingMode.MONITORING_AUCTION);
     }
 
     @Test
     public void testExecuteShortPosition() {
-        execute(BigDecimal.valueOf(-1000L));
+        execute(BigDecimal.valueOf(-1000L), BigDecimal.valueOf(100000), MarketTradingMode.CONTINUOUS);
     }
 
     @Test

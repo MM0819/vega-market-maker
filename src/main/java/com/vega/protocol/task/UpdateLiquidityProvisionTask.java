@@ -66,6 +66,9 @@ public class UpdateLiquidityProvisionTask extends TradingTask {
     public void execute() {
         Market market = marketService.getById(marketId);
         BigDecimal balance = accountService.getTotalBalance(market.getSettlementAsset());
+        if(balance.doubleValue() == 0) {
+            return;
+        }
         BigDecimal exposure = positionService.getExposure(marketId);
         AppConfig config = appConfigStore.get()
                 .orElseThrow(() -> new TradingException(ErrorCode.APP_CONFIG_NOT_FOUND));
@@ -73,10 +76,7 @@ public class UpdateLiquidityProvisionTask extends TradingTask {
                 .orElseThrow(() -> new TradingException(ErrorCode.REFERENCE_PRICE_NOT_FOUND)).getMidPrice();
         BigDecimal bidPoolSize = balance.multiply(BigDecimal.valueOf(0.5));
         BigDecimal askPoolSize = bidPoolSize.divide(referencePrice, market.getDecimalPlaces(), RoundingMode.HALF_DOWN);
-        BigDecimal openVolumeRatio = BigDecimal.ZERO;
-        if(askPoolSize.doubleValue() > 0) {
-            openVolumeRatio = exposure.divide(askPoolSize, market.getDecimalPlaces(), RoundingMode.HALF_DOWN);
-        }
+        BigDecimal openVolumeRatio = exposure.divide(askPoolSize, market.getDecimalPlaces(), RoundingMode.HALF_DOWN);
         double scalingFactor = pricingUtils.getScalingFactor(openVolumeRatio.doubleValue());
         List<DistributionStep> askDistribution = pricingUtils.getAskDistribution(
                 exposure.doubleValue() < 0 ? scalingFactor : 1.0, bidPoolSize.doubleValue(), askPoolSize.doubleValue(),

@@ -8,6 +8,7 @@ import com.vega.protocol.response.ErrorResponse;
 import com.vega.protocol.service.AppConfigService;
 import com.vega.protocol.store.AppConfigStore;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -46,9 +47,13 @@ public class AppConfigControllerTest {
                 .setPricingStepSize(0.1);
     }
 
+    @BeforeEach
+    public void setup() {
+        store.update(getAppConfig());
+    }
+
     @Test
     public void testGetAppConfig() throws Exception {
-        store.update(getAppConfig());
         MvcResult result = mvc.perform(MockMvcRequestBuilders.get("/app-config"))
                 .andExpect(status().isOk())
                 .andReturn();
@@ -57,6 +62,17 @@ public class AppConfigControllerTest {
         Assertions.assertEquals(config, getAppConfig());
         Assertions.assertTrue(store.get().isPresent());
         Assertions.assertEquals(store.get().get(), config);
+    }
+
+    @Test
+    public void testGetAppConfigMissing() throws Exception {
+        store.update(null);
+        MvcResult result = mvc.perform(MockMvcRequestBuilders.get("/app-config"))
+                .andExpect(status().isInternalServerError())
+                .andReturn();
+        String body = result.getResponse().getContentAsString();
+        Assertions.assertEquals(body, mapper.writeValueAsString(new ErrorResponse()
+                .setError(ErrorCode.APP_CONFIG_NOT_FOUND)));
     }
 
     @Test
@@ -171,5 +187,19 @@ public class AppConfigControllerTest {
         String body = result.getResponse().getContentAsString();
         Assertions.assertEquals(body, mapper.writeValueAsString(new ErrorResponse()
                 .setError(ErrorCode.ASK_SIZE_FACTOR_MANDATORY)));
+    }
+
+    @Test
+    public void testUpdateAppConfigMissingPricingStepSize() throws Exception {
+        AppConfig config = getAppConfig()
+                .setPricingStepSize(null);
+        MvcResult result = mvc.perform(MockMvcRequestBuilders.put("/app-config")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(config)))
+                .andExpect(status().isInternalServerError())
+                .andReturn();
+        String body = result.getResponse().getContentAsString();
+        Assertions.assertEquals(body, mapper.writeValueAsString(new ErrorResponse()
+                .setError(ErrorCode.PRICING_STEP_SIZE_MANDATORY)));
     }
 }
