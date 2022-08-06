@@ -6,6 +6,8 @@ import com.vega.protocol.store.MarketStore;
 import com.vega.protocol.store.OrderStore;
 import org.apache.commons.io.IOUtils;
 import org.java_websocket.handshake.HandshakeImpl1Server;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -73,6 +75,14 @@ public class VegaWebSocketClientTest {
         } catch (Exception e) {
             Assertions.fail();
         }
+    }
+
+    @Test
+    public void testHandleUnsupportedMessage() throws JSONException {
+        vegaWebSocketClient.onMessage(new JSONObject()
+                .put("id", "error")
+                .put("payload", new JSONObject().put("data", new JSONObject()))
+                .toString());
     }
 
     @Test

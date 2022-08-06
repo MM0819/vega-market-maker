@@ -18,6 +18,8 @@ public class WebSocketInitializerTest {
     private final OrderStore orderStore = Mockito.mock(OrderStore.class);
     private static final String PARTY_ID = "1";
 
+    // TODO - workout how to speed up this test
+
     private WebSocketInitializer getWebSocketInitializer(boolean enabled, ReferencePriceSource source) {
         return new WebSocketInitializer(
                 "wss://lb.testnet.vega.xyz/query",

@@ -137,34 +137,36 @@ public class VegaWebSocketClient extends WebSocketClient {
                     handleMarkets(data.getJSONArray("marketsData"));
                 } else if(id.equals("orders")) {
                     handleOrders(data.getJSONArray("orders"));
-                } else if(id.equals("positions")) {
+                } else {
+                    log.warn("Unsupported message");
+                } /*else if(id.equals("positions")) {
                     handlePositions(data.getJSONArray("positions"));
                 } else if(id.equals("liquidityProvision")) {
                     handleLiquidityProvision(data.getJSONArray("liquidityProvision"));
-                }
+                }*/
             }
         } catch(Exception e) {
             log.error(e.getMessage(), e);
         }
     }
 
-    /**
-     * Handle JSON array of positions
-     *
-     * @param positionsArray {@link JSONArray}
-     */
-    private void handlePositions(JSONArray positionsArray) {
-        // TODO - handle positions
-    }
-
-    /**
-     * Handle JSON array of LP orders
-     *
-     * @param liquidityProvisionArray {@link JSONArray}
-     */
-    private void handleLiquidityProvision(JSONArray liquidityProvisionArray) {
-        // TODO - handle liquidity provision
-    }
+//    /**
+//     * Handle JSON array of positions
+//     *
+//     * @param positionsArray {@link JSONArray}
+//     */
+//    private void handlePositions(JSONArray positionsArray) {
+//        // TODO - handle positions
+//    }
+//
+//    /**
+//     * Handle JSON array of LP orders
+//     *
+//     * @param liquidityProvisionArray {@link JSONArray}
+//     */
+//    private void handleLiquidityProvision(JSONArray liquidityProvisionArray) {
+//        // TODO - handle liquidity provision
+//    }
 
     /**
      * Handle JSON array of orders

@@ -1,0 +1,136 @@
+{
+  "markets": [
+    {
+      "id": "5e6035fe6a6df78c9ec44b333c231e63d357acef0a0620d2c243f5865d1dc0d8",
+      "tradableInstrument": {
+        "instrument": {
+          "id": "",
+          "code": "AAVEDAI.MF21",
+          "name": "AAVEDAI Monthly (30 Jun 2022)",
+          "metadata": {
+            "tags": [
+              "formerly:2839D9B2329C9E70",
+              "base:AAVE",
+              "quote:DAI",
+              "class:fx/crypto",
+              "monthly",
+              "sector:defi"
+            ]
+          },
+          "future": {
+            "settlementAsset": "6d9d35f657589e40ddfb448b7ad4a7463b66efb307527fedd2aa7df1bbd5ea61",
+            "quoteName": "DAI",
+            "oracleSpecForSettlementPrice": {
+              "id": "c2c8b417c58d071a9c6ea24a2cf756656f8497fa627d51542edb64c6a76aabc9",
+              "createdAt": "0",
+              "updatedAt": "0",
+              "pubKeys": [
+                "0x8873a1ecb80ba0ffd1e55acc0572df27381a9b65e0b6d6a9f095c92329eb29ea"
+              ],
+              "filters": [
+                {
+                  "key": {
+                    "name": "prices.AAVE.value",
+                    "type": "TYPE_INTEGER"
+                  },
+                  "conditions": [
+                    {
+                      "operator": "OPERATOR_EQUALS",
+                      "value": "1"
+                    }
+                  ]
+                }
+              ],
+              "status": "STATUS_UNSPECIFIED"
+            },
+            "oracleSpecForTradingTermination": {
+              "id": "52f7365bb153e81f24acf0f538caf19999ea8caef5309639108febeae09822ab",
+              "createdAt": "0",
+              "updatedAt": "0",
+              "pubKeys": [
+                "0x8873a1ecb80ba0ffd1e55acc0572df27381a9b65e0b6d6a9f095c92329eb29ea"
+              ],
+              "filters": [
+                {
+                  "key": {
+                    "name": "termination.AAVE.value",
+                    "type": "TYPE_BOOLEAN"
+                  },
+                  "conditions": [
+                    {
+                      "operator": "OPERATOR_EQUALS",
+                      "value": "1"
+                    }
+                  ]
+                }
+              ],
+              "status": "STATUS_UNSPECIFIED"
+            },
+            "oracleSpecBinding": {
+              "settlementPriceProperty": "prices.AAVE.value",
+              "tradingTerminationProperty": "termination.AAVE.value"
+            },
+            "settlementPriceDecimals": 0
+          }
+        },
+        "marginCalculator": {
+          "scalingFactors": {
+            "searchLevel": 1.1,
+            "initialMargin": 2.5,
+            "collateralRelease": 2.7
+          }
+        },
+        "logNormalRiskModel": {
+          "riskAversionParameter": 0.01,
+          "tau": 0.0001140771161,
+          "params": {
+            "mu": 0,
+            "r": 0.016,
+            "sigma": 0.5
+          }
+        }
+      },
+      "decimalPlaces": "5",
+      "fees": {
+        "factors": {
+          "makerFee": "0.0002",
+          "infrastructureFee": "0.0005",
+          "liquidityFee": "0.01"
+        }
+      },
+      "openingAuction": {
+        "duration": "204",
+        "volume": "0"
+      },
+      "priceMonitoringSettings": {
+        "parameters": {
+          "triggers": [
+            {
+              "horizon": "43200",
+              "probability": "0.9999999",
+              "auctionExtension": "600"
+            }
+          ]
+        },
+        "updateFrequency": "0"
+      },
+      "liquidityMonitoringParameters": {
+        "targetStakeParameters": {
+          "timeWindow": "3600",
+          "scalingFactor": 10
+        },
+        "triggeringRatio": 0,
+        "auctionExtension": "1"
+      },
+      "tradingMode": "TRADING_MODE_CONTINUOUS",
+      "state": "STATE_ACTIVE",
+      "marketTimestamps": {
+        "proposed": "1658937989868324416",
+        "pending": "1658938065631665615",
+        "open": "1658938838041114911",
+        "close": "0"
+      },
+      "positionDecimalPlaces": "0"
+    }
+  ]
+}
