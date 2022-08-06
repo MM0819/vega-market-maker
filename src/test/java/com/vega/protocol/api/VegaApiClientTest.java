@@ -41,8 +41,6 @@ public class VegaApiClientTest {
             WALLET_URL, WALLET_USER, WALLET_PASSWORD, NODE_URL, MARKET_ID, marketStore
     );
 
-    // TODO - we should be mocking Unirest so that these tests are fast (and so we can also test the recursion)
-
     private Order newOrder() {
         return new Order()
                 .setSide(MarketSide.BUY)

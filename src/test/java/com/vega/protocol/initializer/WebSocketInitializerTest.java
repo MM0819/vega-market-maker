@@ -7,7 +7,6 @@ import com.vega.protocol.store.ReferencePriceStore;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.mockito.Mockito;
 
 public class WebSocketInitializerTest {
@@ -17,8 +16,6 @@ public class WebSocketInitializerTest {
     private final MarketStore marketStore = Mockito.mock(MarketStore.class);
     private final OrderStore orderStore = Mockito.mock(OrderStore.class);
     private static final String PARTY_ID = "1";
-
-    // TODO - workout how to speed up this test
 
     private WebSocketInitializer getWebSocketInitializer(boolean enabled, ReferencePriceSource source) {
         return new WebSocketInitializer(
