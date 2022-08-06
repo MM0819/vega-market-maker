@@ -7,8 +7,10 @@ import com.vega.protocol.store.ReferencePriceStore;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.mockito.Mockito;
 
+@EnabledIfEnvironmentVariable(named = "INT_TESTING_ENABLED", matches = "true")
 public class WebSocketInitializerTest {
 
     private WebSocketInitializer webSocketInitializer;
