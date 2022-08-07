@@ -15,6 +15,7 @@ public class DataInitializer {
     private final AppConfigStore appConfigStore;
     private final AccountStore accountStore;
     private final LiquidityCommitmentStore liquidityCommitmentStore;
+    private final AssetStore assetStore;
     private final VegaApiClient vegaApiClient;
     private final String partyId;
     private final String marketId;
@@ -33,6 +34,7 @@ public class DataInitializer {
                            AppConfigStore appConfigStore,
                            AccountStore accountStore,
                            LiquidityCommitmentStore liquidityCommitmentStore,
+                           AssetStore assetStore,
                            VegaApiClient vegaApiClient,
                            @Value("${vega.party.id}") String partyId,
                            @Value("${vega.market.id}") String marketId,
@@ -50,6 +52,7 @@ public class DataInitializer {
         this.appConfigStore = appConfigStore;
         this.accountStore = accountStore;
         this.liquidityCommitmentStore = liquidityCommitmentStore;
+        this.assetStore = assetStore;
         this.vegaApiClient = vegaApiClient;
         this.partyId = partyId;
         this.marketId = marketId;
@@ -77,7 +80,7 @@ public class DataInitializer {
                 .setAskQuoteRange(askQuoteRange)
                 .setPricingStepSize(pricingStepSize);
         appConfigStore.update(config);
-        // TODO - get assets
+        vegaApiClient.getAssets().forEach(assetStore::add);
         vegaApiClient.getMarkets().forEach(marketStore::add);
         vegaApiClient.getAccounts(partyId).forEach(accountStore::add);
         vegaApiClient.getPositions(partyId).forEach(positionStore::add);

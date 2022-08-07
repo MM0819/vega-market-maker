@@ -7,6 +7,7 @@ import com.vega.protocol.constant.*;
 import com.vega.protocol.exception.TradingException;
 import com.vega.protocol.model.*;
 import com.vega.protocol.service.OrderService;
+import com.vega.protocol.store.AssetStore;
 import com.vega.protocol.store.MarketStore;
 import com.vega.protocol.utils.DecimalUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +30,7 @@ public class VegaApiClient {
     private final String nodeUrl;
     private final String marketId;
     private final MarketStore marketStore;
+    private final AssetStore assetStore;
     private final DecimalUtils decimalUtils;
     private final OrderService orderService;
 
@@ -38,6 +40,7 @@ public class VegaApiClient {
                          @Value("${vega.node.url}") String nodeUrl,
                          @Value("${vega.market.id}") String marketId,
                          MarketStore marketStore,
+                         AssetStore assetStore,
                          DecimalUtils decimalUtils,
                          OrderService orderService) {
         this.walletUrl = walletUrl;
@@ -46,6 +49,7 @@ public class VegaApiClient {
         this.nodeUrl = nodeUrl;
         this.marketId = marketId;
         this.marketStore = marketStore;
+        this.assetStore = assetStore;
         this.decimalUtils = decimalUtils;
         this.orderService = orderService;
     }
@@ -102,38 +106,47 @@ public class VegaApiClient {
     }
 
     /**
-     * Get asset by ID
+     * Get assets
      *
-     * @param id the asset ID
-     *
-     * @return {@link Optional<Asset>}
+     * @return {@link List<Asset>}
      */
-    public Optional<Asset> getAsset(
-            final String id
-    ) {
-        try {
-            HttpResponse<JsonNode> response = Unirest.get(String.format("%s/assets/%s", nodeUrl, id))
-                    .asJson();
-            JSONObject assetObject = response.getBody().getObject().getJSONObject("asset");
-            String symbol = assetObject.getJSONObject("details").getString("symbol");
-            int quantum = assetObject.getJSONObject("details").getInt("quantum");
-            int decimalPlaces = assetObject.getJSONObject("details").getInt("decimals");
-            String name = assetObject.getJSONObject("details").getString("name");
-            AssetStatus status = AssetStatus.valueOf(assetObject.getString("status")
-                    .replace("STATUS_", ""));
-            Asset asset = new Asset()
-                    .setSymbol(symbol)
-                    .setQuantum(quantum)
-                    .setDecimalPlaces(decimalPlaces)
-                    .setName(name)
-                    .setId(id)
-                    .setStatus(status);
-            return Optional.of(asset);
-        } catch(Exception e) {
-            log.error(e.getMessage(), e);
-        }
-        return Optional.empty();
+    public List<Asset> getAssets() {
+        return Collections.emptyList();
     }
+
+//    /**
+//     * Get asset by ID
+//     *
+//     * @param id the asset ID
+//     *
+//     * @return {@link Optional<Asset>}
+//     */
+//    public Optional<Asset> getAsset(
+//            final String id
+//    ) {
+//        try {
+//            HttpResponse<JsonNode> response = Unirest.get(String.format("%s/assets/%s", nodeUrl, id))
+//                    .asJson();
+//            JSONObject assetObject = response.getBody().getObject().getJSONObject("asset");
+//            String symbol = assetObject.getJSONObject("details").getString("symbol");
+//            int quantum = assetObject.getJSONObject("details").getInt("quantum");
+//            int decimalPlaces = assetObject.getJSONObject("details").getInt("decimals");
+//            String name = assetObject.getJSONObject("details").getString("name");
+//            AssetStatus status = AssetStatus.valueOf(assetObject.getString("status")
+//                    .replace("STATUS_", ""));
+//            Asset asset = new Asset()
+//                    .setSymbol(symbol)
+//                    .setQuantum(quantum)
+//                    .setDecimalPlaces(decimalPlaces)
+//                    .setName(name)
+//                    .setId(id)
+//                    .setStatus(status);
+//            return Optional.of(asset);
+//        } catch(Exception e) {
+//            log.error(e.getMessage(), e);
+//        }
+//        return Optional.empty();
+//    }
 
     /**
      * Get accounts
@@ -150,21 +163,17 @@ public class VegaApiClient {
                     .asJson();
             List<Account> accounts = new ArrayList<>();
             JSONArray accountsArray = response.getBody().getObject().getJSONArray("accounts");
-            Map<String, Asset> assetsById = new HashMap<>();
             for(int i=0; i<accountsArray.length(); i++) {
                 JSONObject accountObject = accountsArray.getJSONObject(i);
                 String assetId = accountObject.getString("asset");
-                Asset asset = assetsById.get(assetId);
-                if(asset == null) {
-                    asset = getAsset(assetId).orElseThrow(() -> new TradingException(ErrorCode.ASSET_NOT_FOUND));
-                    assetsById.put(assetId, asset);
-                }
+                Asset asset = assetStore.getById(assetId)
+                        .orElseThrow(() -> new TradingException(ErrorCode.ASSET_NOT_FOUND));
                 String marketId = accountObject.getString("marketId");
                 BigDecimal balance = BigDecimal.valueOf(accountObject.getDouble("balance"));
                 AccountType type = AccountType.valueOf(accountObject.getString("type")
                         .replace("ACCOUNT_TYPE_", ""));
                 String id = String.format("%s-%s-%s", asset, partyId, type);
-                if(!StringUtils.isBlank(marketId) && !marketId.equals("!")) {
+                if(!marketId.equals("!")) {
                     id = String.format("%s-%s", id, marketId);
                 }
                 Account account = new Account()

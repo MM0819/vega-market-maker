@@ -26,10 +26,6 @@ import java.util.Set;
 @Slf4j
 public class VegaWebSocketClient extends WebSocketClient {
 
-    // TODO - subscribe to asset updates
-    private static final String ASSETS_QUERY = """
-    """;
-
     private static final String ACCOUNTS_QUERY = """
         subscription {
             accounts(partyId: "PARTY_ID") {

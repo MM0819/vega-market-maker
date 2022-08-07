@@ -19,6 +19,7 @@ public class DataInitializerTest {
     private AppConfigStore appConfigStore;
     private AccountStore accountStore;
     private LiquidityCommitmentStore liquidityCommitmentStore;
+    private AssetStore assetStore;
     private VegaApiClient vegaApiClient;
     private final String PARTY_ID = "1";
     private final String MARKET_ID = "1";
@@ -40,9 +41,10 @@ public class DataInitializerTest {
         accountStore = Mockito.mock(AccountStore.class);
         vegaApiClient = Mockito.mock(VegaApiClient.class);
         liquidityCommitmentStore = Mockito.mock(LiquidityCommitmentStore.class);
+        assetStore = Mockito.mock(AssetStore.class);
         dataInitializer = new DataInitializer(orderStore, marketStore, positionStore, appConfigStore, accountStore,
-                liquidityCommitmentStore, vegaApiClient, PARTY_ID, MARKET_ID, FEE, SPREAD, ORDER_COUNT, BID_SIZE_FACTOR,
-                ASK_SIZE_FACTOR, BID_QUOTE_RANGE, ASK_QUOTE_RANGE, PRICING_SIZE_STEP);
+                liquidityCommitmentStore, assetStore, vegaApiClient, PARTY_ID, MARKET_ID, FEE, SPREAD, ORDER_COUNT,
+                BID_SIZE_FACTOR, ASK_SIZE_FACTOR, BID_QUOTE_RANGE, ASK_QUOTE_RANGE, PRICING_SIZE_STEP);
     }
 
     @Test

@@ -1,0 +1,28 @@
+{
+  "accounts": [
+    {
+      "id": "",
+      "owner": "6817f2b4d9464716c6756d2827d893872b1d33839e211c27a650629e428dc35c",
+      "balance": "999788538",
+      "asset": "6d9d35f657589e40ddfb448b7ad4a7463b66efb307527fedd2aa7df1bbd5ea61",
+      "marketId": "!",
+      "type": "ACCOUNT_TYPE_GENERAL"
+    },
+    {
+      "id": "",
+      "owner": "6817f2b4d9464716c6756d2827d893872b1d33839e211c27a650629e428dc35c",
+      "balance": "0",
+      "asset": "6d9d35f657589e40ddfb448b7ad4a7463b66efb307527fedd2aa7df1bbd5ea61",
+      "marketId": "10c4b1114d2f6fda239b73d018bca55888b6018f0ac70029972a17fea0a6a56e",
+      "type": "ACCOUNT_TYPE_MARGIN"
+    },
+    {
+      "id": "",
+      "owner": "6817f2b4d9464716c6756d2827d893872b1d33839e211c27a650629e428dc35c",
+      "balance": "0",
+      "asset": "6d9d35f657589e40ddfb448b7ad4a7463b66efb307527fedd2aa7df1bbd5ea61",
+      "marketId": "5e6035fe6a6df78c9ec44b333c231e63d357acef0a0620d2c243f5865d1dc0d8",
+      "type": "ACCOUNT_TYPE_MARGIN"
+    }
+  ]
+}
