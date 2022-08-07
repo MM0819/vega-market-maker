@@ -8,6 +8,7 @@ import com.mashape.unirest.request.HttpRequestWithBody;
 import com.mashape.unirest.request.body.RequestBodyEntity;
 import com.vega.protocol.constant.MarketSide;
 import com.vega.protocol.constant.OrderType;
+import com.vega.protocol.constant.TimeInForce;
 import com.vega.protocol.model.LiquidityProvision;
 import com.vega.protocol.model.Market;
 import com.vega.protocol.model.Order;
@@ -51,6 +52,7 @@ public class VegaApiClientTest {
                 .setPositionDecimalPlaces(3);
         return new Order()
                 .setMarket(market)
+                .setTimeInForce(TimeInForce.GTC)
                 .setSide(MarketSide.BUY)
                 .setSize(BigDecimal.ONE)
                 .setPrice(BigDecimal.ONE)
