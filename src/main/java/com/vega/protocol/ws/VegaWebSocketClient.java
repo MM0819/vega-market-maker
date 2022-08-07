@@ -28,6 +28,10 @@ import java.util.Collections;
 @Slf4j
 public class VegaWebSocketClient extends WebSocketClient {
 
+    // TODO - subscribe to asset updates
+    private static final String ASSETS_QUERY = """
+    """;
+
     private static final String ACCOUNTS_QUERY = """
         subscription {
             accounts(partyId: "PARTY_ID") {
@@ -68,7 +72,7 @@ public class VegaWebSocketClient extends WebSocketClient {
                 market {
                     id
                 }
-                liquidityCommitment {
+                liquidityProvision {
                     commitmentAmount
                     fee
                     sells {
@@ -361,8 +365,12 @@ public class VegaWebSocketClient extends WebSocketClient {
                 int decimalPlaces = marketObject.getInt("decimalPlaces");
                 MarketState state = MarketState.valueOf(marketObject.getString("state")
                         .replaceAll("([a-z])([A-Z])", "$1_$2").toUpperCase());
+
+
                 MarketTradingMode tradingMode = MarketTradingMode.valueOf(marketObject.getString("tradingMode")
                         .replaceAll("([a-z])([A-Z])", "$1_$2").toUpperCase());
+
+
                 String quoteName = marketObject
                         .getJSONObject("tradableInstrument")
                         .getJSONObject("instrument")

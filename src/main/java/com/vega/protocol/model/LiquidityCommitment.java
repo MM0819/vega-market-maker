@@ -15,6 +15,7 @@ import java.util.List;
 public class LiquidityCommitment extends UniqueItem {
     private String id;
     private Market market;
+    private String partyId;
     private BigDecimal fee;
     private BigDecimal commitmentAmount;
     private List<LiquidityCommitmentOffset> bids = new ArrayList<>();

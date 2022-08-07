@@ -87,15 +87,16 @@ public class UpdateLiquidityCommitmentTask extends TradingTask {
                 config.getBidQuoteRange(), config.getOrderCount());
         BigDecimal commitmentAmount = BigDecimal.valueOf((config.getAskQuoteRange() + config.getBidQuoteRange()) / 4)
                 .multiply(balance);
+        // TODO - need to convert correctly to int format using decimalUtils
         List<LiquidityCommitmentOffset> liquidityCommitmentBids = bidDistribution.stream()
                 .map(d -> new LiquidityCommitmentOffset()
-                        .setOffset(referencePrice.subtract(BigDecimal.valueOf(d.getPrice())).longValue())
-                        .setPortion(d.getSize().longValue()))
+                        .setOffset(referencePrice.subtract(BigDecimal.valueOf(d.getPrice())))
+                        .setProportion(d.getSize().intValue()))
                 .collect(Collectors.toList());
         List<LiquidityCommitmentOffset> liquidityCommitmentAsks = askDistribution.stream()
                 .map(d -> new LiquidityCommitmentOffset()
-                        .setOffset(referencePrice.subtract(BigDecimal.valueOf(d.getPrice())).longValue())
-                        .setPortion(d.getSize().longValue()))
+                        .setOffset(referencePrice.subtract(BigDecimal.valueOf(d.getPrice())))
+                        .setProportion(d.getSize().intValue()))
                 .collect(Collectors.toList());
         LiquidityCommitment liquidityCommitment = new LiquidityCommitment()
                 .setCommitmentAmount(commitmentAmount)

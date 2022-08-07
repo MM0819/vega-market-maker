@@ -14,8 +14,10 @@ public class DataInitializer {
     private final PositionStore positionStore;
     private final AppConfigStore appConfigStore;
     private final AccountStore accountStore;
+    private final LiquidityCommitmentStore liquidityCommitmentStore;
     private final VegaApiClient vegaApiClient;
     private final String partyId;
+    private final String marketId;
     private final Double fee;
     private final Double spread;
     private final Integer orderCount;
@@ -30,8 +32,10 @@ public class DataInitializer {
                            PositionStore positionStore,
                            AppConfigStore appConfigStore,
                            AccountStore accountStore,
+                           LiquidityCommitmentStore liquidityCommitmentStore,
                            VegaApiClient vegaApiClient,
                            @Value("${vega.party.id}") String partyId,
+                           @Value("${vega.market.id}") String marketId,
                            @Value("${fee}") Double fee,
                            @Value("${spread}") Double spread,
                            @Value("${order.count}") Integer orderCount,
@@ -45,8 +49,10 @@ public class DataInitializer {
         this.positionStore = positionStore;
         this.appConfigStore = appConfigStore;
         this.accountStore = accountStore;
+        this.liquidityCommitmentStore = liquidityCommitmentStore;
         this.vegaApiClient = vegaApiClient;
         this.partyId = partyId;
+        this.marketId = marketId;
         this.fee = fee;
         this.spread = spread;
         this.orderCount = orderCount;
@@ -71,9 +77,11 @@ public class DataInitializer {
                 .setAskQuoteRange(askQuoteRange)
                 .setPricingStepSize(pricingStepSize);
         appConfigStore.update(config);
+        // TODO - get assets
         vegaApiClient.getMarkets().forEach(marketStore::add);
         vegaApiClient.getAccounts(partyId).forEach(accountStore::add);
         vegaApiClient.getPositions(partyId).forEach(positionStore::add);
         vegaApiClient.getOpenOrders(partyId).forEach(orderStore::add);
+        vegaApiClient.getLiquidityCommitment(partyId, marketId).ifPresent(liquidityCommitmentStore::update);
     }
 }

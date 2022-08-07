@@ -10,6 +10,7 @@ import com.vega.protocol.store.MarketStore;
 import com.vega.protocol.utils.DecimalUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.platform.commons.util.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
@@ -47,18 +48,80 @@ public class VegaApiClient {
     }
 
     /**
+     * Parse liquidity orders JSON
+     *
+     * @param ordersArray {@link JSONArray}
+     * @param decimalPlaces market decimal places
+     *
+     * @return {@link List<LiquidityCommitmentOffset>}
+     */
+    private List<LiquidityCommitmentOffset> parseLiquidityOrders(
+            final JSONArray ordersArray,
+            final int decimalPlaces
+    ) throws JSONException {
+        List<LiquidityCommitmentOffset> liquidityOrders = new ArrayList<>();
+        for(int i=0; i<ordersArray.length(); i++) {
+            JSONObject object = ordersArray.getJSONObject(i);
+            Integer proportion = object.getInt("proportion");
+            BigDecimal offset = BigDecimal.valueOf(object.getDouble("offset"));
+            PeggedReference reference = PeggedReference.valueOf(
+                    object.getString("reference").replace("PEGGED_REFERENCE_", ""));
+            LiquidityCommitmentOffset bid = new LiquidityCommitmentOffset()
+                    .setOffset(decimalUtils.convertToDecimals(decimalPlaces, offset))
+                    .setProportion(proportion)
+                    .setReference(reference);
+            liquidityOrders.add(bid);
+        }
+        return liquidityOrders;
+    }
+
+    /**
      * Get LP commitment for given party and market
      *
      * @param partyId the party ID
      * @param marketId the market ID
      *
-     * @return {@link Optional< LiquidityCommitment >}
+     * @return {@link Optional<LiquidityCommitment>}
      */
-    private Optional<LiquidityCommitment> getLiquidityCommitment(
+    public Optional<LiquidityCommitment> getLiquidityCommitment(
             final String partyId,
             final String marketId
     ) {
-        return Optional.empty(); // TODO - implement this
+        try {
+            HttpResponse<JsonNode> response = Unirest.get(
+                    String.format("%s/liquidity-provisions/party/%s/market/%s", nodeUrl, partyId, marketId))
+                    .asJson();
+            JSONArray liquidityProvisionsArray = response.getBody().getObject().getJSONArray("liquidityProvisions");
+            if(liquidityProvisionsArray.length() == 1) {
+                JSONObject liquidityProvisionObject = liquidityProvisionsArray.getJSONObject(0);
+                Market market = marketStore.getById(marketId)
+                        .orElseThrow(() -> new TradingException(ErrorCode.MARKET_NOT_FOUND));
+                BigDecimal commitmentAmount = BigDecimal.valueOf(
+                        liquidityProvisionObject.getDouble("commitmentAmount"));
+                LiquidityCommitmentStatus status = LiquidityCommitmentStatus.valueOf(
+                        liquidityProvisionObject.getString("status").replace("STATUS_", ""));
+                String id = liquidityProvisionObject.getString("id");
+                BigDecimal fee = BigDecimal.valueOf(liquidityProvisionObject.getDouble("fee"));
+                JSONArray sellsArray = liquidityProvisionObject.getJSONArray("sells");
+                JSONArray buysArray = liquidityProvisionObject.getJSONArray("buys");
+                List<LiquidityCommitmentOffset> bids = parseLiquidityOrders(buysArray, market.getDecimalPlaces());
+                List<LiquidityCommitmentOffset> asks = parseLiquidityOrders(sellsArray, market.getDecimalPlaces());
+                LiquidityCommitment liquidityCommitment = new LiquidityCommitment()
+                        .setCommitmentAmount(decimalUtils.convertToDecimals(
+                                market.getDecimalPlaces(), commitmentAmount))
+                        .setMarket(market)
+                        .setStatus(status)
+                        .setPartyId(partyId)
+                        .setBids(bids)
+                        .setAsks(asks)
+                        .setId(id)
+                        .setFee(fee);
+                return Optional.of(liquidityCommitment);
+            }
+        } catch(Exception e) {
+            log.error(e.getMessage(), e);
+        }
+        return Optional.empty();
     }
 
     /**
@@ -161,8 +224,13 @@ public class VegaApiClient {
                 int decimalPlaces = marketObject.getInt("decimalPlaces");
                 MarketState state = MarketState.valueOf(marketObject.getString("state")
                         .replace("STATE_", ""));
+
+
                 MarketTradingMode tradingMode = MarketTradingMode.valueOf(marketObject.getString("tradingMode")
                         .replace("TRADING_MODE_", ""));
+
+
+
                 Market market = new Market()
                         .setName(name)
                         .setSettlementAsset(settlementAsset)
