@@ -4,10 +4,7 @@ import com.vega.protocol.model.Account;
 import com.vega.protocol.model.Market;
 import com.vega.protocol.model.Order;
 import com.vega.protocol.model.Position;
-import com.vega.protocol.store.AccountStore;
-import com.vega.protocol.store.MarketStore;
-import com.vega.protocol.store.OrderStore;
-import com.vega.protocol.store.PositionStore;
+import com.vega.protocol.store.*;
 import com.vega.protocol.utils.DecimalUtils;
 import org.apache.commons.io.IOUtils;
 import org.java_websocket.handshake.HandshakeImpl1Server;
@@ -31,6 +28,7 @@ public class VegaWebSocketClientTest {
     private OrderStore orderStore;
     private PositionStore positionStore;
     private AccountStore accountStore;
+    private LiquidityCommitmentStore liquidityCommitmentStore;
     private DecimalUtils decimalUtils;
     private static final String PARTY_ID = "6817f2b4d9464716c6756d2827d893872b1d33839e211c27a650629e428dc35c";
     private static final String MARKET_ID = "c6233d79a53a81b9d9d889c5beb42baaa1e3eb412d19bfd854dfa35309ce4190";
@@ -42,8 +40,9 @@ public class VegaWebSocketClientTest {
         positionStore = Mockito.mock(PositionStore.class);
         accountStore = Mockito.mock(AccountStore.class);
         decimalUtils = Mockito.mock(DecimalUtils.class);
+        liquidityCommitmentStore = Mockito.mock(LiquidityCommitmentStore.class);
         vegaWebSocketClient = new VegaWebSocketClient(PARTY_ID, MARKET_ID, marketStore, orderStore, positionStore,
-                accountStore, decimalUtils, URI.create("wss://lb.testnet.vega.xyz/query"));
+                accountStore, liquidityCommitmentStore, decimalUtils, URI.create("wss://lb.testnet.vega.xyz/query"));
     }
 
     private void handleMarkets(int count) {

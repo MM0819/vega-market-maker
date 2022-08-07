@@ -2,14 +2,8 @@ package com.vega.protocol.ws;
 
 import com.vega.protocol.constant.*;
 import com.vega.protocol.exception.TradingException;
-import com.vega.protocol.model.Account;
-import com.vega.protocol.model.Market;
-import com.vega.protocol.model.Order;
-import com.vega.protocol.model.Position;
-import com.vega.protocol.store.AccountStore;
-import com.vega.protocol.store.MarketStore;
-import com.vega.protocol.store.OrderStore;
-import com.vega.protocol.store.PositionStore;
+import com.vega.protocol.model.*;
+import com.vega.protocol.store.*;
 import com.vega.protocol.utils.DecimalUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.java_websocket.client.WebSocketClient;
@@ -23,7 +17,7 @@ import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
 import java.net.URI;
-import java.util.Collections;
+import java.util.*;
 
 @Slf4j
 public class VegaWebSocketClient extends WebSocketClient {
@@ -73,6 +67,8 @@ public class VegaWebSocketClient extends WebSocketClient {
                     id
                 }
                 liquidityProvision {
+                    id
+                    status
                     commitmentAmount
                     fee
                     sells {
@@ -138,6 +134,7 @@ public class VegaWebSocketClient extends WebSocketClient {
     private final OrderStore orderStore;
     private final PositionStore positionStore;
     private final AccountStore accountStore;
+    private final LiquidityCommitmentStore liquidityCommitmentStore;
     private final String partyId;
     private final String marketId;
     private final DecimalUtils decimalUtils;
@@ -151,6 +148,7 @@ public class VegaWebSocketClient extends WebSocketClient {
      * @param orderStore {@link OrderStore}
      * @param positionStore {@link PositionStore}
      * @param accountStore {@link AccountStore}
+     * @param liquidityCommitmentStore {@link LiquidityCommitmentStore}
      * @param decimalUtils {@link DecimalUtils}
      * @param uri the websocket URI
      */
@@ -161,6 +159,7 @@ public class VegaWebSocketClient extends WebSocketClient {
             final OrderStore orderStore,
             final PositionStore positionStore,
             final AccountStore accountStore,
+            final LiquidityCommitmentStore liquidityCommitmentStore,
             final DecimalUtils decimalUtils,
             final URI uri
     ) {
@@ -170,6 +169,7 @@ public class VegaWebSocketClient extends WebSocketClient {
         this.orderStore = orderStore;
         this.positionStore = positionStore;
         this.accountStore = accountStore;
+        this.liquidityCommitmentStore = liquidityCommitmentStore;
         this.decimalUtils = decimalUtils;
         this.partyId = partyId;
         this.marketId = marketId;
@@ -319,6 +319,7 @@ public class VegaWebSocketClient extends WebSocketClient {
      */
     private void handleOrders(JSONObject data) throws JSONException {
         JSONArray ordersArray = getDataAsArray(data, "orders");
+        Set<String> liquidityProvisionIds = new HashSet<>();
         for(int i=0; i<ordersArray.length(); i++) {
             try {
                 JSONObject ordersObject = ordersArray.getJSONObject(i);
@@ -343,11 +344,77 @@ public class VegaWebSocketClient extends WebSocketClient {
                         .setMarket(market)
                         .setSide(side);
                 orderStore.update(order);
-                // TODO - LP commitment is also in this stream
+                JSONObject liquidityProvisionObject = ordersObject.optJSONObject("liquidityProvision");
+                handleLiquidityProvision(liquidityProvisionObject, liquidityProvisionIds, market);
             } catch(Exception e) {
                 log.error(e.getMessage(), e);
             }
         }
+    }
+
+    /**
+     * Handle JSON object for liquidition provision
+     *
+     * @param liquidityProvisionObject {@link JSONObject}
+     * @param liquidityProvisionIds used to prevent duplicate processing
+     * @param market {@link Market}
+     */
+    private void handleLiquidityProvision(
+            final JSONObject liquidityProvisionObject,
+            final Set<String> liquidityProvisionIds,
+            final Market market
+    ) throws JSONException {
+        String id = liquidityProvisionObject.getString("id");
+        if(!liquidityProvisionIds.contains(id)) {
+            BigDecimal commitmentAmount = BigDecimal.valueOf(liquidityProvisionObject.getDouble("commitmentAmount"));
+            BigDecimal fee = BigDecimal.valueOf(liquidityProvisionObject.getDouble("fee"));
+            LiquidityCommitmentStatus status = LiquidityCommitmentStatus.valueOf(liquidityProvisionObject
+                    .getString("status").replaceAll("([a-z])([A-Z])", "$1_$2").toUpperCase());
+            JSONArray buysArray = liquidityProvisionObject.getJSONArray("buys");
+            JSONArray sellsArray = liquidityProvisionObject.getJSONArray("sells");
+            List<LiquidityCommitmentOffset> bids = parseLiquidityOrders(buysArray, market.getDecimalPlaces());
+            List<LiquidityCommitmentOffset> asks = parseLiquidityOrders(sellsArray, market.getDecimalPlaces());
+            LiquidityCommitment liquidityCommitment = new LiquidityCommitment()
+                    .setCommitmentAmount(commitmentAmount)
+                    .setFee(fee)
+                    .setStatus(status)
+                    .setId(id)
+                    .setPartyId(partyId)
+                    .setMarket(market)
+                    .setBids(bids)
+                    .setAsks(asks);
+            liquidityCommitmentStore.update(liquidityCommitment);
+            liquidityProvisionIds.add(id);
+        }
+    }
+
+    /**
+     * Parse liquidity orders JSON
+     *
+     * @param ordersArray {@link JSONArray}
+     * @param decimalPlaces market decimal places
+     *
+     * @return {@link List<LiquidityCommitmentOffset>}
+     */
+    // TODO - merge this with code in VegaApiClient cause it's needlessly duplicated
+    private List<LiquidityCommitmentOffset> parseLiquidityOrders(
+            final JSONArray ordersArray,
+            final int decimalPlaces
+    ) throws JSONException {
+        List<LiquidityCommitmentOffset> liquidityOrders = new ArrayList<>();
+        for(int i=0; i<ordersArray.length(); i++) {
+            JSONObject object = ordersArray.getJSONObject(i);
+            Integer proportion = object.getInt("proportion");
+            BigDecimal offset = BigDecimal.valueOf(object.getDouble("offset"));
+            PeggedReference reference = PeggedReference.valueOf(object.getString("reference")
+                    .replaceAll("([a-z])([A-Z])", "$1_$2").toUpperCase());
+            LiquidityCommitmentOffset bid = new LiquidityCommitmentOffset()
+                    .setOffset(decimalUtils.convertToDecimals(decimalPlaces, offset))
+                    .setProportion(proportion)
+                    .setReference(reference);
+            liquidityOrders.add(bid);
+        }
+        return liquidityOrders;
     }
 
     /**
@@ -365,12 +432,8 @@ public class VegaWebSocketClient extends WebSocketClient {
                 int decimalPlaces = marketObject.getInt("decimalPlaces");
                 MarketState state = MarketState.valueOf(marketObject.getString("state")
                         .replaceAll("([a-z])([A-Z])", "$1_$2").toUpperCase());
-
-
                 MarketTradingMode tradingMode = MarketTradingMode.valueOf(marketObject.getString("tradingMode")
                         .replaceAll("([a-z])([A-Z])", "$1_$2").toUpperCase());
-
-
                 String quoteName = marketObject
                         .getJSONObject("tradableInstrument")
                         .getJSONObject("instrument")

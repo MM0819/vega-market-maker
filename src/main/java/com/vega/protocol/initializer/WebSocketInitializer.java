@@ -31,6 +31,7 @@ public class WebSocketInitializer {
     private final OrderStore orderStore;
     private final PositionStore positionStore;
     private final AccountStore accountStore;
+    private final LiquidityCommitmentStore liquidityCommitmentStore;
     private final DecimalUtils decimalUtils;
     private final String partyId;
     private final String marketId;
@@ -50,6 +51,7 @@ public class WebSocketInitializer {
                                 OrderStore orderStore,
                                 PositionStore positionStore,
                                 AccountStore accountStore,
+                                LiquidityCommitmentStore liquidityCommitmentStore,
                                 DecimalUtils decimalUtils) {
         this.vegaWsUrl = vegaWsUrl;
         this.binanceWsUrl = binanceWsUrl;
@@ -64,6 +66,7 @@ public class WebSocketInitializer {
         this.orderStore = orderStore;
         this.positionStore = positionStore;
         this.accountStore = accountStore;
+        this.liquidityCommitmentStore = liquidityCommitmentStore;
         this.decimalUtils = decimalUtils;
         this.partyId = partyId;
         this.marketId = marketId;
@@ -94,7 +97,7 @@ public class WebSocketInitializer {
     private void initializeVega() {
         log.info("Connecting to Vega Web Socket...");
         vegaWebSocketClient = new VegaWebSocketClient(partyId, marketId, marketStore, orderStore, positionStore,
-                accountStore, decimalUtils, URI.create(vegaWsUrl));
+                accountStore, liquidityCommitmentStore, decimalUtils, URI.create(vegaWsUrl));
         vegaWebSocketClient.connect();
         log.info("Connected to {}", vegaWebSocketClient.getURI().toString());
         vegaWebSocketsInitialized = true;

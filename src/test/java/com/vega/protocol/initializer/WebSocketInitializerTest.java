@@ -16,6 +16,7 @@ public class WebSocketInitializerTest {
     private final OrderStore orderStore = Mockito.mock(OrderStore.class);
     private final PositionStore positionStore = Mockito.mock(PositionStore.class);
     private final AccountStore accountStore = Mockito.mock(AccountStore.class);
+    private final LiquidityCommitmentStore liquidityCommitmentStore = Mockito.mock(LiquidityCommitmentStore.class);
     private final DecimalUtils decimalUtils = Mockito.mock(DecimalUtils.class);
     private static final String PARTY_ID = "1";
     private static final String MARKET_ID = "1";
@@ -26,7 +27,8 @@ public class WebSocketInitializerTest {
                 "wss://stream.binance.com:9443/stream",
                 "wss://socket.polygon.io/stocks",
                 enabled, enabled, enabled, "BTCUSDT", source, PARTY_ID, MARKET_ID,
-                referencePriceStore, marketStore, orderStore, positionStore, accountStore, decimalUtils
+                referencePriceStore, marketStore, orderStore, positionStore, accountStore,
+                liquidityCommitmentStore, decimalUtils
         );
     }
 

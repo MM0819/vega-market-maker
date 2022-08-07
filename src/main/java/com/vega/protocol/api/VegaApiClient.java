@@ -224,13 +224,8 @@ public class VegaApiClient {
                 int decimalPlaces = marketObject.getInt("decimalPlaces");
                 MarketState state = MarketState.valueOf(marketObject.getString("state")
                         .replace("STATE_", ""));
-
-
                 MarketTradingMode tradingMode = MarketTradingMode.valueOf(marketObject.getString("tradingMode")
                         .replace("TRADING_MODE_", ""));
-
-
-
                 Market market = new Market()
                         .setName(name)
                         .setSettlementAsset(settlementAsset)
