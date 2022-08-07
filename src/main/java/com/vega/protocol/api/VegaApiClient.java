@@ -6,11 +6,11 @@ import com.mashape.unirest.http.Unirest;
 import com.vega.protocol.constant.*;
 import com.vega.protocol.exception.TradingException;
 import com.vega.protocol.model.*;
+import com.vega.protocol.service.OrderService;
 import com.vega.protocol.store.MarketStore;
 import com.vega.protocol.utils.DecimalUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.platform.commons.util.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
@@ -30,6 +30,7 @@ public class VegaApiClient {
     private final String marketId;
     private final MarketStore marketStore;
     private final DecimalUtils decimalUtils;
+    private final OrderService orderService;
 
     public VegaApiClient(@Value("${vega.wallet.url}") String walletUrl,
                          @Value("${vega.wallet.user}") String walletUser,
@@ -37,7 +38,8 @@ public class VegaApiClient {
                          @Value("${vega.node.url}") String nodeUrl,
                          @Value("${vega.market.id}") String marketId,
                          MarketStore marketStore,
-                         DecimalUtils decimalUtils) {
+                         DecimalUtils decimalUtils,
+                         OrderService orderService) {
         this.walletUrl = walletUrl;
         this.walletUser = walletUser;
         this.walletPassword = walletPassword;
@@ -45,34 +47,7 @@ public class VegaApiClient {
         this.marketId = marketId;
         this.marketStore = marketStore;
         this.decimalUtils = decimalUtils;
-    }
-
-    /**
-     * Parse liquidity orders JSON
-     *
-     * @param ordersArray {@link JSONArray}
-     * @param decimalPlaces market decimal places
-     *
-     * @return {@link List<LiquidityCommitmentOffset>}
-     */
-    private List<LiquidityCommitmentOffset> parseLiquidityOrders(
-            final JSONArray ordersArray,
-            final int decimalPlaces
-    ) throws JSONException {
-        List<LiquidityCommitmentOffset> liquidityOrders = new ArrayList<>();
-        for(int i=0; i<ordersArray.length(); i++) {
-            JSONObject object = ordersArray.getJSONObject(i);
-            Integer proportion = object.getInt("proportion");
-            BigDecimal offset = BigDecimal.valueOf(object.getDouble("offset"));
-            PeggedReference reference = PeggedReference.valueOf(
-                    object.getString("reference").replace("PEGGED_REFERENCE_", ""));
-            LiquidityCommitmentOffset bid = new LiquidityCommitmentOffset()
-                    .setOffset(decimalUtils.convertToDecimals(decimalPlaces, offset))
-                    .setProportion(proportion)
-                    .setReference(reference);
-            liquidityOrders.add(bid);
-        }
-        return liquidityOrders;
+        this.orderService = orderService;
     }
 
     /**
@@ -104,8 +79,10 @@ public class VegaApiClient {
                 BigDecimal fee = BigDecimal.valueOf(liquidityProvisionObject.getDouble("fee"));
                 JSONArray sellsArray = liquidityProvisionObject.getJSONArray("sells");
                 JSONArray buysArray = liquidityProvisionObject.getJSONArray("buys");
-                List<LiquidityCommitmentOffset> bids = parseLiquidityOrders(buysArray, market.getDecimalPlaces());
-                List<LiquidityCommitmentOffset> asks = parseLiquidityOrders(sellsArray, market.getDecimalPlaces());
+                List<LiquidityCommitmentOffset> bids = orderService.parseLiquidityOrders(
+                        buysArray, market.getDecimalPlaces(), false);
+                List<LiquidityCommitmentOffset> asks = orderService.parseLiquidityOrders(
+                        sellsArray, market.getDecimalPlaces(), false);
                 LiquidityCommitment liquidityCommitment = new LiquidityCommitment()
                         .setCommitmentAmount(decimalUtils.convertToDecimals(
                                 market.getDecimalPlaces(), commitmentAmount))

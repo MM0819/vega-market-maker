@@ -1,9 +1,7 @@
 package com.vega.protocol.ws;
 
-import com.vega.protocol.model.Account;
-import com.vega.protocol.model.Market;
-import com.vega.protocol.model.Order;
-import com.vega.protocol.model.Position;
+import com.vega.protocol.model.*;
+import com.vega.protocol.service.OrderService;
 import com.vega.protocol.store.*;
 import com.vega.protocol.utils.DecimalUtils;
 import org.apache.commons.io.IOUtils;
@@ -30,6 +28,7 @@ public class VegaWebSocketClientTest {
     private AccountStore accountStore;
     private LiquidityCommitmentStore liquidityCommitmentStore;
     private DecimalUtils decimalUtils;
+    private OrderService orderService;
     private static final String PARTY_ID = "6817f2b4d9464716c6756d2827d893872b1d33839e211c27a650629e428dc35c";
     private static final String MARKET_ID = "c6233d79a53a81b9d9d889c5beb42baaa1e3eb412d19bfd854dfa35309ce4190";
 
@@ -40,9 +39,11 @@ public class VegaWebSocketClientTest {
         positionStore = Mockito.mock(PositionStore.class);
         accountStore = Mockito.mock(AccountStore.class);
         decimalUtils = Mockito.mock(DecimalUtils.class);
+        orderService = Mockito.mock(OrderService.class);
         liquidityCommitmentStore = Mockito.mock(LiquidityCommitmentStore.class);
         vegaWebSocketClient = new VegaWebSocketClient(PARTY_ID, MARKET_ID, marketStore, orderStore, positionStore,
-                accountStore, liquidityCommitmentStore, decimalUtils, URI.create("wss://lb.testnet.vega.xyz/query"));
+                accountStore, liquidityCommitmentStore, decimalUtils, orderService,
+                URI.create("wss://lb.testnet.vega.xyz/query"));
     }
 
     private void handleMarkets(int count) {
@@ -115,7 +116,9 @@ public class VegaWebSocketClientTest {
         try(InputStream is = getClass().getClassLoader().getResourceAsStream("vega-orders-ws.json")) {
             String marketsJson = IOUtils.toString(Objects.requireNonNull(is), StandardCharsets.UTF_8);
             vegaWebSocketClient.onMessage(marketsJson);
-            Mockito.verify(orderStore, Mockito.times(1)).update(Mockito.any(Order.class));
+            Mockito.verify(orderStore, Mockito.times(2)).update(Mockito.any(Order.class));
+            Mockito.verify(liquidityCommitmentStore, Mockito.times(1))
+                    .update(Mockito.any(LiquidityCommitment.class));
         } catch (Exception e) {
             Assertions.fail();
         }

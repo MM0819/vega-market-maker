@@ -3,6 +3,7 @@ package com.vega.protocol.ws;
 import com.vega.protocol.constant.*;
 import com.vega.protocol.exception.TradingException;
 import com.vega.protocol.model.*;
+import com.vega.protocol.service.OrderService;
 import com.vega.protocol.store.*;
 import com.vega.protocol.utils.DecimalUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -17,7 +18,10 @@ import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
 import java.net.URI;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 @Slf4j
 public class VegaWebSocketClient extends WebSocketClient {
@@ -138,6 +142,7 @@ public class VegaWebSocketClient extends WebSocketClient {
     private final String partyId;
     private final String marketId;
     private final DecimalUtils decimalUtils;
+    private final OrderService orderService;
 
     /**
      * Create a websocket client for Vega
@@ -150,6 +155,7 @@ public class VegaWebSocketClient extends WebSocketClient {
      * @param accountStore {@link AccountStore}
      * @param liquidityCommitmentStore {@link LiquidityCommitmentStore}
      * @param decimalUtils {@link DecimalUtils}
+     * @param orderService {@link OrderService}
      * @param uri the websocket URI
      */
     public VegaWebSocketClient(
@@ -161,6 +167,7 @@ public class VegaWebSocketClient extends WebSocketClient {
             final AccountStore accountStore,
             final LiquidityCommitmentStore liquidityCommitmentStore,
             final DecimalUtils decimalUtils,
+            final OrderService orderService,
             final URI uri
     ) {
         super(uri, new Draft_6455(Collections.emptyList(),
@@ -171,6 +178,7 @@ public class VegaWebSocketClient extends WebSocketClient {
         this.accountStore = accountStore;
         this.liquidityCommitmentStore = liquidityCommitmentStore;
         this.decimalUtils = decimalUtils;
+        this.orderService = orderService;
         this.partyId = partyId;
         this.marketId = marketId;
     }
@@ -372,8 +380,10 @@ public class VegaWebSocketClient extends WebSocketClient {
                     .getString("status").replaceAll("([a-z])([A-Z])", "$1_$2").toUpperCase());
             JSONArray buysArray = liquidityProvisionObject.getJSONArray("buys");
             JSONArray sellsArray = liquidityProvisionObject.getJSONArray("sells");
-            List<LiquidityCommitmentOffset> bids = parseLiquidityOrders(buysArray, market.getDecimalPlaces());
-            List<LiquidityCommitmentOffset> asks = parseLiquidityOrders(sellsArray, market.getDecimalPlaces());
+            List<LiquidityCommitmentOffset> bids = orderService.parseLiquidityOrders(
+                    buysArray, market.getDecimalPlaces(), true);
+            List<LiquidityCommitmentOffset> asks = orderService.parseLiquidityOrders(
+                    sellsArray, market.getDecimalPlaces(), true);
             LiquidityCommitment liquidityCommitment = new LiquidityCommitment()
                     .setCommitmentAmount(commitmentAmount)
                     .setFee(fee)
@@ -386,35 +396,6 @@ public class VegaWebSocketClient extends WebSocketClient {
             liquidityCommitmentStore.update(liquidityCommitment);
             liquidityProvisionIds.add(id);
         }
-    }
-
-    /**
-     * Parse liquidity orders JSON
-     *
-     * @param ordersArray {@link JSONArray}
-     * @param decimalPlaces market decimal places
-     *
-     * @return {@link List<LiquidityCommitmentOffset>}
-     */
-    // TODO - merge this with code in VegaApiClient cause it's needlessly duplicated
-    private List<LiquidityCommitmentOffset> parseLiquidityOrders(
-            final JSONArray ordersArray,
-            final int decimalPlaces
-    ) throws JSONException {
-        List<LiquidityCommitmentOffset> liquidityOrders = new ArrayList<>();
-        for(int i=0; i<ordersArray.length(); i++) {
-            JSONObject object = ordersArray.getJSONObject(i);
-            Integer proportion = object.getInt("proportion");
-            BigDecimal offset = BigDecimal.valueOf(object.getDouble("offset"));
-            PeggedReference reference = PeggedReference.valueOf(object.getString("reference")
-                    .replaceAll("([a-z])([A-Z])", "$1_$2").toUpperCase());
-            LiquidityCommitmentOffset bid = new LiquidityCommitmentOffset()
-                    .setOffset(decimalUtils.convertToDecimals(decimalPlaces, offset))
-                    .setProportion(proportion)
-                    .setReference(reference);
-            liquidityOrders.add(bid);
-        }
-        return liquidityOrders;
     }
 
     /**
