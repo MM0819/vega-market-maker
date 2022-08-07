@@ -1,5 +1,12 @@
 package com.vega.protocol.constant;
 
 public enum OrderStatus {
-    ACTIVE, FILLED, CANCELLED, STOPPED, REJECTED
+    ACTIVE,
+    EXPIRED,
+    CANCELLED,
+    STOPPED,
+    FILLED,
+    REJECTED,
+    PARTIALLY_FILLED,
+    PARKED
 }

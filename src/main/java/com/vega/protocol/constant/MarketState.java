@@ -1,5 +1,13 @@
 package com.vega.protocol.constant;
 
 public enum MarketState {
-    SUSPENDED, REJECTED, PENDING, ACTIVE, PROPOSED
+    PROPOSED,
+    REJECTED,
+    PENDING,
+    CANCELLED,
+    ACTIVE,
+    SUSPENDED,
+    CLOSED,
+    TRADING_TERMINATED,
+    SETTLED
 }
