@@ -16,4 +16,5 @@ public class Market extends UniqueItem {
     private MarketTradingMode tradingMode;
     private String settlementAsset;
     private int decimalPlaces;
+    private int positionDecimalPlaces;
 }

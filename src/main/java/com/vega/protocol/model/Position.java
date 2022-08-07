@@ -13,7 +13,7 @@ import java.math.BigDecimal;
 public class Position extends UniqueItem {
     private String id;
     private String partyId;
-    private String marketId;
+    private Market market;
     private BigDecimal size;
     private MarketSide side;
     private BigDecimal entryPrice;

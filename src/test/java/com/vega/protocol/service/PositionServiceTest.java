@@ -1,6 +1,7 @@
 package com.vega.protocol.service;
 
 import com.vega.protocol.constant.MarketSide;
+import com.vega.protocol.model.Market;
 import com.vega.protocol.model.Position;
 import com.vega.protocol.store.PositionStore;
 import org.junit.jupiter.api.Assertions;
@@ -24,8 +25,8 @@ public class PositionServiceTest {
     @Test
     public void testGetExposureLong() {
         Mockito.when(positionStore.getItems()).thenReturn(List.of(
-                new Position().setMarketId("1").setSide(MarketSide.BUY).setSize(BigDecimal.TEN),
-                new Position().setMarketId("2").setSide(MarketSide.BUY).setSize(BigDecimal.TEN)
+                new Position().setMarket(new Market().setId("1")).setSide(MarketSide.BUY).setSize(BigDecimal.TEN),
+                new Position().setMarket(new Market().setId("2")).setSide(MarketSide.BUY).setSize(BigDecimal.TEN)
         ));
         BigDecimal exposure = positionService.getExposure("1");
         Assertions.assertEquals(BigDecimal.TEN, exposure);
@@ -34,8 +35,8 @@ public class PositionServiceTest {
     @Test
     public void testGetExposureShort() {
         Mockito.when(positionStore.getItems()).thenReturn(List.of(
-                new Position().setMarketId("1").setSide(MarketSide.SELL).setSize(BigDecimal.TEN),
-                new Position().setMarketId("2").setSide(MarketSide.SELL).setSize(BigDecimal.TEN)
+                new Position().setMarket(new Market().setId("1")).setSide(MarketSide.SELL).setSize(BigDecimal.TEN),
+                new Position().setMarket(new Market().setId("2")).setSide(MarketSide.SELL).setSize(BigDecimal.TEN)
         ));
         BigDecimal exposure = positionService.getExposure("1");
         Assertions.assertEquals(BigDecimal.TEN, exposure.multiply(BigDecimal.valueOf(-1)));

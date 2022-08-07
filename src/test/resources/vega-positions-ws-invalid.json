@@ -1,0 +1,16 @@
+{
+  "payload": {
+    "data": {
+      "positions": {
+        "openVolume": "23",
+        "realisedPNL": "-813716",
+        "unrealisedPNL": "231481",
+        "market": {
+          "id": "5e6035fe6a6df78c9ec44b333c231e63d357acef0a0620d2c243f5865d1dc0d8"
+        }
+      }
+    }
+  },
+  "id": "positions",
+  "type": "data"
+}

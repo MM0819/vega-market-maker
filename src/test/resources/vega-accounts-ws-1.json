@@ -1,0 +1,18 @@
+{
+  "payload": {
+    "data": {
+      "accounts": {
+        "balance": "999576419",
+        "asset": {
+          "symbol": "tDAI",
+          "decimals": 5,
+          "name": "tDAI TEST"
+        },
+        "market": null,
+        "type": "General"
+      }
+    }
+  },
+  "id": "accounts",
+  "type": "data"
+}

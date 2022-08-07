@@ -1,16 +1,21 @@
 package com.vega.protocol.ws;
 
 import com.vega.protocol.constant.*;
+import com.vega.protocol.model.Account;
 import com.vega.protocol.model.Market;
 import com.vega.protocol.model.Order;
+import com.vega.protocol.model.Position;
+import com.vega.protocol.store.AccountStore;
 import com.vega.protocol.store.MarketStore;
 import com.vega.protocol.store.OrderStore;
+import com.vega.protocol.store.PositionStore;
 import lombok.extern.slf4j.Slf4j;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.drafts.Draft_6455;
 import org.java_websocket.handshake.ServerHandshake;
 import org.java_websocket.protocols.Protocol;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.springframework.util.StringUtils;
 
@@ -21,14 +26,36 @@ import java.util.Collections;
 @Slf4j
 public class VegaWebSocketClient extends WebSocketClient {
 
-    // TODO - subscribe to LP orders
-    // TODO - subscribe to positions
-
-    private static final String LP_ORDERS_QUERY = "";
+    private static final String ACCOUNTS_QUERY = """
+        subscription {
+            accounts(partyId: "PARTY_ID") {
+                balance
+                asset {
+                    symbol
+                    decimals
+                    name
+                    id
+                }
+                market {
+                    id
+                    name
+                    tradableInstrument {
+                        instrument {
+                            product {
+                                ...on Future {
+                                    quoteName
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    """;
 
     private static final String ORDERS_QUERY = """
         subscription {
-            orders(partyId: "PARTY_ID") {
+            orders(partyId: "PARTY_ID", marketId: "MARKET_ID") {
                 id
                 price
                 side
@@ -39,11 +66,42 @@ public class VegaWebSocketClient extends WebSocketClient {
                 market {
                     id
                 }
+                liquidityProvision {
+                    commitmentAmount
+                    fee
+                    sells {
+                        liquidityOrder {
+                            reference
+                            proportion
+                            offset
+                        }
+                    }
+                    buys {
+                        liquidityOrder {
+                            reference
+                            proportion
+                            offset
+                        }
+                    }
+                }
             }
         }
     """;
 
-    private static final String POSITIONS_QUERY = "";
+    private static final String POSITIONS_QUERY =
+    """
+        subscription {
+            positions(partyId: "PARTY_ID") {
+                openVolume
+                realisedPNL
+                unrealisedPNL
+                averageEntryPrice
+                market {
+                    id
+                }
+            }
+        }
+    """;
 
     private static final String MARKETS_QUERY =
     """
@@ -53,11 +111,12 @@ public class VegaWebSocketClient extends WebSocketClient {
                     id
                     name
                     decimalPlaces
+                    positionDecimalPlaces
                     tradingMode
                     state
                   	tradableInstrument {
     				    instrument {
-                            product{
+                            product {
                                 ...on Future {
                                     quoteName
                                 }
@@ -71,27 +130,39 @@ public class VegaWebSocketClient extends WebSocketClient {
 
     private final MarketStore marketStore;
     private final OrderStore orderStore;
+    private final PositionStore positionStore;
+    private final AccountStore accountStore;
     private final String partyId;
+    private final String marketId;
 
     /**
      * Create a websocket client for Vega
      *
      * @param partyId the Vega party ID
+     * @param marketId the Vega market ID
      * @param marketStore {@link MarketStore}
      * @param orderStore {@link OrderStore}
+     * @param positionStore {@link PositionStore}
+     * @param accountStore {@link AccountStore}
      * @param uri the websocket URI
      */
     public VegaWebSocketClient(
             final String partyId,
+            final String marketId,
             final MarketStore marketStore,
             final OrderStore orderStore,
+            final PositionStore positionStore,
+            final AccountStore accountStore,
             final URI uri
     ) {
         super(uri, new Draft_6455(Collections.emptyList(),
                 Collections.singletonList(new Protocol("graphql-ws"))));
         this.marketStore = marketStore;
         this.orderStore = orderStore;
+        this.positionStore = positionStore;
+        this.accountStore = accountStore;
         this.partyId = partyId;
+        this.marketId = marketId;
     }
 
     /**
@@ -111,12 +182,30 @@ public class VegaWebSocketClient extends WebSocketClient {
                     .put("payload", marketsQuery);
             this.send(marketsSubscription.toString());
             JSONObject ordersQuery = new JSONObject()
-                    .put("query", ORDERS_QUERY.replace("PARTY_ID", partyId));
+                    .put("query", ORDERS_QUERY
+                            .replace("PARTY_ID", partyId)
+                            .replace("MARKET_ID", marketId));
             JSONObject ordersSubscription = new JSONObject()
                     .put("id", "orders")
                     .put("type", "start")
                     .put("payload", ordersQuery);
             this.send(ordersSubscription.toString());
+            JSONObject positionsQuery = new JSONObject()
+                    .put("query", POSITIONS_QUERY
+                            .replace("PARTY_ID", partyId));
+            JSONObject positionsSubscription = new JSONObject()
+                    .put("id", "positions")
+                    .put("type", "start")
+                    .put("payload", positionsQuery);
+            this.send(positionsSubscription.toString());
+            JSONObject accountsQuery = new JSONObject()
+                    .put("query", ACCOUNTS_QUERY
+                            .replace("PARTY_ID", partyId));
+            JSONObject accountsSubscription = new JSONObject()
+                    .put("id", "accounts")
+                    .put("type", "start")
+                    .put("payload", accountsQuery);
+            this.send(accountsSubscription.toString());
         } catch(Exception e) {
             log.error(e.getMessage());
             log.debug(e.getMessage(), e);
@@ -133,47 +222,90 @@ public class VegaWebSocketClient extends WebSocketClient {
             String id = jsonObject.optString("id");
             if(StringUtils.hasText(id)) {
                 JSONObject data = jsonObject.getJSONObject("payload").getJSONObject("data");
-                if (id.equals("markets")) {
-                    handleMarkets(data.getJSONArray("marketsData"));
-                } else if(id.equals("orders")) {
-                    handleOrders(data.getJSONArray("orders"));
-                } else {
-                    log.warn("Unsupported message");
-                } /*else if(id.equals("positions")) {
-                    handlePositions(data.getJSONArray("positions"));
-                } else if(id.equals("liquidityProvision")) {
-                    handleLiquidityProvision(data.getJSONArray("liquidityProvision"));
-                }*/
+                switch (id) {
+                    case "markets" -> handleMarkets(data);
+                    case "orders" -> handleOrders(data);
+                    case "positions" -> handlePositions(data);
+                    case "accounts" -> handleAccounts(data);
+                    default -> log.warn("Unsupported message");
+                }
             }
         } catch(Exception e) {
             log.error(e.getMessage(), e);
         }
     }
 
-//    /**
-//     * Handle JSON array of positions
-//     *
-//     * @param positionsArray {@link JSONArray}
-//     */
-//    private void handlePositions(JSONArray positionsArray) {
-//        // TODO - handle positions
-//    }
-//
-//    /**
-//     * Handle JSON array of LP orders
-//     *
-//     * @param liquidityProvisionArray {@link JSONArray}
-//     */
-//    private void handleLiquidityProvision(JSONArray liquidityProvisionArray) {
-//        // TODO - handle liquidity provision
-//    }
+    /**
+     * Handle JSON array of accounts
+     *
+     * @param data {@link JSONObject}
+     */
+    private void handleAccounts(JSONObject data) throws JSONException {
+        JSONArray accountsArray = getDataAsArray(data, "accounts");
+        for(int i=0; i<accountsArray.length(); i++) {
+            try {
+                JSONObject accountObject = accountsArray.getJSONObject(i);
+                String asset = accountObject.getJSONObject("asset").getString("symbol");
+                JSONObject marketObject = accountObject.optJSONObject("market");
+                AccountType type = AccountType.valueOf(accountObject.getString("type").toUpperCase());
+                String id = String.format("%s-%s-%s", asset, partyId, type);
+                if(marketObject != null) {
+                    String marketId = marketObject.getString("id");
+                    id = String.format("%s-%s", id, marketId);
+                }
+                Account account = new Account()
+                        .setAsset(asset)
+                        .setType(AccountType.valueOf(accountObject.getString("type").toUpperCase()))
+                        .setBalance(BigDecimal.valueOf(accountObject.getDouble("balance")))
+                        .setPartyId(partyId)
+                        .setId(id);
+                accountStore.update(account);
+            } catch(Exception e) {
+                log.error(e.getMessage(), e);
+            }
+        }
+    }
+
+    /**
+     * Handle JSON array of positions
+     *
+     * @param data {@link JSONObject}
+     */
+    private void handlePositions(JSONObject data) throws JSONException {
+        JSONArray positionsArray = getDataAsArray(data, "positions");
+        for(int i=0; i<positionsArray.length(); i++) {
+            try {
+                JSONObject positionObject = positionsArray.getJSONObject(i);
+                Market market = marketStore.getById(marketId).orElse(null);
+                BigDecimal size = BigDecimal.valueOf(positionObject.getDouble("openVolume"));
+                BigDecimal unrealisedPnl = BigDecimal.valueOf(positionObject.getDouble("unrealisedPNL"));
+                BigDecimal realisedPnl = BigDecimal.valueOf(positionObject.getDouble("realisedPNL"));
+                BigDecimal entryPrice = BigDecimal.valueOf(positionObject.getDouble("averageEntryPrice"));
+                String marketId = positionObject.getJSONObject("market").getString("id");
+                Position position = new Position()
+                        .setPartyId(partyId)
+                        .setUnrealisedPnl(unrealisedPnl)
+                        .setRealisedPnl(realisedPnl)
+                        .setEntryPrice(entryPrice)
+                        .setMarket(market)
+                        .setSize(size)
+                        .setId(String.format("%s-%s", marketId, partyId))
+                        .setSide(size.doubleValue() > 0 ? MarketSide.BUY :
+                                (size.doubleValue() < 0 ? MarketSide.SELL : null));
+                positionStore.update(position);
+            } catch(Exception e) {
+                log.error(e.getMessage(), e);
+            }
+        }
+    }
 
     /**
      * Handle JSON array of orders
      *
-     * @param ordersArray {@link JSONArray}
+     * @param data {@link JSONObject}
      */
-    private void handleOrders(JSONArray ordersArray) {
+    private void handleOrders(JSONObject data) throws JSONException {
+        JSONArray ordersArray = getDataAsArray(data, "orders");
         for(int i=0; i<ordersArray.length(); i++) {
             try {
                 JSONObject ordersObject = ordersArray.getJSONObject(i);
@@ -197,6 +329,7 @@ public class VegaWebSocketClient extends WebSocketClient {
                         .setMarket(market)
                         .setSide(side);
                 orderStore.update(order);
+                // TODO - LP commitment is also in this stream
             } catch(Exception e) {
                 log.error(e.getMessage(), e);
             }
@@ -204,32 +337,35 @@ public class VegaWebSocketClient extends WebSocketClient {
     }
 
     /**
-     * Handle JSON array of orders
+     * Handle JSON array of markets
      *
-     * @param marketsArray {@link JSONArray}
+     * @param data {@link JSONObject}
      */
-    private void handleMarkets(JSONArray marketsArray) {
+    private void handleMarkets(JSONObject data) throws JSONException {
+        JSONArray marketsArray = getDataAsArray(data, "marketsData");
         for(int i=0; i<marketsArray.length(); i++) {
             try {
-                JSONObject marketsObject = marketsArray.getJSONObject(i).getJSONObject("market");
-                String id = marketsObject.getString("id");
-                String name = marketsObject.getString("name");
-                int decimalPlaces = marketsObject.getInt("decimalPlaces");
-                MarketState state = MarketState.valueOf(marketsObject.getString("state")
+                JSONObject marketObject = marketsArray.getJSONObject(i).getJSONObject("market");
+                String id = marketObject.getString("id");
+                String name = marketObject.getString("name");
+                int decimalPlaces = marketObject.getInt("decimalPlaces");
+                MarketState state = MarketState.valueOf(marketObject.getString("state")
                         .replaceAll("([a-z])([A-Z])", "$1_$2").toUpperCase());
-                MarketTradingMode tradingMode = MarketTradingMode.valueOf(marketsObject.getString("tradingMode")
+                MarketTradingMode tradingMode = MarketTradingMode.valueOf(marketObject.getString("tradingMode")
                         .replaceAll("([a-z])([A-Z])", "$1_$2").toUpperCase());
-                String quoteName = marketsObject
+                String quoteName = marketObject
                         .getJSONObject("tradableInstrument")
                         .getJSONObject("instrument")
                         .getJSONObject("product")
                         .getString("quoteName");
+                int positionDecimalPlaces = marketObject.getInt("positionDecimalPlaces");
                 Market market = new Market()
                         .setId(id)
                         .setName(name)
                         .setState(state)
                         .setTradingMode(tradingMode)
                         .setDecimalPlaces(decimalPlaces)
+                        .setPositionDecimalPlaces(positionDecimalPlaces)
                         .setSettlementAsset(quoteName);
                 marketStore.update(market);
             } catch(Exception e) {
@@ -253,5 +389,26 @@ public class VegaWebSocketClient extends WebSocketClient {
     public void onError(Exception e) {
         log.error(e.getMessage());
         log.debug(e.getMessage(), e);
+    }
+
+    /**
+     * Get data as {@link JSONArray}
+     *
+     * @param data {@link JSONObject}
+     * @param key the data key
+     *
+     * @return {@link JSONArray}
+     */
+    private JSONArray getDataAsArray(
+            final JSONObject data,
+            final String key
+    ) throws JSONException {
+        JSONArray array = new JSONArray();
+        try {
+            array = data.getJSONArray(key);
+        } catch(Exception e) {
+            array.put(data.getJSONObject(key));
+        }
+        return array;
     }
 }

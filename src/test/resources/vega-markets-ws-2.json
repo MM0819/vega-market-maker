@@ -1,0 +1,41 @@
+{
+  "payload": {
+    "data": {
+      "marketsData": [{
+        "market": {
+          "id": "7738ae422f8a905a618cb5b113e1267f1d288417361741ed033762f89f64637d",
+          "name": "BTCUSD Monthly (30 Jun 2022)",
+          "decimalPlaces": 5,
+          "positionDecimalPlaces": 3,
+          "tradingMode": "OpeningAuction",
+          "state": "Pending",
+          "tradableInstrument": {
+            "instrument": {
+              "product": {
+                "quoteName": "USD"
+              }
+            }
+          }
+        }
+      }, {
+        "market": {
+          "id": "c6233d79a53a81b9d9d889c5beb42baaa1e3eb412d19bfd854dfa35309ce4190",
+          "name": "Apple Monthly (30 Jun 2022)",
+          "decimalPlaces": 5,
+          "positionDecimalPlaces": 3,
+          "tradingMode": "Continuous",
+          "state": "Active",
+          "tradableInstrument": {
+            "instrument": {
+              "product": {
+                "quoteName": "USD"
+              }
+            }
+          }
+        }
+      }]
+    }
+  },
+  "id": "markets",
+  "type": "data"
+}

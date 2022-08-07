@@ -8,6 +8,7 @@ import com.vega.protocol.exception.TradingException;
 import com.vega.protocol.model.LiquidityProvision;
 import com.vega.protocol.model.Market;
 import com.vega.protocol.model.Order;
+import com.vega.protocol.model.Position;
 import com.vega.protocol.store.MarketStore;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONArray;
@@ -69,6 +70,45 @@ public class VegaApiClient {
                 markets.add(market);
             }
             return markets;
+        } catch(Exception e) {
+            log.error(e.getMessage(), e);
+        }
+        return Collections.emptyList();
+    }
+
+    /**
+     * Get positions
+     *
+     * @param partyId the party ID
+     *
+     * @return {@link List<Position>}
+     */
+    public List<Position> getPositions(
+            final String partyId
+    ) {
+        try {
+            HttpResponse<JsonNode> response = Unirest.get(String.format("%s/parties/%s/positions", nodeUrl, partyId))
+                    .asJson();
+            List<Position> positions = new ArrayList<>();
+            JSONArray positionsArray = response.getBody().getObject().getJSONArray("positions");
+            for(int i=0; i<positionsArray.length(); i++) {
+                JSONObject positionObject = positionsArray.getJSONObject(i);
+                String marketId = positionObject.getString("marketId");
+                Market market = marketStore.getById(marketId).orElse(null);
+                BigDecimal size = BigDecimal.valueOf(positionObject.getDouble("openVolume"));
+                Position position = new Position()
+                        .setMarket(market)
+                        .setEntryPrice(BigDecimal.valueOf(positionObject.getDouble("averageEntryPrice")))
+                        .setRealisedPnl(BigDecimal.valueOf(positionObject.getDouble("realisedPnl")))
+                        .setUnrealisedPnl(BigDecimal.valueOf(positionObject.getDouble("unrealisedPnl")))
+                        .setSide(size.doubleValue() > 0 ? MarketSide.BUY :
+                                (size.doubleValue() < 0 ? MarketSide.SELL : null))
+                        .setSize(size)
+                        .setId(String.format("%s-%s", marketId, partyId))
+                        .setPartyId(partyId);
+                positions.add(position);
+            }
+            return positions;
         } catch(Exception e) {
             log.error(e.getMessage(), e);
         }
@@ -150,7 +190,6 @@ public class VegaApiClient {
                     .headers(headers)
                     .body(cancellation)
                     .asJson();
-            // TODO - remove this recursion when wallet issue is fixed
             if(response.getBody().toString().contains("couldn't get last block height")) {
                 return cancelOrder(id, partyId, attempt+1);
             }
@@ -200,7 +239,6 @@ public class VegaApiClient {
                     .headers(headers)
                     .body(submission)
                     .asJson();
-            // TODO - remove this recursion when wallet issue is fixed
             if(response.getBody().toString().contains("couldn't get last block height")) {
                 return submitOrder(order, partyId, attempt+1);
             }

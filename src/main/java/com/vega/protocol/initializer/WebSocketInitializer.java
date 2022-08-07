@@ -1,9 +1,7 @@
 package com.vega.protocol.initializer;
 
 import com.vega.protocol.constant.ReferencePriceSource;
-import com.vega.protocol.store.MarketStore;
-import com.vega.protocol.store.OrderStore;
-import com.vega.protocol.store.ReferencePriceStore;
+import com.vega.protocol.store.*;
 import com.vega.protocol.ws.BinanceWebSocketClient;
 import com.vega.protocol.ws.PolygonWebSocketClient;
 import com.vega.protocol.ws.VegaWebSocketClient;
@@ -30,7 +28,10 @@ public class WebSocketInitializer {
     private final ReferencePriceStore referencePriceStore;
     private final MarketStore marketStore;
     private final OrderStore orderStore;
+    private final PositionStore positionStore;
+    private final AccountStore accountStore;
     private final String partyId;
+    private final String marketId;
 
     public WebSocketInitializer(@Value("${vega.ws.url}") String vegaWsUrl,
                                 @Value("${binance.ws.url}") String binanceWsUrl,
@@ -41,9 +42,12 @@ public class WebSocketInitializer {
                                 @Value("${reference.price.market}") String referencePriceMarket,
                                 @Value("${reference.price.source}") ReferencePriceSource referencePriceSource,
                                 @Value("${vega.party.id}") String partyId,
+                                @Value("${vega.market.id}") String marketId,
                                 ReferencePriceStore referencePriceStore,
                                 MarketStore marketStore,
-                                OrderStore orderStore) {
+                                OrderStore orderStore,
+                                PositionStore positionStore,
+                                AccountStore accountStore) {
         this.vegaWsUrl = vegaWsUrl;
         this.binanceWsUrl = binanceWsUrl;
         this.polygonWsUrl = polygonWsUrl;
@@ -55,7 +59,10 @@ public class WebSocketInitializer {
         this.referencePriceStore = referencePriceStore;
         this.marketStore = marketStore;
         this.orderStore = orderStore;
+        this.positionStore = positionStore;
+        this.accountStore = accountStore;
         this.partyId = partyId;
+        this.marketId = marketId;
     }
 
     @Getter
@@ -82,7 +89,8 @@ public class WebSocketInitializer {
 
     private void initializeVega() {
         log.info("Connecting to Vega Web Socket...");
-        vegaWebSocketClient = new VegaWebSocketClient(partyId, marketStore, orderStore, URI.create(vegaWsUrl));
+        vegaWebSocketClient = new VegaWebSocketClient(partyId, marketId,
+                marketStore, orderStore, positionStore, accountStore, URI.create(vegaWsUrl));
         vegaWebSocketClient.connect();
         log.info("Connected to {}", vegaWebSocketClient.getURI().toString());
         vegaWebSocketsInitialized = true;

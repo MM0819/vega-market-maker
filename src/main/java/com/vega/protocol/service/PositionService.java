@@ -26,7 +26,7 @@ public class PositionService {
             final String marketId
     ) {
         Optional<Position> positionOptional = positionStore.getItems().stream()
-                .filter(p -> p.getMarketId().equals(marketId)).findFirst();
+                .filter(p -> p.getMarket().getId().equals(marketId)).findFirst();
         if(positionOptional.isPresent()) {
             Position position = positionOptional.get();
             BigDecimal exposure = position.getSize();

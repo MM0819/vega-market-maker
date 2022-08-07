@@ -6,6 +6,7 @@ import com.vega.protocol.model.Order;
 import com.vega.protocol.store.AppConfigStore;
 import com.vega.protocol.store.MarketStore;
 import com.vega.protocol.store.OrderStore;
+import com.vega.protocol.store.PositionStore;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -17,6 +18,7 @@ public class DataInitializerTest {
     private DataInitializer dataInitializer;
     private OrderStore orderStore;
     private MarketStore marketStore;
+    private PositionStore positionStore;
     private AppConfigStore appConfigStore;
     private VegaApiClient vegaApiClient;
     private final String PARTY_ID = "1";
@@ -33,9 +35,10 @@ public class DataInitializerTest {
     public void setup() {
         orderStore = Mockito.mock(OrderStore.class);
         marketStore = Mockito.mock(MarketStore.class);
+        positionStore = Mockito.mock(PositionStore.class);
         appConfigStore = Mockito.mock(AppConfigStore.class);
         vegaApiClient = Mockito.mock(VegaApiClient.class);
-        dataInitializer = new DataInitializer(orderStore, marketStore, appConfigStore, vegaApiClient,
+        dataInitializer = new DataInitializer(orderStore, marketStore, positionStore, appConfigStore, vegaApiClient,
                  PARTY_ID, FEE, SPREAD, ORDER_COUNT, BID_SIZE_FACTOR, ASK_SIZE_FACTOR,
                  BID_QUOTE_RANGE, ASK_QUOTE_RANGE, PRICING_SIZE_STEP);
     }

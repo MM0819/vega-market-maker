@@ -11,6 +11,7 @@ import com.vega.protocol.constant.OrderType;
 import com.vega.protocol.model.LiquidityProvision;
 import com.vega.protocol.model.Market;
 import com.vega.protocol.model.Order;
+import com.vega.protocol.model.Position;
 import com.vega.protocol.store.MarketStore;
 import org.apache.commons.io.IOUtils;
 import org.json.JSONException;
@@ -179,6 +180,23 @@ public class VegaApiClientTest {
     }
 
     @Test
+    public void testGetPositions() {
+        try(MockedStatic<Unirest> mockStatic = Mockito.mockStatic(Unirest.class)) {
+            try(InputStream is = getClass().getClassLoader().getResourceAsStream("vega-positions-rest.json")) {
+                String marketsJson = IOUtils.toString(Objects.requireNonNull(is), StandardCharsets.UTF_8);
+                mockGetToken(mockStatic, tokenJson());
+                mockGetRequest(String.format("/parties/%s/positions", PARTY_ID), mockStatic, new JSONObject(marketsJson));
+                List<Position> positions = vegaApiClient.getPositions(PARTY_ID);
+                Assertions.assertEquals(3, positions.size());
+            } catch (Exception e) {
+                Assertions.fail();
+            }
+        } catch(Exception e) {
+            Assertions.fail();
+        }
+    }
+
+    @Test
     public void testGetOpenOrders() {
         try(MockedStatic<Unirest> mockStatic = Mockito.mockStatic(Unirest.class)) {
             try(InputStream is = getClass().getClassLoader().getResourceAsStream("vega-orders-rest.json")) {
@@ -263,6 +281,15 @@ public class VegaApiClientTest {
             Assertions.assertNotNull(mockStatic);
             List<Market> markets = vegaApiClient.getMarkets();
             Assertions.assertEquals(0, markets.size());
+        }
+    }
+
+    @Test
+    public void testGetPositionsWithError() {
+        try(MockedStatic<Unirest> mockStatic = Mockito.mockStatic(Unirest.class)) {
+            Assertions.assertNotNull(mockStatic);
+            List<Position> positions = vegaApiClient.getPositions(PARTY_ID);
+            Assertions.assertEquals(0, positions.size());
         }
     }
 }

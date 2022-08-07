@@ -1,9 +1,13 @@
 package com.vega.protocol.ws;
 
+import com.vega.protocol.model.Account;
 import com.vega.protocol.model.Market;
 import com.vega.protocol.model.Order;
+import com.vega.protocol.model.Position;
+import com.vega.protocol.store.AccountStore;
 import com.vega.protocol.store.MarketStore;
 import com.vega.protocol.store.OrderStore;
+import com.vega.protocol.store.PositionStore;
 import org.apache.commons.io.IOUtils;
 import org.java_websocket.handshake.HandshakeImpl1Server;
 import org.json.JSONException;
@@ -23,25 +27,82 @@ public class VegaWebSocketClientTest {
     private VegaWebSocketClient vegaWebSocketClient;
     private MarketStore marketStore;
     private OrderStore orderStore;
+    private PositionStore positionStore;
+    private AccountStore accountStore;
     private static final String PARTY_ID = "6817f2b4d9464716c6756d2827d893872b1d33839e211c27a650629e428dc35c";
+    private static final String MARKET_ID = "c6233d79a53a81b9d9d889c5beb42baaa1e3eb412d19bfd854dfa35309ce4190";
 
     @BeforeEach
     public void setup() {
         marketStore = Mockito.mock(MarketStore.class);
         orderStore = Mockito.mock(OrderStore.class);
-        vegaWebSocketClient = new VegaWebSocketClient(
-                PARTY_ID, marketStore, orderStore, URI.create("wss://lb.testnet.vega.xyz/query"));
+        positionStore = Mockito.mock(PositionStore.class);
+        accountStore = Mockito.mock(AccountStore.class);
+        vegaWebSocketClient = new VegaWebSocketClient(PARTY_ID, MARKET_ID,
+                marketStore, orderStore, positionStore, accountStore, URI.create("wss://lb.testnet.vega.xyz/query"));
+    }
+
+    private void handleMarkets(int count) {
+        try(InputStream is = getClass().getClassLoader()
+                .getResourceAsStream(String.format("vega-markets-ws-%s.json", count))) {
+            String marketsJson = IOUtils.toString(Objects.requireNonNull(is), StandardCharsets.UTF_8);
+            vegaWebSocketClient.onMessage(marketsJson);
+            Mockito.verify(marketStore, Mockito.times(count)).update(Mockito.any(Market.class));
+        } catch (Exception e) {
+            Assertions.fail();
+        }
+    }
+
+    private void handlePositions(int count) {
+        try(InputStream is = getClass().getClassLoader()
+                .getResourceAsStream(String.format("vega-positions-ws-%s.json", count))) {
+            String positionsJson = IOUtils.toString(Objects.requireNonNull(is), StandardCharsets.UTF_8);
+            vegaWebSocketClient.onMessage(positionsJson);
+            Mockito.verify(positionStore, Mockito.times(count)).update(Mockito.any(Position.class));
+        } catch (Exception e) {
+            Assertions.fail();
+        }
+    }
+
+    private void handleAccounts(int count) {
+        try(InputStream is = getClass().getClassLoader()
+                .getResourceAsStream(String.format("vega-accounts-ws-%s.json", count))) {
+            String accountsJson = IOUtils.toString(Objects.requireNonNull(is), StandardCharsets.UTF_8);
+            vegaWebSocketClient.onMessage(accountsJson);
+            Mockito.verify(accountStore, Mockito.times(count)).update(Mockito.any(Account.class));
+        } catch (Exception e) {
+            Assertions.fail();
+        }
     }
 
     @Test
     public void testHandleMarkets() {
-        try(InputStream is = getClass().getClassLoader().getResourceAsStream("vega-markets-ws.json")) {
-            String marketsJson = IOUtils.toString(Objects.requireNonNull(is), StandardCharsets.UTF_8);
-            vegaWebSocketClient.onMessage(marketsJson);
-            Mockito.verify(marketStore, Mockito.times(1)).update(Mockito.any(Market.class));
-        } catch (Exception e) {
-            Assertions.fail();
-        }
+        handleMarkets(1);
+    }
+
+    @Test
+    public void testHandleMaketsMany() {
+        handleMarkets(2);
+    }
+
+    @Test
+    public void testHandlePositions() {
+        handlePositions(1);
+    }
+
+    @Test
+    public void testHandlePositionsMany() {
+        handlePositions(2);
+    }
+
+    @Test
+    public void testHandleAccounts() {
+        handleAccounts(1);
+    }
+
+    @Test
+    public void testHandleAccountsMany() {
+        handleAccounts(2);
     }
 
     @Test
@@ -72,6 +133,28 @@ public class VegaWebSocketClientTest {
             String marketsJson = IOUtils.toString(Objects.requireNonNull(is), StandardCharsets.UTF_8);
             vegaWebSocketClient.onMessage(marketsJson);
             Mockito.verify(orderStore, Mockito.times(0)).update(Mockito.any(Order.class));
+        } catch (Exception e) {
+            Assertions.fail();
+        }
+    }
+
+    @Test
+    public void testHandlePositionsWithError() {
+        try(InputStream is = getClass().getClassLoader().getResourceAsStream("vega-positions-ws-invalid.json")) {
+            String marketsJson = IOUtils.toString(Objects.requireNonNull(is), StandardCharsets.UTF_8);
+            vegaWebSocketClient.onMessage(marketsJson);
+            Mockito.verify(positionStore, Mockito.times(0)).update(Mockito.any(Position.class));
+        } catch (Exception e) {
+            Assertions.fail();
+        }
+    }
+
+    @Test
+    public void testHandleAccountsWithError() {
+        try(InputStream is = getClass().getClassLoader().getResourceAsStream("vega-accounts-ws-invalid.json")) {
+            String marketsJson = IOUtils.toString(Objects.requireNonNull(is), StandardCharsets.UTF_8);
+            vegaWebSocketClient.onMessage(marketsJson);
+            Mockito.verify(accountStore, Mockito.times(0)).update(Mockito.any(Account.class));
         } catch (Exception e) {
             Assertions.fail();
         }

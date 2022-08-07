@@ -5,6 +5,7 @@ import com.vega.protocol.model.AppConfig;
 import com.vega.protocol.store.AppConfigStore;
 import com.vega.protocol.store.MarketStore;
 import com.vega.protocol.store.OrderStore;
+import com.vega.protocol.store.PositionStore;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -13,6 +14,7 @@ public class DataInitializer {
 
     private final OrderStore orderStore;
     private final MarketStore marketStore;
+    private final PositionStore positionStore;
     private final AppConfigStore appConfigStore;
     private final VegaApiClient vegaApiClient;
     private final String partyId;
@@ -27,6 +29,7 @@ public class DataInitializer {
 
     public DataInitializer(OrderStore orderStore,
                            MarketStore marketStore,
+                           PositionStore positionStore,
                            AppConfigStore appConfigStore,
                            VegaApiClient vegaApiClient,
                            @Value("${vega.party.id}") String partyId,
@@ -40,6 +43,7 @@ public class DataInitializer {
                            @Value("${pricing.step.size}") Double pricingStepSize) {
         this.orderStore = orderStore;
         this.marketStore = marketStore;
+        this.positionStore = positionStore;
         this.appConfigStore = appConfigStore;
         this.vegaApiClient = vegaApiClient;
         this.partyId = partyId;
@@ -67,7 +71,9 @@ public class DataInitializer {
                 .setAskQuoteRange(askQuoteRange)
                 .setPricingStepSize(pricingStepSize);
         appConfigStore.update(config);
+        // TODO - get accounts
         vegaApiClient.getMarkets().forEach(marketStore::add);
         vegaApiClient.getOpenOrders(partyId).forEach(orderStore::add);
+        vegaApiClient.getPositions(partyId).forEach(positionStore::add);
     }
 }

@@ -1,0 +1,31 @@
+{
+  "positions": [
+    {
+      "marketId": "10c4b1114d2f6fda239b73d018bca55888b6018f0ac70029972a17fea0a6a56e",
+      "partyId": "6817f2b4d9464716c6756d2827d893872b1d33839e211c27a650629e428dc35c",
+      "openVolume": "-1",
+      "realisedPnl": "0",
+      "unrealisedPnl": "0",
+      "averageEntryPrice": "0",
+      "updatedAt": "1659636445037694000"
+    },
+    {
+      "marketId": "10c4b1114d2f6fda239b73d018bca55888b6018f0ac70029972a17fea0a6a56e",
+      "partyId": "6817f2b4d9464716c6756d2827d893872b1d33839e211c27a650629e428dc35c",
+      "openVolume": "1",
+      "realisedPnl": "0",
+      "unrealisedPnl": "0",
+      "averageEntryPrice": "0",
+      "updatedAt": "1659636445037694000"
+    },
+    {
+      "marketId": "10c4b1114d2f6fda239b73d018bca55888b6018f0ac70029972a17fea0a6a56e",
+      "partyId": "6817f2b4d9464716c6756d2827d893872b1d33839e211c27a650629e428dc35c",
+      "openVolume": "0",
+      "realisedPnl": "0",
+      "unrealisedPnl": "0",
+      "averageEntryPrice": "0",
+      "updatedAt": "1659636445037694000"
+    }
+  ]
+}
