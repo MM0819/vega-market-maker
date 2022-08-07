@@ -1,6 +1,7 @@
 package com.vega.protocol.ws;
 
 import com.vega.protocol.constant.*;
+import com.vega.protocol.exception.TradingException;
 import com.vega.protocol.model.Account;
 import com.vega.protocol.model.Market;
 import com.vega.protocol.model.Order;
@@ -9,6 +10,7 @@ import com.vega.protocol.store.AccountStore;
 import com.vega.protocol.store.MarketStore;
 import com.vega.protocol.store.OrderStore;
 import com.vega.protocol.store.PositionStore;
+import com.vega.protocol.utils.DecimalUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.drafts.Draft_6455;
@@ -134,6 +136,7 @@ public class VegaWebSocketClient extends WebSocketClient {
     private final AccountStore accountStore;
     private final String partyId;
     private final String marketId;
+    private final DecimalUtils decimalUtils;
 
     /**
      * Create a websocket client for Vega
@@ -144,6 +147,7 @@ public class VegaWebSocketClient extends WebSocketClient {
      * @param orderStore {@link OrderStore}
      * @param positionStore {@link PositionStore}
      * @param accountStore {@link AccountStore}
+     * @param decimalUtils {@link DecimalUtils}
      * @param uri the websocket URI
      */
     public VegaWebSocketClient(
@@ -153,6 +157,7 @@ public class VegaWebSocketClient extends WebSocketClient {
             final OrderStore orderStore,
             final PositionStore positionStore,
             final AccountStore accountStore,
+            final DecimalUtils decimalUtils,
             final URI uri
     ) {
         super(uri, new Draft_6455(Collections.emptyList(),
@@ -161,6 +166,7 @@ public class VegaWebSocketClient extends WebSocketClient {
         this.orderStore = orderStore;
         this.positionStore = positionStore;
         this.accountStore = accountStore;
+        this.decimalUtils = decimalUtils;
         this.partyId = partyId;
         this.marketId = marketId;
     }
@@ -246,6 +252,7 @@ public class VegaWebSocketClient extends WebSocketClient {
             try {
                 JSONObject accountObject = accountsArray.getJSONObject(i);
                 String asset = accountObject.getJSONObject("asset").getString("symbol");
+                int decimals = accountObject.getJSONObject("asset").getInt("decimals");
                 JSONObject marketObject = accountObject.optJSONObject("market");
                 AccountType type = AccountType.valueOf(accountObject.getString("type").toUpperCase());
                 String id = String.format("%s-%s-%s", asset, partyId, type);
@@ -253,10 +260,11 @@ public class VegaWebSocketClient extends WebSocketClient {
                     String marketId = marketObject.getString("id");
                     id = String.format("%s-%s", id, marketId);
                 }
+                BigDecimal balance = BigDecimal.valueOf(accountObject.getDouble("balance"));
                 Account account = new Account()
                         .setAsset(asset)
-                        .setType(AccountType.valueOf(accountObject.getString("type").toUpperCase()))
-                        .setBalance(BigDecimal.valueOf(accountObject.getDouble("balance")))
+                        .setType(type)
+                        .setBalance(decimalUtils.convertToDecimals(decimals, balance))
                         .setPartyId(partyId)
                         .setId(id);
                 accountStore.update(account);
@@ -276,7 +284,8 @@ public class VegaWebSocketClient extends WebSocketClient {
         for(int i=0; i<positionsArray.length(); i++) {
             try {
                 JSONObject positionObject = positionsArray.getJSONObject(i);
-                Market market = marketStore.getById(marketId).orElse(null);
+                Market market = marketStore.getById(marketId)
+                        .orElseThrow(() -> new TradingException(ErrorCode.MARKET_NOT_FOUND));
                 BigDecimal size = BigDecimal.valueOf(positionObject.getDouble("openVolume"));
                 BigDecimal unrealisedPnl = BigDecimal.valueOf(positionObject.getDouble("unrealisedPNL"));
                 BigDecimal realisedPnl = BigDecimal.valueOf(positionObject.getDouble("realisedPNL"));
@@ -284,11 +293,11 @@ public class VegaWebSocketClient extends WebSocketClient {
                 String marketId = positionObject.getJSONObject("market").getString("id");
                 Position position = new Position()
                         .setPartyId(partyId)
-                        .setUnrealisedPnl(unrealisedPnl)
-                        .setRealisedPnl(realisedPnl)
-                        .setEntryPrice(entryPrice)
+                        .setUnrealisedPnl(decimalUtils.convertToDecimals(market.getDecimalPlaces(), unrealisedPnl))
+                        .setRealisedPnl(decimalUtils.convertToDecimals(market.getDecimalPlaces(), realisedPnl))
+                        .setEntryPrice(decimalUtils.convertToDecimals(market.getDecimalPlaces(), entryPrice))
                         .setMarket(market)
-                        .setSize(size)
+                        .setSize(decimalUtils.convertToDecimals(market.getPositionDecimalPlaces(), entryPrice))
                         .setId(String.format("%s-%s", marketId, partyId))
                         .setSide(size.doubleValue() > 0 ? MarketSide.BUY :
                                 (size.doubleValue() < 0 ? MarketSide.SELL : null));
@@ -315,12 +324,13 @@ public class VegaWebSocketClient extends WebSocketClient {
                 BigDecimal remainingSize = BigDecimal.valueOf(ordersObject.getDouble("remaining"));
                 BigDecimal price = BigDecimal.valueOf(ordersObject.getDouble("price"));
                 String marketId = ordersObject.getJSONObject("market").getString("id");
-                Market market = marketStore.getById(marketId).orElse(null);
+                Market market = marketStore.getById(marketId)
+                        .orElseThrow(() -> new TradingException(ErrorCode.MARKET_NOT_FOUND));
                 OrderType type = OrderType.valueOf(ordersObject.getString("type").toUpperCase());
                 OrderStatus status = OrderStatus.valueOf(ordersObject.getString("status").toUpperCase());
                 Order order = new Order()
-                        .setSize(size)
-                        .setPrice(price)
+                        .setSize(decimalUtils.convertToDecimals(market.getPositionDecimalPlaces(), size))
+                        .setPrice(decimalUtils.convertToDecimals(market.getDecimalPlaces(), price))
                         .setType(type)
                         .setStatus(status)
                         .setRemainingSize(remainingSize)

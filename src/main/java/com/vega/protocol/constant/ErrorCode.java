@@ -13,4 +13,5 @@ public class ErrorCode {
     public static final String FEE_MANDATORY = "Mandatory field: 'fee'";
     public static final String GET_VEGA_TOKEN_FAILED = "Could not get Vega token.";
     public static final String PRICING_STEP_SIZE_MANDATORY = "Mandatory field: 'pricingStepSize'";
+    public static final String ASSET_NOT_FOUND = "Asset not found.";
 }

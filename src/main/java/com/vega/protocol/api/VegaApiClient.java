@@ -5,14 +5,13 @@ import com.mashape.unirest.http.JsonNode;
 import com.mashape.unirest.http.Unirest;
 import com.vega.protocol.constant.*;
 import com.vega.protocol.exception.TradingException;
-import com.vega.protocol.model.LiquidityProvision;
-import com.vega.protocol.model.Market;
-import com.vega.protocol.model.Order;
-import com.vega.protocol.model.Position;
+import com.vega.protocol.model.*;
 import com.vega.protocol.store.MarketStore;
+import com.vega.protocol.utils.DecimalUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.junit.platform.commons.util.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -29,19 +28,103 @@ public class VegaApiClient {
     private final String nodeUrl;
     private final String marketId;
     private final MarketStore marketStore;
+    private final DecimalUtils decimalUtils;
 
     public VegaApiClient(@Value("${vega.wallet.url}") String walletUrl,
                          @Value("${vega.wallet.user}") String walletUser,
                          @Value("${vega.wallet.password}") String walletPassword,
                          @Value("${vega.node.url}") String nodeUrl,
                          @Value("${vega.market.id}") String marketId,
-                         MarketStore marketStore) {
+                         MarketStore marketStore,
+                         DecimalUtils decimalUtils) {
         this.walletUrl = walletUrl;
         this.walletUser = walletUser;
         this.walletPassword = walletPassword;
         this.nodeUrl = nodeUrl;
         this.marketId = marketId;
         this.marketStore = marketStore;
+        this.decimalUtils = decimalUtils;
+    }
+
+    /**
+     * Get asset by ID
+     *
+     * @param id the asset ID
+     *
+     * @return {@link Optional<Asset>}
+     */
+    public Optional<Asset> getAsset(
+            final String id
+    ) {
+        try {
+            HttpResponse<JsonNode> response = Unirest.get(String.format("%s/assets/%s", nodeUrl, id))
+                    .asJson();
+            JSONObject assetObject = response.getBody().getObject().getJSONObject("asset");
+            String symbol = assetObject.getJSONObject("details").getString("symbol");
+            int quantum = assetObject.getJSONObject("details").getInt("quantum");
+            int decimalPlaces = assetObject.getJSONObject("details").getInt("decimals");
+            String name = assetObject.getJSONObject("details").getString("name");
+            AssetStatus status = AssetStatus.valueOf(assetObject.getString("status")
+                    .replace("STATUS_", ""));
+            Asset asset = new Asset()
+                    .setSymbol(symbol)
+                    .setQuantum(quantum)
+                    .setDecimalPlaces(decimalPlaces)
+                    .setName(name)
+                    .setId(id)
+                    .setStatus(status);
+            return Optional.of(asset);
+        } catch(Exception e) {
+            log.error(e.getMessage(), e);
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * Get accounts
+     *
+     * @param partyId the party ID
+     *
+     * @return {@link List<Account>}
+     */
+    public List<Account> getAccounts(
+            final String partyId
+    ) {
+        try {
+            HttpResponse<JsonNode> response = Unirest.get(String.format("%s/parties/%s/accounts", nodeUrl, partyId))
+                    .asJson();
+            List<Account> accounts = new ArrayList<>();
+            JSONArray accountsArray = response.getBody().getObject().getJSONArray("accounts");
+            Map<String, Asset> assetsById = new HashMap<>();
+            for(int i=0; i<accountsArray.length(); i++) {
+                JSONObject accountObject = accountsArray.getJSONObject(i);
+                String assetId = accountObject.getString("asset");
+                Asset asset = assetsById.get(assetId);
+                if(asset == null) {
+                    asset = getAsset(assetId).orElseThrow(() -> new TradingException(ErrorCode.ASSET_NOT_FOUND));
+                    assetsById.put(assetId, asset);
+                }
+                String marketId = accountObject.getString("marketId");
+                BigDecimal balance = BigDecimal.valueOf(accountObject.getDouble("balance"));
+                AccountType type = AccountType.valueOf(accountObject.getString("type")
+                        .replace("ACCOUNT_TYPE_", ""));
+                String id = String.format("%s-%s-%s", asset, partyId, type);
+                if(!StringUtils.isBlank(marketId) && !marketId.equals("!")) {
+                    id = String.format("%s-%s", id, marketId);
+                }
+                Account account = new Account()
+                        .setId(id)
+                        .setBalance(decimalUtils.convertToDecimals(asset.getDecimalPlaces(), balance))
+                        .setAsset(asset.getSymbol())
+                        .setType(type)
+                        .setPartyId(partyId);
+                accounts.add(account);
+            }
+            return accounts;
+        } catch(Exception e) {
+            log.error(e.getMessage(), e);
+        }
+        return Collections.emptyList();
     }
 
     /**
@@ -57,16 +140,21 @@ public class VegaApiClient {
             for(int i=0; i<marketsArray.length(); i++) {
                 JSONObject marketObject = marketsArray.getJSONObject(i);
                 JSONObject tradableInstrument = marketObject.getJSONObject("tradableInstrument");
+                String name = tradableInstrument.getJSONObject("instrument").getString("name");
+                String settlementAsset = tradableInstrument.getJSONObject("instrument")
+                        .getJSONObject("future").getString("quoteName");
+                int decimalPlaces = marketObject.getInt("decimalPlaces");
+                MarketState state = MarketState.valueOf(marketObject.getString("state")
+                        .replace("STATE_", ""));
+                MarketTradingMode tradingMode = MarketTradingMode.valueOf(marketObject.getString("tradingMode")
+                        .replace("TRADING_MODE_", ""));
                 Market market = new Market()
-                        .setName(tradableInstrument.getJSONObject("instrument").getString("name"))
-                        .setSettlementAsset(tradableInstrument.getJSONObject("instrument")
-                                .getJSONObject("future").getString("quoteName"))
-                        .setDecimalPlaces(marketObject.getInt("decimalPlaces"))
+                        .setName(name)
+                        .setSettlementAsset(settlementAsset)
+                        .setDecimalPlaces(decimalPlaces)
                         .setId(marketId)
-                        .setState(MarketState.valueOf(marketObject.getString("state")
-                                .replace("STATE_", "")))
-                        .setTradingMode(MarketTradingMode.valueOf(marketObject.getString("tradingMode")
-                                .replace("TRADING_MODE_", "")));
+                        .setState(state)
+                        .setTradingMode(tradingMode);
                 markets.add(market);
             }
             return markets;
@@ -94,17 +182,23 @@ public class VegaApiClient {
             for(int i=0; i<positionsArray.length(); i++) {
                 JSONObject positionObject = positionsArray.getJSONObject(i);
                 String marketId = positionObject.getString("marketId");
-                Market market = marketStore.getById(marketId).orElse(null);
+                Market market = marketStore.getById(marketId)
+                        .orElseThrow(() -> new TradingException(ErrorCode.MARKET_NOT_FOUND));
                 BigDecimal size = BigDecimal.valueOf(positionObject.getDouble("openVolume"));
+                BigDecimal entryPrice = BigDecimal.valueOf(positionObject.getDouble("averageEntryPrice"));
+                BigDecimal realisedPnl = BigDecimal.valueOf(positionObject.getDouble("realisedPnl"));
+                BigDecimal unrealisedPnl = BigDecimal.valueOf(positionObject.getDouble("unrealisedPnl"));
+                MarketSide side = size.doubleValue() > 0 ? MarketSide.BUY :
+                        (size.doubleValue() < 0 ? MarketSide.SELL : null);
+                String id = String.format("%s-%s", marketId, partyId);
                 Position position = new Position()
                         .setMarket(market)
-                        .setEntryPrice(BigDecimal.valueOf(positionObject.getDouble("averageEntryPrice")))
-                        .setRealisedPnl(BigDecimal.valueOf(positionObject.getDouble("realisedPnl")))
-                        .setUnrealisedPnl(BigDecimal.valueOf(positionObject.getDouble("unrealisedPnl")))
-                        .setSide(size.doubleValue() > 0 ? MarketSide.BUY :
-                                (size.doubleValue() < 0 ? MarketSide.SELL : null))
-                        .setSize(size)
-                        .setId(String.format("%s-%s", marketId, partyId))
+                        .setEntryPrice(decimalUtils.convertToDecimals(market.getDecimalPlaces(), entryPrice))
+                        .setRealisedPnl(decimalUtils.convertToDecimals(market.getDecimalPlaces(), realisedPnl))
+                        .setUnrealisedPnl(decimalUtils.convertToDecimals(market.getDecimalPlaces(), unrealisedPnl))
+                        .setSide(side)
+                        .setSize(decimalUtils.convertToDecimals(market.getPositionDecimalPlaces(), size))
+                        .setId(id)
                         .setPartyId(partyId);
                 positions.add(position);
             }
@@ -133,20 +227,28 @@ public class VegaApiClient {
             for(int i=0; i<ordersArray.length(); i++) {
                 JSONObject orderObject = ordersArray.getJSONObject(i);
                 String marketId = orderObject.getString("marketId");
-                Market market = marketStore.getById(marketId).orElse(null);
+                Market market = marketStore.getById(marketId)
+                        .orElseThrow(() -> new TradingException(ErrorCode.MARKET_NOT_FOUND));
+                OrderType type = OrderType.valueOf(orderObject.getString("type")
+                        .replace("TYPE_", ""));
+                BigDecimal size = BigDecimal.valueOf(orderObject.getDouble("size"));
+                OrderStatus status = OrderStatus.valueOf(orderObject.getString("status")
+                        .replace("STATUS_", ""));
+                MarketSide side = MarketSide.valueOf(orderObject.getString("side")
+                        .replace("SIDE_", ""));
+                BigDecimal remaining = BigDecimal.valueOf(orderObject.getDouble("remaining"));
+                BigDecimal price = BigDecimal.valueOf(orderObject.getDouble("price"));
+                String id = orderObject.getString("id");
                 Order order = new Order()
-                        .setType(OrderType.valueOf(orderObject.getString("type")
-                                .replace("TYPE_", "")))
-                        .setSize(BigDecimal.valueOf(orderObject.getDouble("size")))
-                        .setStatus(OrderStatus.valueOf(orderObject.getString("status")
-                                .replace("STATUS_", "")))
-                        .setSize(BigDecimal.valueOf(orderObject.getDouble("size")))
+                        .setType(type)
+                        .setSize(decimalUtils.convertToDecimals(market.getPositionDecimalPlaces(), size))
+                        .setStatus(status)
                         .setPartyId(partyId)
                         .setMarket(market)
-                        .setRemainingSize(BigDecimal.valueOf(orderObject.getDouble("remaining")))
-                        .setSide(MarketSide.valueOf(orderObject.getString("side")
-                                .replace("SIDE_", "")))
-                        .setId(orderObject.getString("id"));
+                        .setRemainingSize(decimalUtils.convertToDecimals(market.getPositionDecimalPlaces(), remaining))
+                        .setPrice(decimalUtils.convertToDecimals(market.getDecimalPlaces(), price))
+                        .setSide(side)
+                        .setId(id);
                 if(order.getStatus().equals(OrderStatus.ACTIVE)) {
                     orders.add(order);
                 }

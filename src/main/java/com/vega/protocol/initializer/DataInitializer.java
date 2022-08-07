@@ -2,10 +2,7 @@ package com.vega.protocol.initializer;
 
 import com.vega.protocol.api.VegaApiClient;
 import com.vega.protocol.model.AppConfig;
-import com.vega.protocol.store.AppConfigStore;
-import com.vega.protocol.store.MarketStore;
-import com.vega.protocol.store.OrderStore;
-import com.vega.protocol.store.PositionStore;
+import com.vega.protocol.store.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -16,6 +13,7 @@ public class DataInitializer {
     private final MarketStore marketStore;
     private final PositionStore positionStore;
     private final AppConfigStore appConfigStore;
+    private final AccountStore accountStore;
     private final VegaApiClient vegaApiClient;
     private final String partyId;
     private final Double fee;
@@ -31,6 +29,7 @@ public class DataInitializer {
                            MarketStore marketStore,
                            PositionStore positionStore,
                            AppConfigStore appConfigStore,
+                           AccountStore accountStore,
                            VegaApiClient vegaApiClient,
                            @Value("${vega.party.id}") String partyId,
                            @Value("${fee}") Double fee,
@@ -45,6 +44,7 @@ public class DataInitializer {
         this.marketStore = marketStore;
         this.positionStore = positionStore;
         this.appConfigStore = appConfigStore;
+        this.accountStore = accountStore;
         this.vegaApiClient = vegaApiClient;
         this.partyId = partyId;
         this.fee = fee;
@@ -71,9 +71,9 @@ public class DataInitializer {
                 .setAskQuoteRange(askQuoteRange)
                 .setPricingStepSize(pricingStepSize);
         appConfigStore.update(config);
-        // TODO - get accounts
         vegaApiClient.getMarkets().forEach(marketStore::add);
-        vegaApiClient.getOpenOrders(partyId).forEach(orderStore::add);
+        vegaApiClient.getAccounts(partyId).forEach(accountStore::add);
         vegaApiClient.getPositions(partyId).forEach(positionStore::add);
+        vegaApiClient.getOpenOrders(partyId).forEach(orderStore::add);
     }
 }
