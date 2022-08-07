@@ -45,7 +45,12 @@ public class VegaApiClientTest {
     );
 
     private Order newOrder() {
+        Market market = new Market()
+                .setId("12345")
+                .setDecimalPlaces(5)
+                .setPositionDecimalPlaces(3);
         return new Order()
+                .setMarket(market)
                 .setSide(MarketSide.BUY)
                 .setSize(BigDecimal.ONE)
                 .setPrice(BigDecimal.ONE)
@@ -106,6 +111,8 @@ public class VegaApiClientTest {
     private Optional<String> submitOrder(
             final JSONObject jsonResponse
     ) {
+        Mockito.when(decimalUtils.convertFromDecimals(Mockito.anyInt(), Mockito.any(BigDecimal.class)))
+                .thenReturn(BigDecimal.ONE);
         try(MockedStatic<Unirest> mockStatic = Mockito.mockStatic(Unirest.class)) {
             mockGetToken(mockStatic, tokenJson());
             mockSubmitTransaction(mockStatic, jsonResponse);
