@@ -1,9 +1,7 @@
 package com.vega.protocol.service;
 
 import com.vega.protocol.constant.MarketSide;
-import com.vega.protocol.model.LiquidityCommitment;
 import com.vega.protocol.model.LiquidityCommitmentOffset;
-import com.vega.protocol.model.Market;
 import com.vega.protocol.utils.DecimalUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
@@ -61,7 +59,7 @@ public class OrderServiceTest {
     @Test
     public void testParseLiquidityOrdersFromREST() {
         try(InputStream is = getClass().getClassLoader()
-                .getResourceAsStream("vega-liquidity-provisions-rest.json")) {
+                .getResourceAsStream("vega-liquidity-provisions-rest-1.json")) {
             JSONObject ordersJson = new JSONObject(
                     IOUtils.toString(Objects.requireNonNull(is), StandardCharsets.UTF_8));
             JSONArray ordersArray = ordersJson

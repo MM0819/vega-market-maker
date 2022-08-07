@@ -13,7 +13,6 @@ import com.vega.protocol.utils.DecimalUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.junit.platform.commons.util.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -111,42 +110,34 @@ public class VegaApiClient {
      * @return {@link List<Asset>}
      */
     public List<Asset> getAssets() {
+        try {
+            HttpResponse<JsonNode> response = Unirest.get(String.format("%s/assets", nodeUrl)).asJson();
+            JSONArray assetsArray = response.getBody().getObject().getJSONArray("assets");
+            List<Asset> assets = new ArrayList<>();
+            for(int i=0; i<assetsArray.length(); i++) {
+                JSONObject assetObject = assetsArray.getJSONObject(i);
+                String id = assetObject.getString("id");
+                String symbol = assetObject.getJSONObject("details").getString("symbol");
+                int quantum = assetObject.getJSONObject("details").getInt("quantum");
+                int decimalPlaces = assetObject.getJSONObject("details").getInt("decimals");
+                String name = assetObject.getJSONObject("details").getString("name");
+                AssetStatus status = AssetStatus.valueOf(assetObject.getString("status")
+                        .replace("STATUS_", ""));
+                Asset asset = new Asset()
+                        .setSymbol(symbol)
+                        .setQuantum(quantum)
+                        .setDecimalPlaces(decimalPlaces)
+                        .setName(name)
+                        .setId(id)
+                        .setStatus(status);
+                assets.add(asset);
+            }
+            return assets;
+        } catch(Exception e) {
+            log.error(e.getMessage(), e);
+        }
         return Collections.emptyList();
     }
-
-//    /**
-//     * Get asset by ID
-//     *
-//     * @param id the asset ID
-//     *
-//     * @return {@link Optional<Asset>}
-//     */
-//    public Optional<Asset> getAsset(
-//            final String id
-//    ) {
-//        try {
-//            HttpResponse<JsonNode> response = Unirest.get(String.format("%s/assets/%s", nodeUrl, id))
-//                    .asJson();
-//            JSONObject assetObject = response.getBody().getObject().getJSONObject("asset");
-//            String symbol = assetObject.getJSONObject("details").getString("symbol");
-//            int quantum = assetObject.getJSONObject("details").getInt("quantum");
-//            int decimalPlaces = assetObject.getJSONObject("details").getInt("decimals");
-//            String name = assetObject.getJSONObject("details").getString("name");
-//            AssetStatus status = AssetStatus.valueOf(assetObject.getString("status")
-//                    .replace("STATUS_", ""));
-//            Asset asset = new Asset()
-//                    .setSymbol(symbol)
-//                    .setQuantum(quantum)
-//                    .setDecimalPlaces(decimalPlaces)
-//                    .setName(name)
-//                    .setId(id)
-//                    .setStatus(status);
-//            return Optional.of(asset);
-//        } catch(Exception e) {
-//            log.error(e.getMessage(), e);
-//        }
-//        return Optional.empty();
-//    }
 
     /**
      * Get accounts
