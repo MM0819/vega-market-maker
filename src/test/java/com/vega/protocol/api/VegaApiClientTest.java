@@ -183,6 +183,7 @@ public class VegaApiClientTest {
 
     @Test
     public void testGetPositions() {
+        Mockito.when(marketStore.getById(Mockito.any())).thenReturn(Optional.of(new Market()));
         try(MockedStatic<Unirest> mockStatic = Mockito.mockStatic(Unirest.class)) {
             try(InputStream is = getClass().getClassLoader().getResourceAsStream("vega-positions-rest.json")) {
                 String marketsJson = IOUtils.toString(Objects.requireNonNull(is), StandardCharsets.UTF_8);
@@ -200,6 +201,7 @@ public class VegaApiClientTest {
 
     @Test
     public void testGetOpenOrders() {
+        Mockito.when(marketStore.getById(Mockito.any())).thenReturn(Optional.of(new Market()));
         try(MockedStatic<Unirest> mockStatic = Mockito.mockStatic(Unirest.class)) {
             try(InputStream is = getClass().getClassLoader().getResourceAsStream("vega-orders-rest.json")) {
                 String marketsJson = IOUtils.toString(Objects.requireNonNull(is), StandardCharsets.UTF_8);

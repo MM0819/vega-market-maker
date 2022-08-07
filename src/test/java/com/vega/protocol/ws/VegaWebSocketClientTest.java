@@ -22,6 +22,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
+import java.util.Optional;
 
 public class VegaWebSocketClientTest {
 
@@ -57,6 +58,7 @@ public class VegaWebSocketClientTest {
     }
 
     private void handlePositions(int count) {
+        Mockito.when(marketStore.getById(Mockito.any())).thenReturn(Optional.of(new Market()));
         try(InputStream is = getClass().getClassLoader()
                 .getResourceAsStream(String.format("vega-positions-ws-%s.json", count))) {
             String positionsJson = IOUtils.toString(Objects.requireNonNull(is), StandardCharsets.UTF_8);
@@ -110,6 +112,7 @@ public class VegaWebSocketClientTest {
 
     @Test
     public void testHandleOrders() {
+        Mockito.when(marketStore.getById(Mockito.any())).thenReturn(Optional.of(new Market()));
         try(InputStream is = getClass().getClassLoader().getResourceAsStream("vega-orders-ws.json")) {
             String marketsJson = IOUtils.toString(Objects.requireNonNull(is), StandardCharsets.UTF_8);
             vegaWebSocketClient.onMessage(marketsJson);

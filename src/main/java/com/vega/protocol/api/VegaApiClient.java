@@ -321,6 +321,7 @@ public class VegaApiClient {
             return Optional.empty();
         }
         try {
+            // TODO - convert from decimals
             String reference = String.format("%s-%s", partyId, UUID.randomUUID());
             JSONObject orderSubmission = new JSONObject()
                     .put("marketId", marketId)
