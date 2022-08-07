@@ -69,4 +69,27 @@ public class OrderService {
         }
         return liquidityOrders;
     }
+
+    /**
+     * Build liquidity orders JSON
+     *
+     * @param offsets {@link List<LiquidityCommitmentOffset>}
+     * @param decimalPlaces market decimal places
+     *
+     * @return {@link JSONArray}
+     */
+    public JSONArray buildLiquidityOrders(
+            final int decimalPlaces,
+            final List<LiquidityCommitmentOffset> offsets
+    ) throws JSONException {
+        JSONArray array = new JSONArray();
+        for(LiquidityCommitmentOffset offset : offsets) {
+            JSONObject order = new JSONObject()
+                    .put("offset", decimalUtils.convertFromDecimals(decimalPlaces, offset.getOffset()))
+                    .put("proportion", offset.getProportion())
+                    .put("reference", String.format("PEGGED_REFERENCE_%s", offset.getReference().name()));
+            array.put(order);
+        }
+        return array;
+    }
 }

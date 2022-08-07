@@ -447,28 +447,69 @@ public class VegaApiClient {
      *
      * @param liquidityCommitment {@link LiquidityCommitment}
      * @param partyId the party ID
+     * @param amendment true if amending an existing commitment
      *
      * @return {@link Optional<String>}
      */
     public Optional<String> submitLiquidityCommitment(
-            LiquidityCommitment liquidityCommitment,
-            final String partyId
+            final LiquidityCommitment liquidityCommitment,
+            final String partyId,
+            final boolean amendment
     ) {
-        return Optional.empty();
+        return submitLiquidityCommitment(liquidityCommitment, partyId, amendment, 1);
     }
 
     /**
-     * Amend existing liquidity commitment
+     * Submit liquidity commitment with recursive retry
      *
-     * @param liquidityCommitment {@link LiquidityCommitment}
+     * @param liquidityCommitment the liquidity commitment
      * @param partyId the party ID
+     * @param amendment true if amending an existing commitment
+     * @param attempt the attempt count
      *
      * @return {@link Optional<String>}
      */
-    public Optional<String> amendLiquidityCommitment(
-            LiquidityCommitment liquidityCommitment,
-            final String partyId
+    private Optional<String> submitLiquidityCommitment(
+            final LiquidityCommitment liquidityCommitment,
+            final String partyId,
+            final boolean amendment,
+            final int attempt
     ) {
+        if(attempt >= 10) {
+            return Optional.empty();
+        }
+        try {
+            Market market = liquidityCommitment.getMarket();
+            BigDecimal commitmentAmount = liquidityCommitment.getCommitmentAmount();
+            JSONObject liquidityProvisionSubmission = new JSONObject()
+                    .put("marketId", market.getId())
+                    .put("commitmentAmount", decimalUtils.convertFromDecimals(
+                            market.getPositionDecimalPlaces(), commitmentAmount).toBigInteger().toString())
+                    .put("fee", liquidityCommitment.getFee().toString())
+                    .put("buys", orderService.buildLiquidityOrders(
+                            market.getDecimalPlaces(), liquidityCommitment.getBids()))
+                    .put("sells", orderService.buildLiquidityOrders(
+                            market.getDecimalPlaces(), liquidityCommitment.getAsks()));
+            String cmd = !amendment ? "liquidityProvisionSubmission" : "liquidityProvisionAmendment";
+            JSONObject submission = new JSONObject()
+                    .put(cmd, liquidityProvisionSubmission)
+                    .put("pubKey", partyId)
+                    .put("propagate", true);
+            String token = getToken().orElseThrow(() -> new TradingException(ErrorCode.GET_VEGA_TOKEN_FAILED));
+            Map<String, String> headers = new HashMap<>();
+            headers.put("Authorization", String.format("Bearer %s", token));
+            HttpResponse<JsonNode> response = Unirest.post(String.format("%s/api/v1/command/sync", walletUrl))
+                    .headers(headers)
+                    .body(submission)
+                    .asJson();
+            if(response.getBody().toString().contains("couldn't get last block height")) {
+                return submitLiquidityCommitment(liquidityCommitment, partyId, amendment, attempt+1);
+            }
+            String txHash = response.getBody().getObject().getString("txHash");
+            return Optional.of(txHash);
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+        }
         return Optional.empty();
     }
 

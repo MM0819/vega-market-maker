@@ -71,8 +71,8 @@ public class UpdateLiquidityCommitmentTaskTest {
                 Mockito.anyDouble(), Mockito.anyDouble(), Mockito.anyDouble(), Mockito.anyDouble(), Mockito.anyInt()))
                 .thenReturn(List.of(new DistributionStep().setPrice(1d).setSize(1d)));
         updateLiquidityCommitmentTask.execute();
-        Mockito.verify(vegaApiClient, Mockito.times(1))
-                .submitLiquidityCommitment(Mockito.any(LiquidityCommitment.class), Mockito.anyString()); // TODO - fix assertion
+        Mockito.verify(vegaApiClient, Mockito.times(1)).submitLiquidityCommitment(
+                Mockito.any(LiquidityCommitment.class), Mockito.anyString(), Mockito.anyBoolean()); // TODO - fix assertion
     }
 
     @Test
@@ -81,8 +81,8 @@ public class UpdateLiquidityCommitmentTaskTest {
         Mockito.when(accountService.getTotalBalance(USDT)).thenReturn(BigDecimal.ZERO);
         Mockito.when(positionService.getExposure(MARKET_ID)).thenReturn(BigDecimal.ZERO);
         updateLiquidityCommitmentTask.execute();
-        Mockito.verify(vegaApiClient, Mockito.times(0))
-                .submitLiquidityCommitment(Mockito.any(LiquidityCommitment.class), Mockito.anyString());
+        Mockito.verify(vegaApiClient, Mockito.times(0)).submitLiquidityCommitment(
+                Mockito.any(LiquidityCommitment.class), Mockito.anyString(), Mockito.anyBoolean());
     }
 
     @Test
@@ -95,8 +95,8 @@ public class UpdateLiquidityCommitmentTaskTest {
                 new ReferencePrice().setMidPrice(BigDecimal.valueOf(20000))));
         Mockito.when(liquidityCommitmentStore.get()).thenReturn(Optional.empty());
         updateLiquidityCommitmentTask.execute();
-        Mockito.verify(vegaApiClient, Mockito.times(1))
-                .submitLiquidityCommitment(Mockito.any(LiquidityCommitment.class), Mockito.anyString()); // TODO - fix assertion
+        Mockito.verify(vegaApiClient, Mockito.times(1)).submitLiquidityCommitment(
+                Mockito.any(LiquidityCommitment.class), Mockito.anyString(), Mockito.anyBoolean()); // TODO - fix assertion
     }
 
     @Test
@@ -109,8 +109,8 @@ public class UpdateLiquidityCommitmentTaskTest {
                 new ReferencePrice().setMidPrice(BigDecimal.valueOf(20000))));
         Mockito.when(liquidityCommitmentStore.get()).thenReturn(Optional.of(new LiquidityCommitment()));
         updateLiquidityCommitmentTask.execute();
-        Mockito.verify(vegaApiClient, Mockito.times(1))
-                .amendLiquidityCommitment(Mockito.any(LiquidityCommitment.class), Mockito.anyString()); // TODO - fix assertion
+        Mockito.verify(vegaApiClient, Mockito.times(1)).submitLiquidityCommitment(
+                Mockito.any(LiquidityCommitment.class), Mockito.anyString(), Mockito.anyBoolean()); // TODO - fix assertion
     }
 
     @Test

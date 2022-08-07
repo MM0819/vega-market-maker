@@ -167,12 +167,7 @@ public class VegaApiClientTest {
 
     @Test
     public void testSubmitLiquidityCommitment() {
-        vegaApiClient.submitLiquidityCommitment(new LiquidityCommitment(), PARTY_ID);
-    }
-
-    @Test
-    public void testAmendLiquidityCommitment() {
-        vegaApiClient.amendLiquidityCommitment(new LiquidityCommitment(), PARTY_ID);
+        vegaApiClient.submitLiquidityCommitment(new LiquidityCommitment(), PARTY_ID, false);
     }
 
     @Test
