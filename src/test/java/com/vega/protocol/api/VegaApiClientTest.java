@@ -9,7 +9,7 @@ import com.mashape.unirest.request.body.RequestBodyEntity;
 import com.vega.protocol.constant.MarketSide;
 import com.vega.protocol.constant.OrderType;
 import com.vega.protocol.constant.TimeInForce;
-import com.vega.protocol.model.LiquidityProvision;
+import com.vega.protocol.model.LiquidityCommitment;
 import com.vega.protocol.model.Market;
 import com.vega.protocol.model.Order;
 import com.vega.protocol.model.Position;
@@ -164,13 +164,13 @@ public class VegaApiClientTest {
     }
 
     @Test
-    public void testSubmitLiquidityProvision() {
-        vegaApiClient.submitLiquidityProvision(new LiquidityProvision(), PARTY_ID);
+    public void testSubmitLiquidityCommitment() {
+        vegaApiClient.submitLiquidityCommitment(new LiquidityCommitment(), PARTY_ID);
     }
 
     @Test
-    public void testAmendLiquidityProvision() {
-        vegaApiClient.amendLiquidityProvision(new LiquidityProvision(), PARTY_ID);
+    public void testAmendLiquidityCommitment() {
+        vegaApiClient.amendLiquidityCommitment(new LiquidityCommitment(), PARTY_ID);
     }
 
     @Test

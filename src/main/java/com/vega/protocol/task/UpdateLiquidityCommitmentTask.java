@@ -8,7 +8,7 @@ import com.vega.protocol.service.AccountService;
 import com.vega.protocol.service.MarketService;
 import com.vega.protocol.service.PositionService;
 import com.vega.protocol.store.AppConfigStore;
-import com.vega.protocol.store.LiquidityProvisionStore;
+import com.vega.protocol.store.LiquidityCommitmentStore;
 import com.vega.protocol.store.ReferencePriceStore;
 import com.vega.protocol.utils.PricingUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -22,35 +22,35 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Component
-public class UpdateLiquidityProvisionTask extends TradingTask {
+public class UpdateLiquidityCommitmentTask extends TradingTask {
 
     private final MarketService marketService;
     private final AccountService accountService;
     private final PositionService positionService;
     private final AppConfigStore appConfigStore;
     private final ReferencePriceStore referencePriceStore;
-    private final LiquidityProvisionStore liquidityProvisionStore;
+    private final LiquidityCommitmentStore liquidityCommitmentStore;
     private final VegaApiClient vegaApiClient;
     private final String marketId;
     private final PricingUtils pricingUtils;
     private final String partyId;
 
-    public UpdateLiquidityProvisionTask(@Value("${vega.market.id}") String marketId,
-                                        @Value("${vega.party.id}") String partyId,
-                                        MarketService marketService,
-                                        AccountService accountService,
-                                        PositionService positionService,
-                                        AppConfigStore appConfigStore,
-                                        VegaApiClient vegaApiClient,
-                                        ReferencePriceStore referencePriceStore,
-                                        LiquidityProvisionStore liquidityProvisionStore,
-                                        PricingUtils pricingUtils) {
+    public UpdateLiquidityCommitmentTask(@Value("${vega.market.id}") String marketId,
+                                         @Value("${vega.party.id}") String partyId,
+                                         MarketService marketService,
+                                         AccountService accountService,
+                                         PositionService positionService,
+                                         AppConfigStore appConfigStore,
+                                         VegaApiClient vegaApiClient,
+                                         ReferencePriceStore referencePriceStore,
+                                         LiquidityCommitmentStore liquidityCommitmentStore,
+                                         PricingUtils pricingUtils) {
         this.marketService = marketService;
         this.accountService = accountService;
         this.positionService = positionService;
         this.appConfigStore = appConfigStore;
         this.referencePriceStore = referencePriceStore;
-        this.liquidityProvisionStore = liquidityProvisionStore;
+        this.liquidityCommitmentStore = liquidityCommitmentStore;
         this.vegaApiClient = vegaApiClient;
         this.marketId = marketId;
         this.pricingUtils = pricingUtils;
@@ -85,27 +85,27 @@ public class UpdateLiquidityProvisionTask extends TradingTask {
         List<DistributionStep> bidDistribution = pricingUtils.getBidDistribution(
                 exposure.doubleValue() > 0 ? scalingFactor : 1.0, bidPoolSize.doubleValue(), askPoolSize.doubleValue(),
                 config.getBidQuoteRange(), config.getOrderCount());
-        BigDecimal commitment = BigDecimal.valueOf((config.getAskQuoteRange() + config.getBidQuoteRange()) / 4)
+        BigDecimal commitmentAmount = BigDecimal.valueOf((config.getAskQuoteRange() + config.getBidQuoteRange()) / 4)
                 .multiply(balance);
-        List<LiquidityProvisionOffset> liquidityProvisionBids = bidDistribution.stream()
-                .map(d -> new LiquidityProvisionOffset()
+        List<LiquidityCommitmentOffset> liquidityCommitmentBids = bidDistribution.stream()
+                .map(d -> new LiquidityCommitmentOffset()
                         .setOffset(referencePrice.subtract(BigDecimal.valueOf(d.getPrice())).longValue())
                         .setPortion(d.getSize().longValue()))
                 .collect(Collectors.toList());
-        List<LiquidityProvisionOffset> liquidityProvisionAsks = askDistribution.stream()
-                .map(d -> new LiquidityProvisionOffset()
+        List<LiquidityCommitmentOffset> liquidityCommitmentAsks = askDistribution.stream()
+                .map(d -> new LiquidityCommitmentOffset()
                         .setOffset(referencePrice.subtract(BigDecimal.valueOf(d.getPrice())).longValue())
                         .setPortion(d.getSize().longValue()))
                 .collect(Collectors.toList());
-        LiquidityProvision liquidityProvision = new LiquidityProvision()
-                .setCommitment(commitment)
+        LiquidityCommitment liquidityCommitment = new LiquidityCommitment()
+                .setCommitmentAmount(commitmentAmount)
                 .setFee(BigDecimal.valueOf(config.getFee()))
-                .setBids(liquidityProvisionBids)
-                .setAsks(liquidityProvisionAsks);
-        if(liquidityProvisionStore.get().isPresent()) {
-            vegaApiClient.amendLiquidityProvision(liquidityProvision, partyId);
+                .setBids(liquidityCommitmentBids)
+                .setAsks(liquidityCommitmentAsks);
+        if(liquidityCommitmentStore.get().isPresent()) {
+            vegaApiClient.amendLiquidityCommitment(liquidityCommitment, partyId);
         } else {
-            vegaApiClient.submitLiquidityProvision(liquidityProvision, partyId);
+            vegaApiClient.submitLiquidityCommitment(liquidityCommitment, partyId);
         }
     }
 }

@@ -47,6 +47,21 @@ public class VegaApiClient {
     }
 
     /**
+     * Get LP commitment for given party and market
+     *
+     * @param partyId the party ID
+     * @param marketId the market ID
+     *
+     * @return {@link Optional< LiquidityCommitment >}
+     */
+    private Optional<LiquidityCommitment> getLiquidityCommitment(
+            final String partyId,
+            final String marketId
+    ) {
+        return Optional.empty(); // TODO - implement this
+    }
+
+    /**
      * Get asset by ID
      *
      * @param id the asset ID
@@ -390,13 +405,13 @@ public class VegaApiClient {
     /**
      * Submit a new liquidity commitment
      *
-     * @param liquidityProvision {@link LiquidityProvision}
+     * @param liquidityCommitment {@link LiquidityCommitment}
      * @param partyId the party ID
      *
      * @return {@link Optional<String>}
      */
-    public Optional<String> submitLiquidityProvision(
-            LiquidityProvision liquidityProvision,
+    public Optional<String> submitLiquidityCommitment(
+            LiquidityCommitment liquidityCommitment,
             final String partyId
     ) {
         return Optional.empty();
@@ -405,13 +420,13 @@ public class VegaApiClient {
     /**
      * Amend existing liquidity commitment
      *
-     * @param liquidityProvision {@link LiquidityProvision}
+     * @param liquidityCommitment {@link LiquidityCommitment}
      * @param partyId the party ID
      *
      * @return {@link Optional<String>}
      */
-    public Optional<String> amendLiquidityProvision(
-            LiquidityProvision liquidityProvision,
+    public Optional<String> amendLiquidityCommitment(
+            LiquidityCommitment liquidityCommitment,
             final String partyId
     ) {
         return Optional.empty();

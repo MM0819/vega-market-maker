@@ -5,7 +5,7 @@ import lombok.experimental.Accessors;
 
 @Data
 @Accessors(chain = true)
-public class LiquidityProvisionOffset {
+public class LiquidityCommitmentOffset {
     Long portion;
     Long offset;
 }

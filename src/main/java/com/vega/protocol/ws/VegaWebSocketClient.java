@@ -68,7 +68,7 @@ public class VegaWebSocketClient extends WebSocketClient {
                 market {
                     id
                 }
-                liquidityProvision {
+                liquidityCommitment {
                     commitmentAmount
                     fee
                     sells {
