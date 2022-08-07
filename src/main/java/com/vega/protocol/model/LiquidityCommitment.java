@@ -1,5 +1,6 @@
 package com.vega.protocol.model;
 
+import com.vega.protocol.constant.LiquidityCommitmentStatus;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -18,4 +19,5 @@ public class LiquidityCommitment extends UniqueItem {
     private BigDecimal commitmentAmount;
     private List<LiquidityCommitmentOffset> bids = new ArrayList<>();
     private List<LiquidityCommitmentOffset> asks = new ArrayList<>();
+    private LiquidityCommitmentStatus status;
 }
