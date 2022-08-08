@@ -335,6 +335,7 @@ public class VegaApiClient {
         if(attempt >= 10) {
             return Optional.empty();
         }
+        HttpResponse<JsonNode> response = null;
         try {
             JSONObject orderCancellation = new JSONObject()
                     .put("marketId", marketId)
@@ -346,17 +347,23 @@ public class VegaApiClient {
             String token = getToken().orElseThrow(() -> new TradingException(ErrorCode.GET_VEGA_TOKEN_FAILED));
             Map<String, String> headers = new HashMap<>();
             headers.put("Authorization", String.format("Bearer %s", token));
-            HttpResponse<JsonNode> response = Unirest.post(String.format("%s/api/v1/command/sync", walletUrl))
+            response = Unirest.post(String.format("%s/api/v1/command/sync", walletUrl))
                     .headers(headers)
                     .body(cancellation)
                     .asJson();
             if(response.getBody().toString().contains("couldn't get last block height")) {
                 return cancelOrder(id, partyId, attempt+1);
             }
+            if(response.getBody().toString().contains("error")) {
+                throw new TradingException(response.getBody().getObject().getString("error"));
+            }
             String txHash = response.getBody().getObject().getString("txHash");
             return Optional.of(txHash);
         } catch (Exception e) {
             log.error(e.getMessage(), e);
+            if(response != null) {
+                log.info(response.getBody().toString());
+            }
         }
         return Optional.empty();
     }
@@ -378,6 +385,7 @@ public class VegaApiClient {
         if(attempt >= 10) {
             return Optional.empty();
         }
+        HttpResponse<JsonNode> response = null;
         try {
             String reference = String.format("%s-%s", partyId, UUID.randomUUID());
             Market market = order.getMarket();
@@ -400,17 +408,23 @@ public class VegaApiClient {
             String token = getToken().orElseThrow(() -> new TradingException(ErrorCode.GET_VEGA_TOKEN_FAILED));
             Map<String, String> headers = new HashMap<>();
             headers.put("Authorization", String.format("Bearer %s", token));
-            HttpResponse<JsonNode> response = Unirest.post(String.format("%s/api/v1/command/sync", walletUrl))
+            response = Unirest.post(String.format("%s/api/v1/command/sync", walletUrl))
                     .headers(headers)
                     .body(submission)
                     .asJson();
             if(response.getBody().toString().contains("couldn't get last block height")) {
                 return submitOrder(order, partyId, attempt+1);
             }
+            if(response.getBody().toString().contains("error")) {
+                throw new TradingException(response.getBody().getObject().getString("error"));
+            }
             String txHash = response.getBody().getObject().getString("txHash");
             return Optional.of(txHash);
         } catch (Exception e) {
             log.error(e.getMessage(), e);
+            if(response != null) {
+                log.info(response.getBody().toString());
+            }
         }
         return Optional.empty();
     }
@@ -481,6 +495,7 @@ public class VegaApiClient {
         if(attempt >= 10) {
             return Optional.empty();
         }
+        HttpResponse<JsonNode> response = null;
         try {
             Market market = liquidityCommitment.getMarket();
             BigDecimal commitmentAmount = liquidityCommitment.getCommitmentAmount();
@@ -501,17 +516,23 @@ public class VegaApiClient {
             String token = getToken().orElseThrow(() -> new TradingException(ErrorCode.GET_VEGA_TOKEN_FAILED));
             Map<String, String> headers = new HashMap<>();
             headers.put("Authorization", String.format("Bearer %s", token));
-            HttpResponse<JsonNode> response = Unirest.post(String.format("%s/api/v1/command/sync", walletUrl))
+            response = Unirest.post(String.format("%s/api/v1/command/sync", walletUrl))
                     .headers(headers)
                     .body(submission)
                     .asJson();
             if(response.getBody().toString().contains("couldn't get last block height")) {
                 return submitLiquidityCommitment(liquidityCommitment, partyId, amendment, attempt+1);
             }
+            if(response.getBody().toString().contains("error")) {
+                throw new TradingException(response.getBody().getObject().getString("error"));
+            }
             String txHash = response.getBody().getObject().getString("txHash");
             return Optional.of(txHash);
         } catch (Exception e) {
             log.error(e.getMessage(), e);
+            if(response != null) {
+                log.info(response.getBody().toString());
+            }
         }
         return Optional.empty();
     }

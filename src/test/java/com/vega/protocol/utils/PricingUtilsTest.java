@@ -67,12 +67,12 @@ public class PricingUtilsTest {
 
     @Test
     public void testGetBidDistribution() {
-        getBidDistribution(10, 10, 1.0, 0.999, 0.999);
+        getBidDistribution(10, 10, 1.0, 0.05, 0.999);
     }
 
     @Test
     public void testGetAskDistribution() {
-        getAskDistribution(10, 10, 1.0, 2.0, 2.0);
+        getAskDistribution(10, 10, 1.0, 0.05, 2.0);
     }
 
     @Test

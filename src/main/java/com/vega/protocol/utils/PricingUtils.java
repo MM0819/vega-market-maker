@@ -8,6 +8,7 @@ import com.vega.protocol.store.AppConfigStore;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -106,6 +107,7 @@ public class PricingUtils {
         if(distribution.size() > orderCount) {
             distribution = aggregateDistribution(distribution, orderCount, MarketSide.BUY);
         }
+        Collections.reverse(distribution);
         return distribution;
     }
 
@@ -201,7 +203,7 @@ public class PricingUtils {
                         .mapToDouble(DistributionStep::getSize)
                         .sum();
                 aggregateDistribution.add(new DistributionStep()
-                        .setPrice(price)
+                        .setPrice(previousPrice)
                         .setSize(size));
             }
             previousPrice = price;

@@ -105,13 +105,24 @@ public class UpdateQuotesTask extends TradingTask {
         BigDecimal openVolumeRatio = exposure.abs().divide(askPoolSize,
                 market.getDecimalPlaces(), RoundingMode.HALF_DOWN);
         double scalingFactor = pricingUtils.getScalingFactor(openVolumeRatio.doubleValue());
-        log.info("Exposure = {}\nBid pool size = {}\nAsk pool size = {}", exposure, bidPoolSize, askPoolSize);
+        log.info("\n\nReference price = {}\nExposure = {}\nBid pool size = {}\nAsk pool size = {}\n",
+                referencePrice, exposure, bidPoolSize, askPoolSize);
         List<DistributionStep> askDistribution = pricingUtils.getAskDistribution(
                 exposure.doubleValue() < 0 ? scalingFactor : 1.0, bidPoolSize.doubleValue(), askPoolSize.doubleValue(),
                 config.getAskQuoteRange(), config.getAskLiquidityRange(), config.getOrderCount());
         List<DistributionStep> bidDistribution = pricingUtils.getBidDistribution(
                 exposure.doubleValue() > 0 ? scalingFactor : 1.0, bidPoolSize.doubleValue(), askPoolSize.doubleValue(),
                 config.getBidQuoteRange(), config.getBidLiquidityRange(), config.getOrderCount());
+        if(bidDistribution.size() == 0) {
+            log.warn("Bid distribution was empty !!");
+            return;
+        }
+        if(askDistribution.size() == 0) {
+            log.warn("Ask distribution was empty !!");
+            return;
+        }
+        bidDistribution.get(0).setPrice(bidDistribution.get(0).getPrice() * (1 - config.getSpread()));
+        askDistribution.get(0).setPrice(askDistribution.get(0).getPrice() * (1 + config.getSpread()));
         TimeInForce tif = market.getTradingMode().equals(MarketTradingMode.CONTINUOUS) ?
                 TimeInForce.GTC : TimeInForce.GFA;
         List<Order> bids = bidDistribution.stream().map(d ->
