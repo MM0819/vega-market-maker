@@ -39,7 +39,7 @@ public class UpdateLiquidityCommitmentTask extends TradingTask {
     private final String partyId;
 
     public UpdateLiquidityCommitmentTask(@Value("${vega.market.id}") String marketId,
-                                         @Value("${naive.flow.enabled}") Boolean taskEnabled,
+                                         @Value("${update.liquidity.commitment.enabled}") Boolean taskEnabled,
                                          @Value("${vega.party.id}") String partyId,
                                          MarketService marketService,
                                          AccountService accountService,
