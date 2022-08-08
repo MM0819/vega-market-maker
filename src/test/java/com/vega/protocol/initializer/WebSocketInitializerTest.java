@@ -47,6 +47,7 @@ public class WebSocketInitializerTest {
         Assertions.assertNull(webSocketInitializer.getPolygonWebSocketClient());
         Assertions.assertTrue(webSocketInitializer.getVegaWebSocketClient().isOpen());
         Assertions.assertTrue(webSocketInitializer.getBinanceWebSocketClient().isOpen());
+        Assertions.assertTrue(webSocketInitializer.isBinanceWebSocketInitialized());
     }
 
     @Test
@@ -57,6 +58,7 @@ public class WebSocketInitializerTest {
         Assertions.assertNull(webSocketInitializer.getBinanceWebSocketClient());
         Assertions.assertTrue(webSocketInitializer.getVegaWebSocketClient().isOpen());
         Assertions.assertTrue(webSocketInitializer.getPolygonWebSocketClient().isOpen());
+        Assertions.assertTrue(webSocketInitializer.isPolygonWebSocketInitialized());
     }
 
     @Test
@@ -67,6 +69,7 @@ public class WebSocketInitializerTest {
         Assertions.assertNull(webSocketInitializer.getPolygonWebSocketClient());
         Assertions.assertNull(webSocketInitializer.getBinanceWebSocketClient());
         Assertions.assertNull(webSocketInitializer.getVegaWebSocketClient());
+        Assertions.assertFalse(webSocketInitializer.isVegaWebSocketsInitialized());
     }
 
     @Test

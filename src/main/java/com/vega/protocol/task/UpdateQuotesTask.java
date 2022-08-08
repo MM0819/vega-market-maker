@@ -108,10 +108,10 @@ public class UpdateQuotesTask extends TradingTask {
         log.info("Exposure = {}\nBid pool size = {}\nAsk pool size = {}", exposure, bidPoolSize, askPoolSize);
         List<DistributionStep> askDistribution = pricingUtils.getAskDistribution(
                 exposure.doubleValue() < 0 ? scalingFactor : 1.0, bidPoolSize.doubleValue(), askPoolSize.doubleValue(),
-                config.getAskQuoteRange(), config.getOrderCount());
+                config.getAskQuoteRange(), config.getAskLiquidityRange(), config.getOrderCount());
         List<DistributionStep> bidDistribution = pricingUtils.getBidDistribution(
                 exposure.doubleValue() > 0 ? scalingFactor : 1.0, bidPoolSize.doubleValue(), askPoolSize.doubleValue(),
-                config.getBidQuoteRange(), config.getOrderCount());
+                config.getBidQuoteRange(), config.getBidLiquidityRange(), config.getOrderCount());
         TimeInForce tif = market.getTradingMode().equals(MarketTradingMode.CONTINUOUS) ?
                 TimeInForce.GTC : TimeInForce.GFA;
         List<Order> bids = bidDistribution.stream().map(d ->

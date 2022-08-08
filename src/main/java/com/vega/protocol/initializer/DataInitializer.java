@@ -27,6 +27,8 @@ public class DataInitializer {
     private final Double askSizeFactor;
     private final Double bidQuoteRange;
     private final Double askQuoteRange;
+    private final Double bidLiquidityRange;
+    private final Double askLiquidityRange;
     private final Double pricingStepSize;
 
     @Getter
@@ -49,6 +51,8 @@ public class DataInitializer {
                            @Value("${ask.size.factor}") Double askSizeFactor,
                            @Value("${bid.quote.range}") Double bidQuoteRange,
                            @Value("${ask.quote.range}") Double askQuoteRange,
+                           @Value("${bid.liquidity.range}") Double bidLiquidityRange,
+                           @Value("${ask.liquidity.range}") Double askLiquidityRange,
                            @Value("${pricing.step.size}") Double pricingStepSize) {
         this.orderStore = orderStore;
         this.marketStore = marketStore;
@@ -67,6 +71,8 @@ public class DataInitializer {
         this.askSizeFactor = askSizeFactor;
         this.bidQuoteRange = bidQuoteRange;
         this.askQuoteRange = askQuoteRange;
+        this.bidLiquidityRange = bidLiquidityRange;
+        this.askLiquidityRange = askLiquidityRange;
         this.pricingStepSize = pricingStepSize;
     }
 
@@ -82,6 +88,8 @@ public class DataInitializer {
                 .setAskSizeFactor(askSizeFactor)
                 .setBidQuoteRange(bidQuoteRange)
                 .setAskQuoteRange(askQuoteRange)
+                .setBidLiquidityRange(bidLiquidityRange)
+                .setAskLiquidityRange(askLiquidityRange)
                 .setPricingStepSize(pricingStepSize);
         appConfigStore.update(config);
         vegaApiClient.getAssets().forEach(assetStore::add);

@@ -67,6 +67,7 @@ public class PricingUtils {
      * @param bidPoolSize the size of the bid pool
      * @param askPoolSize the size of the ask pool
      * @param quoteRange the range to provide quotes for
+     * @param inventoryRange the range to distribute inventory across
      * @param orderCount the target order count
      *
      * @return {@link List} of {@link DistributionStep}
@@ -76,10 +77,11 @@ public class PricingUtils {
             double bidPoolSize,
             double askPoolSize,
             double quoteRange,
+            double inventoryRange,
             int orderCount
     ) {
         double price = bidPoolSize / askPoolSize;
-        double cutoff = price * 0.001; // TODO - we should allow the user to configure their inventory range
+        double cutoff = price * (1 - inventoryRange);
         double quoteCutoff = price * (1 - quoteRange);
         double askSize = 1 / price;
         List<DistributionStep> distribution = new ArrayList<>();
@@ -110,6 +112,7 @@ public class PricingUtils {
      * @param bidPoolSize the size of our bid pool (i.e. total collateral)
      * @param askPoolSize the size of our ask pool (derived from bid pool and reference price)
      * @param quoteRange the range to provide quotes for
+     * @param inventoryRange the range to distribute inventory across
      * @param orderCount the number of orders
      *
      * @return {@link List} of {@link DistributionStep}
@@ -119,12 +122,13 @@ public class PricingUtils {
             double bidPoolSize,
             double askPoolSize,
             double quoteRange,
+            double inventoryRange,
             int orderCount
     ) {
         double bidSize = 1.0;
         double originalAskPoolSize = askPoolSize;
         double price = bidPoolSize / askPoolSize;
-        double cutoff = price * 2; // TODO - we should allow the user to configure their inventory range
+        double cutoff = price * (1 + inventoryRange);
         double quoteCutoff = price * (1 + quoteRange);
         List<DistributionStep> distribution = new ArrayList<>();
         double stepSize = appConfigStore.get()
@@ -164,12 +168,10 @@ public class PricingUtils {
             int orderCount,
             MarketSide side
     ) {
-        if(distribution.size() <= 1) {
-            return distribution;
-        }
-        // TODO - make this work for asks as well
-        double maxPrice = distribution.stream().max(Comparator.comparing(DistributionStep::getPrice)).get().getPrice();
-        double minPrice = distribution.stream().min(Comparator.comparing(DistributionStep::getPrice)).get().getPrice();
+        double maxPrice = distribution.stream().max(Comparator.comparing(DistributionStep::getPrice))
+                .orElse(new DistributionStep().setPrice(0.0)).getPrice();
+        double minPrice = distribution.stream().min(Comparator.comparing(DistributionStep::getPrice))
+                .orElse(new DistributionStep().setPrice(0.0)).getPrice();
         double range = maxPrice - minPrice;
         double stepSize = range / orderCount;
         List<Double> aggregatePrices = DoubleStream.iterate(minPrice, d -> d + stepSize)

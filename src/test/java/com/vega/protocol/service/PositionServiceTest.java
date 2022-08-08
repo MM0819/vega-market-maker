@@ -48,4 +48,12 @@ public class PositionServiceTest {
         BigDecimal exposure = positionService.getExposure("1");
         Assertions.assertEquals(BigDecimal.ZERO, exposure);
     }
+
+    @Test
+    public void testGetExposureWithZeroSize() {
+        Mockito.when(positionStore.getItems()).thenReturn(List.of(new Position()
+                .setMarket(new Market().setId("1")).setSide(MarketSide.SELL).setSize(BigDecimal.ZERO)));
+        BigDecimal exposure = positionService.getExposure("1");
+        Assertions.assertEquals(BigDecimal.ZERO, exposure);
+    }
 }

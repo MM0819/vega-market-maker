@@ -31,6 +31,8 @@ public class DataInitializerTest {
     private final Double ASK_SIZE_FACTOR = 1.0;
     private final Double BID_QUOTE_RANGE = 0.05;
     private final Double ASK_QUOTE_RANGE = 0.05;
+    private final Double BID_LIQUIDITY_RANGE = 0.999;
+    private final Double ASK_LIQUIDITY_RANGE = 2.0;
     private final Double PRICING_SIZE_STEP = 0.1;
 
     @BeforeEach
@@ -45,7 +47,8 @@ public class DataInitializerTest {
         assetStore = Mockito.mock(AssetStore.class);
         dataInitializer = new DataInitializer(orderStore, marketStore, positionStore, appConfigStore, accountStore,
                 liquidityCommitmentStore, assetStore, vegaApiClient, PARTY_ID, MARKET_ID, FEE, SPREAD, ORDER_COUNT,
-                BID_SIZE_FACTOR, ASK_SIZE_FACTOR, BID_QUOTE_RANGE, ASK_QUOTE_RANGE, PRICING_SIZE_STEP);
+                BID_SIZE_FACTOR, ASK_SIZE_FACTOR, BID_QUOTE_RANGE, ASK_QUOTE_RANGE, BID_LIQUIDITY_RANGE,
+                ASK_LIQUIDITY_RANGE, PRICING_SIZE_STEP);
     }
 
     @Test

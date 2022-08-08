@@ -46,6 +46,8 @@ public class UpdateLiquidityCommitmentTaskTest {
                 .setOrderCount(10)
                 .setBidSizeFactor(1.0)
                 .setBidQuoteRange(0.05)
+                .setAskLiquidityRange(1.0)
+                .setBidLiquidityRange(0.999)
                 .setAskSizeFactor(1.0)
                 .setAskQuoteRange(0.05)
                 .setPricingStepSize(0.1);
@@ -72,10 +74,12 @@ public class UpdateLiquidityCommitmentTaskTest {
         Mockito.when(liquidityCommitmentStore.get()).thenReturn(Optional.empty());
         Mockito.when(pricingUtils.getScalingFactor(Mockito.anyDouble())).thenReturn(1d);
         Mockito.when(pricingUtils.getBidDistribution(
-                Mockito.anyDouble(), Mockito.anyDouble(), Mockito.anyDouble(), Mockito.anyDouble(), Mockito.anyInt()))
+                Mockito.anyDouble(), Mockito.anyDouble(), Mockito.anyDouble(), Mockito.anyDouble(),
+                        Mockito.anyDouble(), Mockito.anyInt()))
                 .thenReturn(List.of(new DistributionStep().setPrice(1d).setSize(1d)));
         Mockito.when(pricingUtils.getAskDistribution(
-                Mockito.anyDouble(), Mockito.anyDouble(), Mockito.anyDouble(), Mockito.anyDouble(), Mockito.anyInt()))
+                Mockito.anyDouble(), Mockito.anyDouble(), Mockito.anyDouble(), Mockito.anyDouble(),
+                        Mockito.anyDouble(), Mockito.anyInt()))
                 .thenReturn(List.of(new DistributionStep().setPrice(1d).setSize(1d)));
         updateLiquidityCommitmentTask.execute();
         Mockito.verify(vegaApiClient, Mockito.times(1)).submitLiquidityCommitment(
