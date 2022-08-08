@@ -85,8 +85,9 @@ public class OrderService {
         JSONArray array = new JSONArray();
         for(LiquidityCommitmentOffset offset : offsets) {
             JSONObject order = new JSONObject()
-                    .put("offset", decimalUtils.convertFromDecimals(decimalPlaces, offset.getOffset()))
-                    .put("proportion", offset.getProportion())
+                    .put("offset", decimalUtils.convertFromDecimals(decimalPlaces, offset.getOffset())
+                            .toBigInteger().toString())
+                    .put("proportion", offset.getProportion().toString())
                     .put("reference", String.format("PEGGED_REFERENCE_%s", offset.getReference().name()));
             array.put(order);
         }

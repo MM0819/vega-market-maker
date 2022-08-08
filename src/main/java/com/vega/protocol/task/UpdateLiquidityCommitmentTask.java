@@ -2,6 +2,7 @@ package com.vega.protocol.task;
 
 import com.vega.protocol.api.VegaApiClient;
 import com.vega.protocol.constant.ErrorCode;
+import com.vega.protocol.constant.PeggedReference;
 import com.vega.protocol.exception.TradingException;
 import com.vega.protocol.model.*;
 import com.vega.protocol.service.AccountService;
@@ -87,14 +88,15 @@ public class UpdateLiquidityCommitmentTask extends TradingTask {
                 config.getBidQuoteRange(), config.getOrderCount());
         BigDecimal commitmentAmount = BigDecimal.valueOf((config.getAskQuoteRange() + config.getBidQuoteRange()) / 4)
                 .multiply(balance);
-        // TODO - need to convert correctly to int format using decimalUtils
         List<LiquidityCommitmentOffset> liquidityCommitmentBids = bidDistribution.stream()
                 .map(d -> new LiquidityCommitmentOffset()
+                        .setReference(PeggedReference.MID)
                         .setOffset(referencePrice.subtract(BigDecimal.valueOf(d.getPrice())))
                         .setProportion(d.getSize().intValue()))
                 .collect(Collectors.toList());
         List<LiquidityCommitmentOffset> liquidityCommitmentAsks = askDistribution.stream()
                 .map(d -> new LiquidityCommitmentOffset()
+                        .setReference(PeggedReference.MID)
                         .setOffset(referencePrice.subtract(BigDecimal.valueOf(d.getPrice())))
                         .setProportion(d.getSize().intValue()))
                 .collect(Collectors.toList());
