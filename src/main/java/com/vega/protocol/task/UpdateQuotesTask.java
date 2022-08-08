@@ -42,7 +42,7 @@ public class UpdateQuotesTask extends TradingTask {
     private final String partyId;
 
     public UpdateQuotesTask(@Value("${vega.market.id}") String marketId,
-                            @Value("${naive.flow.enabled}") Boolean taskEnabled,
+                            @Value("${update.quotes.enabled}") Boolean taskEnabled,
                             @Value("${vega.party.id}") String partyId,
                             ReferencePriceStore referencePriceStore,
                             AppConfigStore appConfigStore,
@@ -122,6 +122,8 @@ public class UpdateQuotesTask extends TradingTask {
                         .setSide(MarketSide.BUY)
                         .setType(OrderType.LIMIT)
                         .setTimeInForce(tif)
+                        .setMarket(market)
+                        .setPartyId(partyId)
         ).collect(Collectors.toList());
         List<Order> asks = askDistribution.stream().map(d ->
                 new Order()
@@ -131,6 +133,8 @@ public class UpdateQuotesTask extends TradingTask {
                         .setSide(MarketSide.SELL)
                         .setType(OrderType.LIMIT)
                         .setTimeInForce(tif)
+                        .setMarket(market)
+                        .setPartyId(partyId)
         ).collect(Collectors.toList());
         List<Order> currentOrders = orderStore.getItems();
         List<Order> currentBids = currentOrders.stream()

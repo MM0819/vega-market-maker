@@ -8,6 +8,7 @@ import org.apache.commons.collections4.ListUtils;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -83,6 +84,7 @@ public class PricingUtils {
         double stepSize = appConfigStore.get()
                 .orElseThrow(() -> new TradingException(ErrorCode.APP_CONFIG_NOT_FOUND))
                 .getPricingStepSize();
+        stepSize = askSize * stepSize;
         while(price >= cutoff) {
             double bidSize = getBidSize(askSize, askPoolSize, bidPoolSize, scalingFactor);
             DistributionStep order = new DistributionStep().setPrice(price).setSize(askSize);
@@ -90,7 +92,7 @@ public class PricingUtils {
             bidPoolSize -= bidSize;
             askPoolSize += askSize;
             price = bidPoolSize / askPoolSize;
-            askSize = askSize * (1 + stepSize);
+            askSize = askSize + stepSize;
         }
         if(distribution.size() > orderCount) {
             distribution = aggregateDistribution(distribution, orderCount);
@@ -123,6 +125,7 @@ public class PricingUtils {
         double stepSize = appConfigStore.get()
                 .orElseThrow(() -> new TradingException(ErrorCode.APP_CONFIG_NOT_FOUND))
                 .getPricingStepSize();
+        stepSize = bidSize * stepSize;
         while(price <= cutoff) {
             double askSize = getAskSize(bidSize, askPoolSize, bidPoolSize, scalingFactor);
             DistributionStep order = new DistributionStep().setPrice(price).setSize(askSize);
@@ -130,7 +133,7 @@ public class PricingUtils {
             bidPoolSize += bidSize;
             askPoolSize -= askSize;
             price = bidPoolSize / askPoolSize;
-            bidSize = bidSize * (1 + stepSize);
+            bidSize = bidSize + stepSize;
         }
         if(distribution.size() > orderCount) {
             distribution = aggregateDistribution(distribution, orderCount);
@@ -152,14 +155,18 @@ public class PricingUtils {
     ) {
         List<Double> prices = distribution.stream().map(DistributionStep::getPrice).collect(Collectors.toList());
         List<Double> sizes = distribution.stream().map(DistributionStep::getSize).collect(Collectors.toList());
-        int partitionSize = prices.size() / orderCount;
-        List<List<Double>> pricePartitions = ListUtils.partition(prices, partitionSize);
-        List<List<Double>> sizePartitions = ListUtils.partition(sizes, partitionSize);
+        int partitionSize = (int) Math.ceil((double) prices.size() / (double) orderCount);
+        List<List<Double>> pricePartitions = ListUtils.partition(prices, partitionSize)
+                .stream().filter(p -> p.size() == partitionSize).toList();
+        List<List<Double>> sizePartitions = ListUtils.partition(sizes, partitionSize)
+                .stream().filter(p -> p.size() == partitionSize).toList();
         distribution = new ArrayList<>();
-        for (int i = 0; i < orderCount; i++) {
-            distribution.add(new DistributionStep()
-                    .setPrice(pricePartitions.get(i).get(partitionSize - 1))
-                    .setSize(sizePartitions.get(i).stream().mapToDouble(Double::doubleValue).sum()));
+        int length = Math.min(pricePartitions.size(), orderCount);
+        for (int i = 0; i < length; i++) {
+            DistributionStep step = new DistributionStep()
+                    .setPrice(pricePartitions.get(i).get(pricePartitions.get(i).size() - 1))
+                    .setSize(sizePartitions.get(i).stream().mapToDouble(Double::doubleValue).sum());
+            distribution.add(step);
         }
         return distribution;
     }

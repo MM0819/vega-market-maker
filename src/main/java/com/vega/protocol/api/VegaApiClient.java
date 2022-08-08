@@ -195,6 +195,7 @@ public class VegaApiClient {
             for(int i=0; i<marketsArray.length(); i++) {
                 JSONObject marketObject = marketsArray.getJSONObject(i);
                 JSONObject tradableInstrument = marketObject.getJSONObject("tradableInstrument");
+                String id = marketObject.getString("id");
                 String name = tradableInstrument.getJSONObject("instrument").getString("name");
                 String settlementAssetId = tradableInstrument.getJSONObject("instrument")
                         .getJSONObject("future").getString("settlementAsset");
@@ -209,7 +210,7 @@ public class VegaApiClient {
                         .setName(name)
                         .setSettlementAsset(settlementAsset.getSymbol())
                         .setDecimalPlaces(decimalPlaces)
-                        .setId(marketId)
+                        .setId(id)
                         .setState(state)
                         .setTradingMode(tradingMode);
                 markets.add(market);
