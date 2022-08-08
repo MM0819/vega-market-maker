@@ -12,7 +12,9 @@
           "tradableInstrument": {
             "instrument": {
               "product": {
-                "quoteName": "USD"
+                "settlementAsset": {
+                  "id": "4a12e42cf69da167fd265a88eef6c0a36da9f42891dad3b424884ac05faace09"
+                }
               }
             }
           }

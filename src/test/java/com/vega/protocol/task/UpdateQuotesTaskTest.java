@@ -5,6 +5,7 @@ import com.vega.protocol.constant.ErrorCode;
 import com.vega.protocol.constant.MarketSide;
 import com.vega.protocol.constant.MarketTradingMode;
 import com.vega.protocol.initializer.DataInitializer;
+import com.vega.protocol.initializer.WebSocketInitializer;
 import com.vega.protocol.model.*;
 import com.vega.protocol.service.AccountService;
 import com.vega.protocol.service.MarketService;
@@ -39,6 +40,7 @@ public class UpdateQuotesTaskTest {
     private final PositionService positionService = Mockito.mock(PositionService.class);
     private final PricingUtils pricingUtils = Mockito.mock(PricingUtils.class);
     private final DataInitializer dataInitializer = Mockito.mock(DataInitializer.class);
+    private final WebSocketInitializer webSocketInitializer = Mockito.mock(WebSocketInitializer.class);
 
     private AppConfig getAppConfig() {
         return new AppConfig()
@@ -55,7 +57,8 @@ public class UpdateQuotesTaskTest {
     @BeforeEach
     public void setup() {
         updateQuotesTask = new UpdateQuotesTask(MARKET_ID, PARTY_ID, referencePriceStore, appConfigStore, orderStore,
-                vegaApiClient, marketService, accountService, positionService, pricingUtils, dataInitializer);
+                vegaApiClient, marketService, accountService, positionService, pricingUtils, dataInitializer,
+                webSocketInitializer);
     }
 
     private void execute(
@@ -64,6 +67,8 @@ public class UpdateQuotesTaskTest {
             final MarketTradingMode tradingMode
     ) {
         Mockito.when(dataInitializer.isInitialized()).thenReturn(true);
+        Mockito.when(webSocketInitializer.isVegaWebSocketsInitialized()).thenReturn(true);
+        Mockito.when(webSocketInitializer.isBinanceWebSocketInitialized()).thenReturn(true);
         Mockito.when(marketService.getById(MARKET_ID)).thenReturn(new Market()
                 .setSettlementAsset(USDT)
                 .setTradingMode(tradingMode));
@@ -135,6 +140,8 @@ public class UpdateQuotesTaskTest {
     @Test
     public void testExecuteAppConfigNotFound() {
         Mockito.when(dataInitializer.isInitialized()).thenReturn(true);
+        Mockito.when(webSocketInitializer.isVegaWebSocketsInitialized()).thenReturn(true);
+        Mockito.when(webSocketInitializer.isBinanceWebSocketInitialized()).thenReturn(true);
         Mockito.when(marketService.getById(MARKET_ID)).thenReturn(new Market()
                 .setSettlementAsset(USDT)
                 .setTradingMode(MarketTradingMode.CONTINUOUS));
@@ -151,6 +158,8 @@ public class UpdateQuotesTaskTest {
     @Test
     public void testExecuteReferencePriceNotFound() {
         Mockito.when(dataInitializer.isInitialized()).thenReturn(true);
+        Mockito.when(webSocketInitializer.isVegaWebSocketsInitialized()).thenReturn(true);
+        Mockito.when(webSocketInitializer.isBinanceWebSocketInitialized()).thenReturn(true);
         Mockito.when(marketService.getById(MARKET_ID)).thenReturn(new Market()
                 .setSettlementAsset(USDT)
                 .setTradingMode(MarketTradingMode.CONTINUOUS));

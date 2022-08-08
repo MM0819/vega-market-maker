@@ -33,8 +33,8 @@ public class Application implements CommandLineRunner {
     @Override
     public void run(String... args) {
         log.info("Starting market maker...");
-        webSocketInitializer.initialize();
-        sleepUtils.sleep(5000L);
         dataInitializer.initialize();
+        sleepUtils.sleep(5000L);
+        webSocketInitializer.initialize();
     }
 }

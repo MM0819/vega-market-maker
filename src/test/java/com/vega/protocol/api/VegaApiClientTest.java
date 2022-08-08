@@ -191,6 +191,26 @@ public class VegaApiClientTest {
         }
     }
 
+    private void getMarkets(
+            final Optional<Asset> asset,
+            final int count
+    ) {
+        Mockito.when(assetStore.getById(Mockito.any())).thenReturn(asset);
+        try(MockedStatic<Unirest> mockStatic = Mockito.mockStatic(Unirest.class)) {
+            try(InputStream is = getClass().getClassLoader().getResourceAsStream("vega-markets-rest.json")) {
+                String marketsJson = IOUtils.toString(Objects.requireNonNull(is), StandardCharsets.UTF_8);
+                mockGetToken(mockStatic, tokenJson());
+                mockGetRequest("/markets", mockStatic, new JSONObject(marketsJson));
+                List<Market> markets = vegaApiClient.getMarkets();
+                Assertions.assertEquals(count, markets.size());
+            } catch (Exception e) {
+                Assertions.fail();
+            }
+        } catch(Exception e) {
+            Assertions.fail();
+        }
+    }
+
     private void getLiquidityCommitment(
             final Optional<Market> market,
             final boolean isPresent,
@@ -332,19 +352,12 @@ public class VegaApiClientTest {
 
     @Test
     public void testGetMarkets() {
-        try(MockedStatic<Unirest> mockStatic = Mockito.mockStatic(Unirest.class)) {
-            try(InputStream is = getClass().getClassLoader().getResourceAsStream("vega-markets-rest.json")) {
-                String marketsJson = IOUtils.toString(Objects.requireNonNull(is), StandardCharsets.UTF_8);
-                mockGetToken(mockStatic, tokenJson());
-                mockGetRequest("/markets", mockStatic, new JSONObject(marketsJson));
-                List<Market> markets = vegaApiClient.getMarkets();
-                Assertions.assertEquals(1, markets.size());
-            } catch (Exception e) {
-                Assertions.fail();
-            }
-        } catch(Exception e) {
-            Assertions.fail();
-        }
+        getMarkets(Optional.of(new Asset()), 1);
+    }
+
+    @Test
+    public void testGetMarketsMissingAsset() {
+        getMarkets(Optional.empty(), 0);
     }
 
     @Test

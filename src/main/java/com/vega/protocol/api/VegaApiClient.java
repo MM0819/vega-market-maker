@@ -196,8 +196,10 @@ public class VegaApiClient {
                 JSONObject marketObject = marketsArray.getJSONObject(i);
                 JSONObject tradableInstrument = marketObject.getJSONObject("tradableInstrument");
                 String name = tradableInstrument.getJSONObject("instrument").getString("name");
-                String settlementAsset = tradableInstrument.getJSONObject("instrument")
-                        .getJSONObject("future").getString("quoteName");
+                String settlementAssetId = tradableInstrument.getJSONObject("instrument")
+                        .getJSONObject("future").getString("settlementAsset");
+                Asset settlementAsset = assetStore.getById(settlementAssetId)
+                        .orElseThrow(() -> new TradingException(ErrorCode.ASSET_NOT_FOUND));
                 int decimalPlaces = marketObject.getInt("decimalPlaces");
                 MarketState state = MarketState.valueOf(marketObject.getString("state")
                         .replace("STATE_", ""));
@@ -205,7 +207,7 @@ public class VegaApiClient {
                         .replace("TRADING_MODE_", ""));
                 Market market = new Market()
                         .setName(name)
-                        .setSettlementAsset(settlementAsset)
+                        .setSettlementAsset(settlementAsset.getSymbol())
                         .setDecimalPlaces(decimalPlaces)
                         .setId(marketId)
                         .setState(state)

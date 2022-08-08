@@ -43,7 +43,9 @@ public class VegaWebSocketClient extends WebSocketClient {
                         instrument {
                             product {
                                 ...on Future {
-                                    quoteName
+                                    settlementAsset {
+                                        id
+                                    }
                                 }
                             }
                         }
@@ -120,7 +122,9 @@ public class VegaWebSocketClient extends WebSocketClient {
     				    instrument {
                             product {
                                 ...on Future {
-                                    quoteName
+                                    settlementAsset {
+                                        id
+                                    }
                                 }
                             }
                         }
@@ -134,6 +138,7 @@ public class VegaWebSocketClient extends WebSocketClient {
     private final OrderStore orderStore;
     private final PositionStore positionStore;
     private final AccountStore accountStore;
+    private final AssetStore assetStore;
     private final LiquidityCommitmentStore liquidityCommitmentStore;
     private final String partyId;
     private final String marketId;
@@ -149,6 +154,7 @@ public class VegaWebSocketClient extends WebSocketClient {
      * @param orderStore {@link OrderStore}
      * @param positionStore {@link PositionStore}
      * @param accountStore {@link AccountStore}
+     * @param assetStore {@link AssetStore}
      * @param liquidityCommitmentStore {@link LiquidityCommitmentStore}
      * @param decimalUtils {@link DecimalUtils}
      * @param orderService {@link OrderService}
@@ -161,6 +167,7 @@ public class VegaWebSocketClient extends WebSocketClient {
             final OrderStore orderStore,
             final PositionStore positionStore,
             final AccountStore accountStore,
+            final AssetStore assetStore,
             final LiquidityCommitmentStore liquidityCommitmentStore,
             final DecimalUtils decimalUtils,
             final OrderService orderService,
@@ -172,6 +179,7 @@ public class VegaWebSocketClient extends WebSocketClient {
         this.orderStore = orderStore;
         this.positionStore = positionStore;
         this.accountStore = accountStore;
+        this.assetStore = assetStore;
         this.liquidityCommitmentStore = liquidityCommitmentStore;
         this.decimalUtils = decimalUtils;
         this.orderService = orderService;
@@ -414,11 +422,14 @@ public class VegaWebSocketClient extends WebSocketClient {
                         .replaceAll("([a-z])([A-Z])", "$1_$2").toUpperCase());
                 MarketTradingMode tradingMode = MarketTradingMode.valueOf(marketObject.getString("tradingMode")
                         .replaceAll("([a-z])([A-Z])", "$1_$2").toUpperCase());
-                String quoteName = marketObject
+                String settlementAssetId = marketObject
                         .getJSONObject("tradableInstrument")
                         .getJSONObject("instrument")
                         .getJSONObject("product")
-                        .getString("quoteName");
+                        .getJSONObject("settlementAsset")
+                        .getString("id");
+                Asset asset = assetStore.getById(settlementAssetId)
+                        .orElseThrow(() -> new TradingException(ErrorCode.ASSET_NOT_FOUND));
                 int positionDecimalPlaces = marketObject.getInt("positionDecimalPlaces");
                 Market market = new Market()
                         .setId(id)
@@ -427,7 +438,7 @@ public class VegaWebSocketClient extends WebSocketClient {
                         .setTradingMode(tradingMode)
                         .setDecimalPlaces(decimalPlaces)
                         .setPositionDecimalPlaces(positionDecimalPlaces)
-                        .setSettlementAsset(quoteName);
+                        .setSettlementAsset(asset.getSymbol());
                 marketStore.update(market);
             } catch(Exception e) {
                 log.info(data.toString());

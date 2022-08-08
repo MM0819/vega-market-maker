@@ -5,6 +5,7 @@ import com.vega.protocol.constant.MarketSide;
 import com.vega.protocol.constant.OrderStatus;
 import com.vega.protocol.constant.OrderType;
 import com.vega.protocol.initializer.DataInitializer;
+import com.vega.protocol.initializer.WebSocketInitializer;
 import com.vega.protocol.model.Market;
 import com.vega.protocol.model.Order;
 import com.vega.protocol.service.AccountService;
@@ -42,8 +43,9 @@ public class NaiveFlowTask extends TradingTask {
                          MarketService marketService,
                          AccountService accountService,
                          OrderService orderService,
-                         DataInitializer dataInitializer) {
-        super(dataInitializer);
+                         DataInitializer dataInitializer,
+                         WebSocketInitializer webSocketInitializer) {
+        super(dataInitializer, webSocketInitializer);
         this.vegaApiClient = vegaApiClient;
         this.marketService = marketService;
         this.marketId = marketId;
@@ -60,7 +62,7 @@ public class NaiveFlowTask extends TradingTask {
 
     @Override
     public void execute() {
-        if(!dataInitializer.isInitialized()) {
+        if(!isInitialized()) {
             log.warn("Cannot execute {} because data is not initialized", getClass().getSimpleName());
             return;
         }

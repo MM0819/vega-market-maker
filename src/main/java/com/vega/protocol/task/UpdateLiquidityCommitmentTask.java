@@ -5,6 +5,7 @@ import com.vega.protocol.constant.ErrorCode;
 import com.vega.protocol.constant.PeggedReference;
 import com.vega.protocol.exception.TradingException;
 import com.vega.protocol.initializer.DataInitializer;
+import com.vega.protocol.initializer.WebSocketInitializer;
 import com.vega.protocol.model.*;
 import com.vega.protocol.service.AccountService;
 import com.vega.protocol.service.MarketService;
@@ -47,8 +48,9 @@ public class UpdateLiquidityCommitmentTask extends TradingTask {
                                          ReferencePriceStore referencePriceStore,
                                          LiquidityCommitmentStore liquidityCommitmentStore,
                                          PricingUtils pricingUtils,
-                                         DataInitializer dataInitializer) {
-        super(dataInitializer);
+                                         DataInitializer dataInitializer,
+                                         WebSocketInitializer webSocketInitializer) {
+        super(dataInitializer, webSocketInitializer);
         this.marketService = marketService;
         this.accountService = accountService;
         this.positionService = positionService;
@@ -68,7 +70,7 @@ public class UpdateLiquidityCommitmentTask extends TradingTask {
 
     @Override
     public void execute() {
-        if(!dataInitializer.isInitialized()) {
+        if(!isInitialized()) {
             log.warn("Cannot execute {} because data is not initialized", getClass().getSimpleName());
             return;
         }

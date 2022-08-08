@@ -26,6 +26,7 @@ public class VegaWebSocketClientTest {
     private OrderStore orderStore;
     private PositionStore positionStore;
     private AccountStore accountStore;
+    private AssetStore assetStore;
     private LiquidityCommitmentStore liquidityCommitmentStore;
     private DecimalUtils decimalUtils;
     private OrderService orderService;
@@ -38,17 +39,22 @@ public class VegaWebSocketClientTest {
         orderStore = Mockito.mock(OrderStore.class);
         positionStore = Mockito.mock(PositionStore.class);
         accountStore = Mockito.mock(AccountStore.class);
+        assetStore = Mockito.mock(AssetStore.class);
         decimalUtils = Mockito.mock(DecimalUtils.class);
         orderService = Mockito.mock(OrderService.class);
         liquidityCommitmentStore = Mockito.mock(LiquidityCommitmentStore.class);
         vegaWebSocketClient = new VegaWebSocketClient(PARTY_ID, MARKET_ID, marketStore, orderStore, positionStore,
-                accountStore, liquidityCommitmentStore, decimalUtils, orderService,
+                accountStore, assetStore, liquidityCommitmentStore, decimalUtils, orderService,
                 URI.create("wss://lb.testnet.vega.xyz/query"));
     }
 
-    private void handleMarkets(int count) {
+    private void handleMarkets(
+            final Optional<Asset> asset,
+            final int count
+    ) {
+        Mockito.when(assetStore.getById(Mockito.any())).thenReturn(asset);
         try(InputStream is = getClass().getClassLoader()
-                .getResourceAsStream(String.format("vega-markets-ws-%s.json", count))) {
+                .getResourceAsStream(String.format("vega-markets-ws-%s.json", count == 0 ? count + 1 : count))) {
             String marketsJson = IOUtils.toString(Objects.requireNonNull(is), StandardCharsets.UTF_8);
             vegaWebSocketClient.onMessage(marketsJson);
             Mockito.verify(marketStore, Mockito.times(count)).update(Mockito.any(Market.class));
@@ -82,12 +88,17 @@ public class VegaWebSocketClientTest {
 
     @Test
     public void testHandleMarkets() {
-        handleMarkets(1);
+        handleMarkets(Optional.of(new Asset()), 1);
+    }
+
+    @Test
+    public void testHandleMarketsMissingAsset() {
+        handleMarkets(Optional.empty(), 0);
     }
 
     @Test
     public void testHandleMaketsMany() {
-        handleMarkets(2);
+        handleMarkets(Optional.of(new Asset()), 2);
     }
 
     @Test

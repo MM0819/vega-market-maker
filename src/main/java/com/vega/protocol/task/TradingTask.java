@@ -1,6 +1,7 @@
 package com.vega.protocol.task;
 
 import com.vega.protocol.initializer.DataInitializer;
+import com.vega.protocol.initializer.WebSocketInitializer;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.scheduling.support.CronTrigger;
 
@@ -11,9 +12,18 @@ public abstract class TradingTask {
     private static final ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
 
     protected final DataInitializer dataInitializer;
+    protected final WebSocketInitializer webSocketInitializer;
 
-    protected TradingTask(DataInitializer dataInitializer) {
+    protected TradingTask(DataInitializer dataInitializer,
+                          WebSocketInitializer webSocketInitializer) {
         this.dataInitializer = dataInitializer;
+        this.webSocketInitializer = webSocketInitializer;
+    }
+
+    public boolean isInitialized() {
+        return dataInitializer.isInitialized() && webSocketInitializer.isVegaWebSocketsInitialized() &&
+                (webSocketInitializer.isPolygonWebSocketInitialized() ||
+                        webSocketInitializer.isBinanceWebSocketInitialized());
     }
 
     /**

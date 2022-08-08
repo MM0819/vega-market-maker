@@ -1,6 +1,7 @@
 package com.vega.protocol.task;
 
 import com.vega.protocol.initializer.DataInitializer;
+import com.vega.protocol.initializer.WebSocketInitializer;
 import com.vega.protocol.model.LiquidityCommitment;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -11,16 +12,20 @@ public class HedgeExposureTaskTest {
 
     private HedgeExposureTask hedgeExposureTask;
     private DataInitializer dataInitializer;
+    private WebSocketInitializer webSocketInitializer;
 
     @BeforeEach
     public void setup() {
         dataInitializer = Mockito.mock(DataInitializer.class);
-        hedgeExposureTask = new HedgeExposureTask(dataInitializer);
+        webSocketInitializer = Mockito.mock(WebSocketInitializer.class);
+        hedgeExposureTask = new HedgeExposureTask(dataInitializer, webSocketInitializer);
     }
 
     @Test
     public void testExecute() {
         Mockito.when(dataInitializer.isInitialized()).thenReturn(true);
+        Mockito.when(webSocketInitializer.isVegaWebSocketsInitialized()).thenReturn(true);
+        Mockito.when(webSocketInitializer.isBinanceWebSocketInitialized()).thenReturn(true);
         hedgeExposureTask.execute();
     }
 

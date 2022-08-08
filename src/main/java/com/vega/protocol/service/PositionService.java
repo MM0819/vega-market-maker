@@ -30,6 +30,7 @@ public class PositionService {
         if(positionOptional.isPresent()) {
             Position position = positionOptional.get();
             BigDecimal exposure = position.getSize();
+            if(exposure.doubleValue() == 0) return BigDecimal.ZERO;
             if(position.getSide().equals(MarketSide.SELL)) {
                 return exposure.multiply(BigDecimal.valueOf(-1));
             }

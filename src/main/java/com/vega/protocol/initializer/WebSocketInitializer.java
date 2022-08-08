@@ -32,6 +32,7 @@ public class WebSocketInitializer {
     private final OrderStore orderStore;
     private final PositionStore positionStore;
     private final AccountStore accountStore;
+    private final AssetStore assetStore;
     private final LiquidityCommitmentStore liquidityCommitmentStore;
     private final DecimalUtils decimalUtils;
     private final OrderService orderService;
@@ -53,6 +54,7 @@ public class WebSocketInitializer {
                                 OrderStore orderStore,
                                 PositionStore positionStore,
                                 AccountStore accountStore,
+                                AssetStore assetStore,
                                 LiquidityCommitmentStore liquidityCommitmentStore,
                                 DecimalUtils decimalUtils,
                                 OrderService orderService) {
@@ -69,6 +71,7 @@ public class WebSocketInitializer {
         this.orderStore = orderStore;
         this.positionStore = positionStore;
         this.accountStore = accountStore;
+        this.assetStore = assetStore;
         this.liquidityCommitmentStore = liquidityCommitmentStore;
         this.decimalUtils = decimalUtils;
         this.orderService = orderService;
@@ -82,8 +85,11 @@ public class WebSocketInitializer {
     private BinanceWebSocketClient binanceWebSocketClient;
     @Getter
     private PolygonWebSocketClient polygonWebSocketClient;
+    @Getter
     private boolean vegaWebSocketsInitialized = false;
+    @Getter
     private boolean binanceWebSocketInitialized = false;
+    @Getter
     private boolean polygonWebSocketInitialized = false;
 
     public void initialize() {
@@ -101,7 +107,7 @@ public class WebSocketInitializer {
     private void initializeVega() {
         log.info("Connecting to Vega Web Socket...");
         vegaWebSocketClient = new VegaWebSocketClient(partyId, marketId, marketStore, orderStore, positionStore,
-                accountStore, liquidityCommitmentStore, decimalUtils, orderService, URI.create(vegaWsUrl));
+                accountStore, assetStore, liquidityCommitmentStore, decimalUtils, orderService, URI.create(vegaWsUrl));
         vegaWebSocketClient.connect();
         log.info("Connected to {}", vegaWebSocketClient.getURI().toString());
         vegaWebSocketsInitialized = true;

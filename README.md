@@ -88,4 +88,4 @@ Setup your environment:
 
 Start the app: 
 
-`java -jar target/simple-market-maker-1.0-SNAPSHOT.jar`
+`java -jar target/vega-market-maker-1.0-SNAPSHOT.jar`
