@@ -99,7 +99,7 @@ public class PricingUtils {
             price = bidPoolSize / askPoolSize;
             askSize = askSize + stepSize;
         }
-        double volume = distribution.stream().map(DistributionStep::getSize).mapToDouble(d -> d).sum();
+        double volume = distribution.stream().map(d -> d.getPrice() * d.getSize()).mapToDouble(d -> d).sum();
         double scale = originalBidPoolSize / volume;
         distribution.forEach(d -> d.setSize(d.getSize() * scale * scalingFactor));
         distribution = distribution.stream().filter(d -> d.getPrice() >= quoteCutoff).collect(Collectors.toList());

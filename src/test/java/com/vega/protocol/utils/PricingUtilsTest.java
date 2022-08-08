@@ -119,7 +119,12 @@ public class PricingUtilsTest {
 
     @Test
     public void testGetBidDistributionPartialRange() {
-        getBidDistribution(10, 10, 1.0, 0.5, 0.999);
+        getBidDistribution(10, 10, 1.0, 0.25, 0.5);
+    }
+
+    @Test
+    public void testGetBidDistributionCustomRange() {
+        getBidDistribution(10, 10, 1.0, 0.5, 0.5);
     }
 
     @Test
