@@ -42,6 +42,7 @@ public class UpdateQuotesTask extends TradingTask {
     private final String partyId;
 
     public UpdateQuotesTask(@Value("${vega.market.id}") String marketId,
+                            @Value("${naive.flow.enabled}") Boolean taskEnabled,
                             @Value("${vega.party.id}") String partyId,
                             ReferencePriceStore referencePriceStore,
                             AppConfigStore appConfigStore,
@@ -53,7 +54,7 @@ public class UpdateQuotesTask extends TradingTask {
                             PricingUtils pricingUtils,
                             DataInitializer dataInitializer,
                             WebSocketInitializer webSocketInitializer) {
-        super(dataInitializer, webSocketInitializer);
+        super(dataInitializer, webSocketInitializer, taskEnabled);
         this.appConfigStore = appConfigStore;
         this.marketId = marketId;
         this.referencePriceStore = referencePriceStore;
@@ -81,6 +82,10 @@ public class UpdateQuotesTask extends TradingTask {
     public void execute() {
         if(!isInitialized()) {
             log.warn("Cannot execute {} because data is not initialized", getClass().getSimpleName());
+            return;
+        }
+        if(!taskEnabled) {
+            log.warn("Cannot execute {} because it is disabled", getClass().getSimpleName());
             return;
         }
         log.info("Updating quotes...");

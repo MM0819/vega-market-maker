@@ -53,8 +53,8 @@ public class UpdateLiquidityCommitmentTaskTest {
 
     @BeforeEach
     public void setup() {
-        updateLiquidityCommitmentTask = new UpdateLiquidityCommitmentTask(MARKET_ID, PARTY_ID, marketService,
-                accountService, positionService, appConfigStore, vegaApiClient, referencePriceStore,
+        updateLiquidityCommitmentTask = new UpdateLiquidityCommitmentTask(MARKET_ID, true, PARTY_ID,
+                marketService, accountService, positionService, appConfigStore, vegaApiClient, referencePriceStore,
                 liquidityCommitmentStore, pricingUtils, dataInitializer, webSocketInitializer);
     }
 

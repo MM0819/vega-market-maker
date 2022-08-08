@@ -56,9 +56,9 @@ public class UpdateQuotesTaskTest {
 
     @BeforeEach
     public void setup() {
-        updateQuotesTask = new UpdateQuotesTask(MARKET_ID, PARTY_ID, referencePriceStore, appConfigStore, orderStore,
-                vegaApiClient, marketService, accountService, positionService, pricingUtils, dataInitializer,
-                webSocketInitializer);
+        updateQuotesTask = new UpdateQuotesTask(MARKET_ID, true, PARTY_ID, referencePriceStore,
+                appConfigStore, orderStore, vegaApiClient, marketService, accountService, positionService,
+                pricingUtils, dataInitializer, webSocketInitializer);
     }
 
     private void execute(

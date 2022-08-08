@@ -39,6 +39,7 @@ public class UpdateLiquidityCommitmentTask extends TradingTask {
     private final String partyId;
 
     public UpdateLiquidityCommitmentTask(@Value("${vega.market.id}") String marketId,
+                                         @Value("${naive.flow.enabled}") Boolean taskEnabled,
                                          @Value("${vega.party.id}") String partyId,
                                          MarketService marketService,
                                          AccountService accountService,
@@ -50,7 +51,7 @@ public class UpdateLiquidityCommitmentTask extends TradingTask {
                                          PricingUtils pricingUtils,
                                          DataInitializer dataInitializer,
                                          WebSocketInitializer webSocketInitializer) {
-        super(dataInitializer, webSocketInitializer);
+        super(dataInitializer, webSocketInitializer, taskEnabled);
         this.marketService = marketService;
         this.accountService = accountService;
         this.positionService = positionService;
@@ -72,6 +73,10 @@ public class UpdateLiquidityCommitmentTask extends TradingTask {
     public void execute() {
         if(!isInitialized()) {
             log.warn("Cannot execute {} because data is not initialized", getClass().getSimpleName());
+            return;
+        }
+        if(!taskEnabled) {
+            log.warn("Cannot execute {} because it is disabled", getClass().getSimpleName());
             return;
         }
         log.info("Updating liquidity commitment...");

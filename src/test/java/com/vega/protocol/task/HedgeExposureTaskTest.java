@@ -18,7 +18,7 @@ public class HedgeExposureTaskTest {
     public void setup() {
         dataInitializer = Mockito.mock(DataInitializer.class);
         webSocketInitializer = Mockito.mock(WebSocketInitializer.class);
-        hedgeExposureTask = new HedgeExposureTask(dataInitializer, webSocketInitializer);
+        hedgeExposureTask = new HedgeExposureTask(dataInitializer, webSocketInitializer, true);
     }
 
     @Test

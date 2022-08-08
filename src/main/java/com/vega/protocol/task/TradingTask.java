@@ -13,11 +13,14 @@ public abstract class TradingTask {
 
     protected final DataInitializer dataInitializer;
     protected final WebSocketInitializer webSocketInitializer;
+    protected final boolean taskEnabled;
 
     protected TradingTask(DataInitializer dataInitializer,
-                          WebSocketInitializer webSocketInitializer) {
+                          WebSocketInitializer webSocketInitializer,
+                          boolean taskEnabled) {
         this.dataInitializer = dataInitializer;
         this.webSocketInitializer = webSocketInitializer;
+        this.taskEnabled = taskEnabled;
     }
 
     public boolean isInitialized() {

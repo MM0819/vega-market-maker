@@ -30,14 +30,13 @@ public class NaiveFlowTask extends TradingTask {
     private final AccountService accountService;
     private final OrderService orderService;
     private final String marketId;
-    private final Boolean naiveFlowEnabled;
     private final String partyId;
 
     private MarketSide bias = MarketSide.BUY;
     private LocalDateTime nextBiasUpdate = LocalDateTime.now().minusHours(1);
 
     public NaiveFlowTask(@Value("${vega.market.id}") String marketId,
-                         @Value("${naive.flow.enabled}") Boolean naiveFlowEnabled,
+                         @Value("${naive.flow.enabled}") Boolean taskEnabled,
                          @Value("${naive.flow.party.id}") String partyId,
                          VegaApiClient vegaApiClient,
                          MarketService marketService,
@@ -45,11 +44,10 @@ public class NaiveFlowTask extends TradingTask {
                          OrderService orderService,
                          DataInitializer dataInitializer,
                          WebSocketInitializer webSocketInitializer) {
-        super(dataInitializer, webSocketInitializer);
+        super(dataInitializer, webSocketInitializer, taskEnabled);
         this.vegaApiClient = vegaApiClient;
         this.marketService = marketService;
         this.marketId = marketId;
-        this.naiveFlowEnabled = naiveFlowEnabled;
         this.partyId = partyId;
         this.accountService = accountService;
         this.orderService = orderService;
@@ -66,7 +64,10 @@ public class NaiveFlowTask extends TradingTask {
             log.warn("Cannot execute {} because data is not initialized", getClass().getSimpleName());
             return;
         }
-        if(!naiveFlowEnabled) return;
+        if(!taskEnabled) {
+            log.warn("Cannot execute {} because it is disabled", getClass().getSimpleName());
+            return;
+        }
         updateBias();
         double threshold = new Random().nextDouble();
         MarketSide side = bias;
