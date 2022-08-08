@@ -100,9 +100,9 @@ public class WebSocketInitializerTest {
     public void testKeepAliveBinanceClosed() throws InterruptedException {
         webSocketInitializer = getWebSocketInitializer(true, ReferencePriceSource.BINANCE);
         webSocketInitializer.initialize();
-        Thread.sleep(1000L);
+        Thread.sleep(2000L);
         webSocketInitializer.getBinanceWebSocketClient().close();
-        Thread.sleep(1000L);
+        Thread.sleep(2000L);
         webSocketInitializer.keepWebSocketsAlive();
     }
 

@@ -1,11 +1,13 @@
 package com.vega.protocol.service;
 
 import com.vega.protocol.constant.MarketSide;
+import com.vega.protocol.constant.PeggedReference;
 import com.vega.protocol.model.LiquidityCommitmentOffset;
 import com.vega.protocol.utils.DecimalUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -13,7 +15,9 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import java.io.InputStream;
+import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -73,5 +77,16 @@ public class OrderServiceTest {
             log.error(e.getMessage(), e);
             Assertions.fail();
         }
+    }
+
+    @Test
+    public void testBuildLiquidityOrders() throws JSONException {
+        List<LiquidityCommitmentOffset> offsets = new ArrayList<>();
+        offsets.add(new LiquidityCommitmentOffset()
+                .setOffset(BigDecimal.ONE)
+                .setProportion(1)
+                .setReference(PeggedReference.MID));
+        JSONArray array = orderService.buildLiquidityOrders(3, offsets);
+        Assertions.assertEquals(1, array.length());
     }
 }

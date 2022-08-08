@@ -6,6 +6,7 @@ import com.mashape.unirest.http.Unirest;
 import com.mashape.unirest.request.GetRequest;
 import com.mashape.unirest.request.HttpRequestWithBody;
 import com.mashape.unirest.request.body.RequestBodyEntity;
+import com.vega.protocol.constant.LiquidityCommitmentStatus;
 import com.vega.protocol.constant.MarketSide;
 import com.vega.protocol.constant.OrderType;
 import com.vega.protocol.constant.TimeInForce;
@@ -15,6 +16,7 @@ import com.vega.protocol.store.AssetStore;
 import com.vega.protocol.store.MarketStore;
 import com.vega.protocol.utils.DecimalUtils;
 import org.apache.commons.io.IOUtils;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.jupiter.api.Assertions;
@@ -25,6 +27,7 @@ import org.mockito.Mockito;
 import java.io.InputStream;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -59,6 +62,20 @@ public class VegaApiClientTest {
                 .setSize(BigDecimal.ONE)
                 .setPrice(BigDecimal.ONE)
                 .setType(OrderType.LIMIT);
+    }
+
+    private LiquidityCommitment newLiquidityCommitment() {
+        Market market = new Market()
+                .setId("12345")
+                .setDecimalPlaces(5)
+                .setPositionDecimalPlaces(3);
+        return new LiquidityCommitment()
+                .setMarket(market)
+                .setFee(BigDecimal.valueOf(0.001))
+                .setStatus(LiquidityCommitmentStatus.ACTIVE)
+                .setCommitmentAmount(BigDecimal.ONE)
+                .setAsks(new ArrayList<>())
+                .setBids(new ArrayList<>());
     }
 
     private JSONObject tokenJson() throws JSONException {
@@ -112,81 +129,6 @@ public class VegaApiClientTest {
         mockStatic.when(() -> Unirest.get(String.format("%s%s", NODE_URL, path))).thenReturn(request);
     }
 
-    private Optional<String> submitOrder(
-            final JSONObject jsonResponse
-    ) {
-        Mockito.when(decimalUtils.convertFromDecimals(Mockito.anyInt(), Mockito.any(BigDecimal.class)))
-                .thenReturn(BigDecimal.ONE);
-        try(MockedStatic<Unirest> mockStatic = Mockito.mockStatic(Unirest.class)) {
-            mockGetToken(mockStatic, tokenJson());
-            mockSubmitTransaction(mockStatic, jsonResponse);
-            Order order = newOrder();
-            return vegaApiClient.submitOrder(order, PARTY_ID);
-        } catch(Exception e) {
-            Assertions.fail();
-        }
-        return Optional.empty();
-    }
-
-    private Optional<String> cancelOrder(
-            final JSONObject jsonResponse
-    ) {
-        try(MockedStatic<Unirest> mockStatic = Mockito.mockStatic(Unirest.class)) {
-            mockGetToken(mockStatic, tokenJson());
-            mockSubmitTransaction(mockStatic, jsonResponse);
-            return vegaApiClient.cancelOrder("1", PARTY_ID);
-        } catch(Exception e) {
-            Assertions.fail();
-        }
-        return Optional.empty();
-    }
-
-    @Test
-    public void testSubmitOrder() throws JSONException {
-        Optional<String> txHash = submitOrder(txHashJson());
-        Assertions.assertTrue(txHash.isPresent());
-    }
-
-    @Test
-    public void testSubmitOrderWithWalletError() throws JSONException {
-        Optional<String> txHash = submitOrder(errorJson());
-        Assertions.assertTrue(txHash.isEmpty());
-    }
-
-    @Test
-    public void testCancelOrder() throws JSONException {
-        Optional<String> txHash = cancelOrder(txHashJson());
-        Assertions.assertTrue(txHash.isPresent());
-    }
-
-    @Test
-    public void testCancelOrderWithWalletError() throws JSONException {
-        Optional<String> txHash = cancelOrder(errorJson());
-        Assertions.assertTrue(txHash.isEmpty());
-    }
-
-    @Test
-    public void testSubmitLiquidityCommitment() {
-        vegaApiClient.submitLiquidityCommitment(new LiquidityCommitment(), PARTY_ID, false);
-    }
-
-    @Test
-    public void testGetAssets() {
-        try(MockedStatic<Unirest> mockStatic = Mockito.mockStatic(Unirest.class)) {
-            try(InputStream is = getClass().getClassLoader().getResourceAsStream("vega-assets-rest.json")) {
-                String accountsJson = IOUtils.toString(Objects.requireNonNull(is), StandardCharsets.UTF_8);
-                mockGetToken(mockStatic, tokenJson());
-                mockGetRequest("/assets", mockStatic, new JSONObject(accountsJson));
-                List<Asset> assets = vegaApiClient.getAssets();
-                Assertions.assertEquals(16, assets.size());
-            } catch (Exception e) {
-                Assertions.fail();
-            }
-        } catch(Exception e) {
-            Assertions.fail();
-        }
-    }
-
     private void getAccounts(
             final Optional<Asset> asset,
             final int expectedAccounts
@@ -201,33 +143,6 @@ public class VegaApiClientTest {
                 mockGetRequest(String.format("/parties/%s/accounts", PARTY_ID), mockStatic, new JSONObject(accountsJson));
                 List<Account> accounts = vegaApiClient.getAccounts(PARTY_ID);
                 Assertions.assertEquals(expectedAccounts, accounts.size());
-            } catch (Exception e) {
-                Assertions.fail();
-            }
-        } catch(Exception e) {
-            Assertions.fail();
-        }
-    }
-
-    @Test
-    public void testGetAccounts() {
-        getAccounts(Optional.of(new Asset().setDecimalPlaces(1)), 3);
-    }
-
-    @Test
-    public void testGetAccountsWhenAssetNotfound() {
-        getAccounts(Optional.empty(), 0);
-    }
-
-    @Test
-    public void testGetMarkets() {
-        try(MockedStatic<Unirest> mockStatic = Mockito.mockStatic(Unirest.class)) {
-            try(InputStream is = getClass().getClassLoader().getResourceAsStream("vega-markets-rest.json")) {
-                String marketsJson = IOUtils.toString(Objects.requireNonNull(is), StandardCharsets.UTF_8);
-                mockGetToken(mockStatic, tokenJson());
-                mockGetRequest("/markets", mockStatic, new JSONObject(marketsJson));
-                List<Market> markets = vegaApiClient.getMarkets();
-                Assertions.assertEquals(1, markets.size());
             } catch (Exception e) {
                 Assertions.fail();
             }
@@ -254,16 +169,6 @@ public class VegaApiClientTest {
         } catch(Exception e) {
             Assertions.fail();
         }
-    }
-
-    @Test
-    public void testGetPositions() {
-        getPositions(Optional.of(new Market()), 3);
-    }
-
-    @Test
-    public void testGetPositionsMissingMarket() {
-        getPositions(Optional.empty(), 0);
     }
 
     private void getOpenOrders(
@@ -307,6 +212,149 @@ public class VegaApiClientTest {
         } catch(Exception e) {
             Assertions.fail();
         }
+    }
+
+    private Optional<String> submitOrder(
+            final JSONObject jsonResponse
+    ) {
+        Mockito.when(decimalUtils.convertFromDecimals(Mockito.anyInt(), Mockito.any(BigDecimal.class)))
+                .thenReturn(BigDecimal.ONE);
+        try(MockedStatic<Unirest> mockStatic = Mockito.mockStatic(Unirest.class)) {
+            mockGetToken(mockStatic, tokenJson());
+            mockSubmitTransaction(mockStatic, jsonResponse);
+            Order order = newOrder();
+            return vegaApiClient.submitOrder(order, PARTY_ID);
+        } catch(Exception e) {
+            Assertions.fail();
+        }
+        return Optional.empty();
+    }
+
+    private Optional<String> cancelOrder(
+            final JSONObject jsonResponse
+    ) {
+        try(MockedStatic<Unirest> mockStatic = Mockito.mockStatic(Unirest.class)) {
+            mockGetToken(mockStatic, tokenJson());
+            mockSubmitTransaction(mockStatic, jsonResponse);
+            return vegaApiClient.cancelOrder("1", PARTY_ID);
+        } catch(Exception e) {
+            Assertions.fail();
+        }
+        return Optional.empty();
+    }
+
+    private Optional<String> submitLiquidityCommitment(
+            final JSONObject jsonResponse,
+            final boolean amendment
+    ) throws JSONException {
+        Mockito.when(decimalUtils.convertFromDecimals(Mockito.anyInt(), Mockito.any(BigDecimal.class)))
+                .thenReturn(BigDecimal.ONE);
+        Mockito.when(orderService.buildLiquidityOrders(Mockito.anyInt(), Mockito.anyList())).thenReturn(new JSONArray());
+        try(MockedStatic<Unirest> mockStatic = Mockito.mockStatic(Unirest.class)) {
+            mockGetToken(mockStatic, tokenJson());
+            mockSubmitTransaction(mockStatic, jsonResponse);
+            LiquidityCommitment liquidityCommitment = newLiquidityCommitment();
+            return vegaApiClient.submitLiquidityCommitment(liquidityCommitment, PARTY_ID, amendment);
+        } catch(Exception e) {
+            Assertions.fail();
+        }
+        return Optional.empty();
+    }
+
+    @Test
+    public void testSubmitLiquidityCommitment() throws JSONException {
+        Optional<String> txHash = submitLiquidityCommitment(txHashJson(), false);
+        Assertions.assertTrue(txHash.isPresent());
+    }
+
+    @Test
+    public void testSubmitLiquidityAmendment() throws JSONException {
+        Optional<String> txHash = submitLiquidityCommitment(txHashJson(), true);
+        Assertions.assertTrue(txHash.isPresent());
+    }
+
+    @Test
+    public void testSubmitLiquidityCommitmentWithWalletError() throws JSONException {
+        Optional<String> txHash = submitLiquidityCommitment(errorJson(), false);
+        Assertions.assertTrue(txHash.isEmpty());
+    }
+
+    @Test
+    public void testSubmitOrder() throws JSONException {
+        Optional<String> txHash = submitOrder(txHashJson());
+        Assertions.assertTrue(txHash.isPresent());
+    }
+
+    @Test
+    public void testSubmitOrderWithWalletError() throws JSONException {
+        Optional<String> txHash = submitOrder(errorJson());
+        Assertions.assertTrue(txHash.isEmpty());
+    }
+
+    @Test
+    public void testCancelOrder() throws JSONException {
+        Optional<String> txHash = cancelOrder(txHashJson());
+        Assertions.assertTrue(txHash.isPresent());
+    }
+
+    @Test
+    public void testCancelOrderWithWalletError() throws JSONException {
+        Optional<String> txHash = cancelOrder(errorJson());
+        Assertions.assertTrue(txHash.isEmpty());
+    }
+
+    @Test
+    public void testGetAssets() {
+        try(MockedStatic<Unirest> mockStatic = Mockito.mockStatic(Unirest.class)) {
+            try(InputStream is = getClass().getClassLoader().getResourceAsStream("vega-assets-rest.json")) {
+                String accountsJson = IOUtils.toString(Objects.requireNonNull(is), StandardCharsets.UTF_8);
+                mockGetToken(mockStatic, tokenJson());
+                mockGetRequest("/assets", mockStatic, new JSONObject(accountsJson));
+                List<Asset> assets = vegaApiClient.getAssets();
+                Assertions.assertEquals(16, assets.size());
+            } catch (Exception e) {
+                Assertions.fail();
+            }
+        } catch(Exception e) {
+            Assertions.fail();
+        }
+    }
+
+    @Test
+    public void testGetAccounts() {
+        getAccounts(Optional.of(new Asset().setDecimalPlaces(1)), 3);
+    }
+
+    @Test
+    public void testGetAccountsWhenAssetNotfound() {
+        getAccounts(Optional.empty(), 0);
+    }
+
+    @Test
+    public void testGetMarkets() {
+        try(MockedStatic<Unirest> mockStatic = Mockito.mockStatic(Unirest.class)) {
+            try(InputStream is = getClass().getClassLoader().getResourceAsStream("vega-markets-rest.json")) {
+                String marketsJson = IOUtils.toString(Objects.requireNonNull(is), StandardCharsets.UTF_8);
+                mockGetToken(mockStatic, tokenJson());
+                mockGetRequest("/markets", mockStatic, new JSONObject(marketsJson));
+                List<Market> markets = vegaApiClient.getMarkets();
+                Assertions.assertEquals(1, markets.size());
+            } catch (Exception e) {
+                Assertions.fail();
+            }
+        } catch(Exception e) {
+            Assertions.fail();
+        }
+    }
+
+    @Test
+    public void testGetPositions() {
+        getPositions(Optional.of(new Market()), 3);
+    }
+
+    @Test
+    public void testGetPositionsMissingMarket() {
+        getPositions(Optional.empty(), 0);
     }
 
     @Test
@@ -367,6 +415,18 @@ public class VegaApiClientTest {
     }
 
     @Test
+    public void testSubmitLiquidityCommitmentWithError() {
+        try(MockedStatic<Unirest> mockStatic = Mockito.mockStatic(Unirest.class)) {
+            mockGetToken(mockStatic, tokenJson());
+            Optional<String> txHash = vegaApiClient.submitLiquidityCommitment(
+                    new LiquidityCommitment(), PARTY_ID, false);
+            Assertions.assertTrue(txHash.isEmpty());
+        } catch(Exception e) {
+            Assertions.fail();
+        }
+    }
+
+    @Test
     public void testCancelOrderWithMissingToken() {
         try(MockedStatic<Unirest> mockStatic = Mockito.mockStatic(Unirest.class)) {
             mockGetToken(mockStatic, new JSONObject());
@@ -384,6 +444,20 @@ public class VegaApiClientTest {
         try(MockedStatic<Unirest> mockStatic = Mockito.mockStatic(Unirest.class)) {
             mockGetToken(mockStatic, new JSONObject());
             Optional<String> txHash = vegaApiClient.submitOrder(newOrder(), PARTY_ID);
+            Assertions.assertTrue(txHash.isEmpty());
+        } catch(Exception e) {
+            Assertions.fail();
+        }
+    }
+
+    @Test
+    public void testSubmitLiquidityCommitmentWithMissingToken() {
+        Mockito.when(decimalUtils.convertFromDecimals(Mockito.anyInt(), Mockito.any(BigDecimal.class)))
+                .thenReturn(BigDecimal.ONE);
+        try(MockedStatic<Unirest> mockStatic = Mockito.mockStatic(Unirest.class)) {
+            mockGetToken(mockStatic, new JSONObject());
+            Optional<String> txHash = vegaApiClient.submitLiquidityCommitment(
+                    newLiquidityCommitment(), PARTY_ID, false);
             Assertions.assertTrue(txHash.isEmpty());
         } catch(Exception e) {
             Assertions.fail();
