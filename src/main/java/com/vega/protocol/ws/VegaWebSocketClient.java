@@ -221,8 +221,7 @@ public class VegaWebSocketClient extends WebSocketClient {
                     .put("payload", accountsQuery);
             this.send(accountsSubscription.toString());
         } catch(Exception e) {
-            log.error(e.getMessage());
-            log.debug(e.getMessage(), e);
+            log.error(e.getMessage(), e);
         }
     }
 
@@ -245,6 +244,7 @@ public class VegaWebSocketClient extends WebSocketClient {
                 }
             }
         } catch(Exception e) {
+            log.info(message);
             log.error(e.getMessage(), e);
         }
     }
@@ -277,6 +277,7 @@ public class VegaWebSocketClient extends WebSocketClient {
                         .setId(id);
                 accountStore.update(account);
             } catch(Exception e) {
+                log.info(data.toString());
                 log.error(e.getMessage(), e);
             }
         }
@@ -311,6 +312,7 @@ public class VegaWebSocketClient extends WebSocketClient {
                                 (size.doubleValue() < 0 ? MarketSide.SELL : null));
                 positionStore.update(position);
             } catch(Exception e) {
+                log.info(data.toString());
                 log.error(e.getMessage(), e);
             }
         }
@@ -351,6 +353,7 @@ public class VegaWebSocketClient extends WebSocketClient {
                 JSONObject liquidityProvisionObject = ordersObject.optJSONObject("liquidityProvision");
                 handleLiquidityProvision(liquidityProvisionObject, liquidityProvisionIds, market);
             } catch(Exception e) {
+                log.info(data.toString());
                 log.error(e.getMessage(), e);
             }
         }
@@ -427,6 +430,7 @@ public class VegaWebSocketClient extends WebSocketClient {
                         .setSettlementAsset(quoteName);
                 marketStore.update(market);
             } catch(Exception e) {
+                log.info(data.toString());
                 log.error(e.getMessage(), e);
             }
         }
@@ -437,7 +441,7 @@ public class VegaWebSocketClient extends WebSocketClient {
      */
     @Override
     public void onClose(int code, String reason, boolean remote) {
-        log.error(reason);
+        log.error("Closed: {}, {}, {} !!", code, reason, remote);
     }
 
     /**
@@ -445,8 +449,7 @@ public class VegaWebSocketClient extends WebSocketClient {
      */
     @Override
     public void onError(Exception e) {
-        log.error(e.getMessage());
-        log.debug(e.getMessage(), e);
+        log.error(e.getMessage(), e);
     }
 
     /**

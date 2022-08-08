@@ -3,6 +3,7 @@ package com.vega.protocol.task;
 import com.vega.protocol.api.VegaApiClient;
 import com.vega.protocol.constant.*;
 import com.vega.protocol.exception.TradingException;
+import com.vega.protocol.initializer.DataInitializer;
 import com.vega.protocol.model.AppConfig;
 import com.vega.protocol.model.DistributionStep;
 import com.vega.protocol.model.Market;
@@ -48,7 +49,9 @@ public class UpdateQuotesTask extends TradingTask {
                             MarketService marketService,
                             AccountService accountService,
                             PositionService positionService,
-                            PricingUtils pricingUtils) {
+                            PricingUtils pricingUtils,
+                            DataInitializer dataInitializer) {
+        super(dataInitializer);
         this.appConfigStore = appConfigStore;
         this.marketId = marketId;
         this.referencePriceStore = referencePriceStore;
@@ -74,9 +77,15 @@ public class UpdateQuotesTask extends TradingTask {
      */
     @Override
     public void execute() {
+        if(!dataInitializer.isInitialized()) {
+            log.warn("Cannot execute {} because data is not initialized", getClass().getSimpleName());
+            return;
+        }
+        log.info("Updating quotes...");
         Market market = marketService.getById(marketId);
         BigDecimal balance = accountService.getTotalBalance(market.getSettlementAsset());
         if(balance.doubleValue() == 0) {
+            log.info("Cannot update quotes because balance = {}", balance);
             return;
         }
         BigDecimal exposure = positionService.getExposure(marketId);
@@ -89,6 +98,7 @@ public class UpdateQuotesTask extends TradingTask {
         BigDecimal openVolumeRatio = exposure.abs().divide(askPoolSize,
                 market.getDecimalPlaces(), RoundingMode.HALF_DOWN);
         double scalingFactor = pricingUtils.getScalingFactor(openVolumeRatio.doubleValue());
+        log.info("Exposure = {}\nBid pool size = {}\nAsk pool size = {}", exposure, bidPoolSize, askPoolSize);
         List<DistributionStep> askDistribution = pricingUtils.getAskDistribution(
                 exposure.doubleValue() < 0 ? scalingFactor : 1.0, bidPoolSize.doubleValue(), askPoolSize.doubleValue(),
                 config.getAskQuoteRange(), config.getOrderCount());
@@ -130,6 +140,7 @@ public class UpdateQuotesTask extends TradingTask {
         int bidCount = Math.max(bids.size(), currentBids.size());
         updateSideOfBook(bids, currentBids, bidCount);
         updateSideOfBook(asks, currentAsks, askCount);
+        log.info("Quotes successfully updated!");
     }
 
     /**

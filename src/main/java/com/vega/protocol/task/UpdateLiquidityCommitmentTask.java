@@ -4,6 +4,7 @@ import com.vega.protocol.api.VegaApiClient;
 import com.vega.protocol.constant.ErrorCode;
 import com.vega.protocol.constant.PeggedReference;
 import com.vega.protocol.exception.TradingException;
+import com.vega.protocol.initializer.DataInitializer;
 import com.vega.protocol.model.*;
 import com.vega.protocol.service.AccountService;
 import com.vega.protocol.service.MarketService;
@@ -45,7 +46,9 @@ public class UpdateLiquidityCommitmentTask extends TradingTask {
                                          VegaApiClient vegaApiClient,
                                          ReferencePriceStore referencePriceStore,
                                          LiquidityCommitmentStore liquidityCommitmentStore,
-                                         PricingUtils pricingUtils) {
+                                         PricingUtils pricingUtils,
+                                         DataInitializer dataInitializer) {
+        super(dataInitializer);
         this.marketService = marketService;
         this.accountService = accountService;
         this.positionService = positionService;
@@ -65,9 +68,15 @@ public class UpdateLiquidityCommitmentTask extends TradingTask {
 
     @Override
     public void execute() {
+        if(!dataInitializer.isInitialized()) {
+            log.warn("Cannot execute {} because data is not initialized", getClass().getSimpleName());
+            return;
+        }
+        log.info("Updating liquidity commitment...");
         Market market = marketService.getById(marketId);
         BigDecimal balance = accountService.getTotalBalance(market.getSettlementAsset());
         if(balance.doubleValue() == 0) {
+            log.info("Cannot update liquidity commitment because balance = {}", balance);
             return;
         }
         BigDecimal exposure = positionService.getExposure(marketId);
@@ -80,6 +89,7 @@ public class UpdateLiquidityCommitmentTask extends TradingTask {
         BigDecimal openVolumeRatio = exposure.abs().divide(askPoolSize,
                 market.getDecimalPlaces(), RoundingMode.HALF_DOWN);
         double scalingFactor = pricingUtils.getScalingFactor(openVolumeRatio.doubleValue());
+        log.info("Exposure = {}\nBid pool size = {}\nAsk pool size = {}", exposure, bidPoolSize, askPoolSize);
         List<DistributionStep> askDistribution = pricingUtils.getAskDistribution(
                 exposure.doubleValue() < 0 ? scalingFactor : 1.0, bidPoolSize.doubleValue(), askPoolSize.doubleValue(),
                 config.getAskQuoteRange(), config.getOrderCount());
@@ -107,5 +117,6 @@ public class UpdateLiquidityCommitmentTask extends TradingTask {
                 .setAsks(liquidityCommitmentAsks);
         vegaApiClient.submitLiquidityCommitment(liquidityCommitment, partyId,
                 liquidityCommitmentStore.get().isPresent());
+        log.info("Liquidity commitment successfully updated!");
     }
 }

@@ -4,6 +4,7 @@ import com.vega.protocol.api.VegaApiClient;
 import com.vega.protocol.constant.ErrorCode;
 import com.vega.protocol.constant.MarketSide;
 import com.vega.protocol.constant.MarketTradingMode;
+import com.vega.protocol.initializer.DataInitializer;
 import com.vega.protocol.model.*;
 import com.vega.protocol.service.AccountService;
 import com.vega.protocol.service.MarketService;
@@ -37,6 +38,7 @@ public class UpdateQuotesTaskTest {
     private final AccountService accountService = Mockito.mock(AccountService.class);
     private final PositionService positionService = Mockito.mock(PositionService.class);
     private final PricingUtils pricingUtils = Mockito.mock(PricingUtils.class);
+    private final DataInitializer dataInitializer = Mockito.mock(DataInitializer.class);
 
     private AppConfig getAppConfig() {
         return new AppConfig()
@@ -53,7 +55,7 @@ public class UpdateQuotesTaskTest {
     @BeforeEach
     public void setup() {
         updateQuotesTask = new UpdateQuotesTask(MARKET_ID, PARTY_ID, referencePriceStore, appConfigStore, orderStore,
-                vegaApiClient, marketService, accountService, positionService, pricingUtils);
+                vegaApiClient, marketService, accountService, positionService, pricingUtils, dataInitializer);
     }
 
     private void execute(
@@ -61,6 +63,7 @@ public class UpdateQuotesTaskTest {
             final BigDecimal balance,
             final MarketTradingMode tradingMode
     ) {
+        Mockito.when(dataInitializer.isInitialized()).thenReturn(true);
         Mockito.when(marketService.getById(MARKET_ID)).thenReturn(new Market()
                 .setSettlementAsset(USDT)
                 .setTradingMode(tradingMode));
@@ -131,6 +134,7 @@ public class UpdateQuotesTaskTest {
 
     @Test
     public void testExecuteAppConfigNotFound() {
+        Mockito.when(dataInitializer.isInitialized()).thenReturn(true);
         Mockito.when(marketService.getById(MARKET_ID)).thenReturn(new Market()
                 .setSettlementAsset(USDT)
                 .setTradingMode(MarketTradingMode.CONTINUOUS));
@@ -146,6 +150,7 @@ public class UpdateQuotesTaskTest {
 
     @Test
     public void testExecuteReferencePriceNotFound() {
+        Mockito.when(dataInitializer.isInitialized()).thenReturn(true);
         Mockito.when(marketService.getById(MARKET_ID)).thenReturn(new Market()
                 .setSettlementAsset(USDT)
                 .setTradingMode(MarketTradingMode.CONTINUOUS));
@@ -158,6 +163,13 @@ public class UpdateQuotesTaskTest {
         } catch(Exception e) {
             Assertions.assertEquals(e.getMessage(), ErrorCode.REFERENCE_PRICE_NOT_FOUND);
         }
+    }
+
+    @Test
+    public void testExecuteNotInitialized() {
+        Mockito.when(dataInitializer.isInitialized()).thenReturn(false);
+        updateQuotesTask.execute();
+        Mockito.verify(vegaApiClient, Mockito.times(0)).submitOrder(Mockito.any(Order.class), Mockito.anyString());
     }
 
     @Test

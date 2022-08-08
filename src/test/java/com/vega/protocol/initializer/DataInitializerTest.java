@@ -4,6 +4,7 @@ import com.vega.protocol.api.VegaApiClient;
 import com.vega.protocol.model.Market;
 import com.vega.protocol.model.Order;
 import com.vega.protocol.store.*;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -51,8 +52,10 @@ public class DataInitializerTest {
     public void testInitialize() {
         Mockito.when(vegaApiClient.getMarkets()).thenReturn(List.of(new Market()));
         Mockito.when(vegaApiClient.getOpenOrders(PARTY_ID)).thenReturn(List.of(new Order()));
+        Assertions.assertFalse(dataInitializer.isInitialized());
         dataInitializer.initialize();
         Mockito.verify(marketStore, Mockito.times(1)).add(Mockito.any(Market.class));
         Mockito.verify(orderStore, Mockito.times(1)).add(Mockito.any(Order.class));
+        Assertions.assertTrue(dataInitializer.isInitialized());
     }
 }

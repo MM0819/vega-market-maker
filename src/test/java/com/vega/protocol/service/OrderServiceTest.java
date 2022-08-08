@@ -81,6 +81,7 @@ public class OrderServiceTest {
 
     @Test
     public void testBuildLiquidityOrders() throws JSONException {
+        Mockito.when(decimalUtils.convertFromDecimals(Mockito.anyInt(), Mockito.any())).thenReturn(BigDecimal.ONE);
         List<LiquidityCommitmentOffset> offsets = new ArrayList<>();
         offsets.add(new LiquidityCommitmentOffset()
                 .setOffset(BigDecimal.ONE)

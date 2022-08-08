@@ -2,6 +2,7 @@ package com.vega.protocol;
 
 import com.vega.protocol.initializer.DataInitializer;
 import com.vega.protocol.initializer.WebSocketInitializer;
+import com.vega.protocol.utils.SleepUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -15,11 +16,14 @@ public class Application implements CommandLineRunner {
 
     private final WebSocketInitializer webSocketInitializer;
     private final DataInitializer dataInitializer;
+    private final SleepUtils sleepUtils;
 
     public Application(WebSocketInitializer webSocketInitializer,
-                       DataInitializer dataInitializer) {
+                       DataInitializer dataInitializer,
+                       SleepUtils sleepUtils) {
         this.webSocketInitializer = webSocketInitializer;
         this.dataInitializer = dataInitializer;
+        this.sleepUtils = sleepUtils;
     }
 
     public static void main(String[] args) {
@@ -30,6 +34,7 @@ public class Application implements CommandLineRunner {
     public void run(String... args) {
         log.info("Starting market maker...");
         webSocketInitializer.initialize();
+        sleepUtils.sleep(5000L);
         dataInitializer.initialize();
     }
 }

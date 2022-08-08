@@ -4,6 +4,7 @@ import com.vega.protocol.api.VegaApiClient;
 import com.vega.protocol.constant.MarketSide;
 import com.vega.protocol.constant.OrderStatus;
 import com.vega.protocol.constant.OrderType;
+import com.vega.protocol.initializer.DataInitializer;
 import com.vega.protocol.model.Market;
 import com.vega.protocol.model.Order;
 import com.vega.protocol.service.AccountService;
@@ -40,7 +41,9 @@ public class NaiveFlowTask extends TradingTask {
                          VegaApiClient vegaApiClient,
                          MarketService marketService,
                          AccountService accountService,
-                         OrderService orderService) {
+                         OrderService orderService,
+                         DataInitializer dataInitializer) {
+        super(dataInitializer);
         this.vegaApiClient = vegaApiClient;
         this.marketService = marketService;
         this.marketId = marketId;
@@ -57,6 +60,10 @@ public class NaiveFlowTask extends TradingTask {
 
     @Override
     public void execute() {
+        if(!dataInitializer.isInitialized()) {
+            log.warn("Cannot execute {} because data is not initialized", getClass().getSimpleName());
+            return;
+        }
         if(!naiveFlowEnabled) return;
         updateBias();
         double threshold = new Random().nextDouble();

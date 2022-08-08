@@ -2,6 +2,7 @@ package com.vega.protocol.task;
 
 import com.vega.protocol.api.VegaApiClient;
 import com.vega.protocol.constant.MarketSide;
+import com.vega.protocol.initializer.DataInitializer;
 import com.vega.protocol.model.Market;
 import com.vega.protocol.model.Order;
 import com.vega.protocol.service.AccountService;
@@ -25,12 +26,13 @@ public class NaiveFlowTaskTest {
     private final MarketService marketService = Mockito.mock(MarketService.class);
     private final AccountService accountService = Mockito.mock(AccountService.class);
     private final OrderService orderService = Mockito.mock(OrderService.class);
+    private final DataInitializer dataInitializer = Mockito.mock(DataInitializer .class);
 
     private NaiveFlowTask getNaiveFlowTask(
             boolean enabled
     ) {
         return new NaiveFlowTask(MARKET_ID, enabled, PARTY_ID,
-                vegaApiClient, marketService, accountService, orderService);
+                vegaApiClient, marketService, accountService, orderService, dataInitializer);
     }
 
     @BeforeEach
@@ -40,6 +42,7 @@ public class NaiveFlowTaskTest {
 
     @Test
     public void testExecute() {
+        Mockito.when(dataInitializer.isInitialized()).thenReturn(true);
         Mockito.when(marketService.getById(MARKET_ID)).thenReturn(new Market().setSettlementAsset(USDT));
         Mockito.when(accountService.getTotalBalance(USDT)).thenReturn(BigDecimal.valueOf(100000));
         int count = 20;
@@ -53,6 +56,15 @@ public class NaiveFlowTaskTest {
 
     @Test
     public void testExecuteDisabled() {
+        Mockito.when(dataInitializer.isInitialized()).thenReturn(true);
+        naiveFlowTask = getNaiveFlowTask(false);
+        naiveFlowTask.execute();
+        Mockito.verify(vegaApiClient, Mockito.times(0)).submitOrder(Mockito.any(Order.class), Mockito.anyString());
+    }
+
+    @Test
+    public void testExecuteNotInitialized() {
+        Mockito.when(dataInitializer.isInitialized()).thenReturn(false);
         naiveFlowTask = getNaiveFlowTask(false);
         naiveFlowTask.execute();
         Mockito.verify(vegaApiClient, Mockito.times(0)).submitOrder(Mockito.any(Order.class), Mockito.anyString());

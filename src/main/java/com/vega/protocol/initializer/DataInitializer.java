@@ -3,6 +3,7 @@ package com.vega.protocol.initializer;
 import com.vega.protocol.api.VegaApiClient;
 import com.vega.protocol.model.AppConfig;
 import com.vega.protocol.store.*;
+import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -27,6 +28,9 @@ public class DataInitializer {
     private final Double bidQuoteRange;
     private final Double askQuoteRange;
     private final Double pricingStepSize;
+
+    @Getter
+    private boolean initialized = false;
 
     public DataInitializer(OrderStore orderStore,
                            MarketStore marketStore,
@@ -86,5 +90,6 @@ public class DataInitializer {
         vegaApiClient.getPositions(partyId).forEach(positionStore::add);
         vegaApiClient.getOpenOrders(partyId).forEach(orderStore::add);
         vegaApiClient.getLiquidityCommitment(partyId, marketId).ifPresent(liquidityCommitmentStore::update);
+        initialized = true;
     }
 }
