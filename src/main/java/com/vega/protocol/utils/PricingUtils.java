@@ -1,16 +1,17 @@
 package com.vega.protocol.utils;
 
 import com.vega.protocol.constant.ErrorCode;
+import com.vega.protocol.constant.MarketSide;
 import com.vega.protocol.exception.TradingException;
 import com.vega.protocol.model.DistributionStep;
 import com.vega.protocol.store.AppConfigStore;
-import org.apache.commons.collections4.ListUtils;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.DoubleStream;
 
 @Component
 public class PricingUtils {
@@ -65,7 +66,7 @@ public class PricingUtils {
      * @param scalingFactor the scaling factor used, which shifts the bids further out from the mid-price
      * @param bidPoolSize the size of the bid pool
      * @param askPoolSize the size of the ask pool
-     * @param quoteRange depth of quoted prices
+     * @param quoteRange the range to provide quotes for
      * @param orderCount the target order count
      *
      * @return {@link List} of {@link DistributionStep}
@@ -78,7 +79,8 @@ public class PricingUtils {
             int orderCount
     ) {
         double price = bidPoolSize / askPoolSize;
-        double cutoff = price * (1 - quoteRange);
+        double cutoff = price * 0.001; // TODO - we should allow the user to configure their inventory range
+        double quoteCutoff = price * (1 - quoteRange);
         double askSize = 1 / price;
         List<DistributionStep> distribution = new ArrayList<>();
         double stepSize = appConfigStore.get()
@@ -94,8 +96,9 @@ public class PricingUtils {
             price = bidPoolSize / askPoolSize;
             askSize = askSize + stepSize;
         }
+        distribution = distribution.stream().filter(d -> d.getPrice() >= quoteCutoff).collect(Collectors.toList());
         if(distribution.size() > orderCount) {
-            distribution = aggregateDistribution(distribution, orderCount);
+            distribution = aggregateDistribution(distribution, orderCount, MarketSide.BUY);
         }
         return distribution;
     }
@@ -106,7 +109,7 @@ public class PricingUtils {
      * @param scalingFactor scaling factor, used to push asks out from mid-price
      * @param bidPoolSize the size of our bid pool (i.e. total collateral)
      * @param askPoolSize the size of our ask pool (derived from bid pool and reference price)
-     * @param askQuoteRange the depth of asks
+     * @param quoteRange the range to provide quotes for
      * @param orderCount the number of orders
      *
      * @return {@link List} of {@link DistributionStep}
@@ -115,12 +118,14 @@ public class PricingUtils {
             double scalingFactor,
             double bidPoolSize,
             double askPoolSize,
-            double askQuoteRange,
+            double quoteRange,
             int orderCount
     ) {
         double bidSize = 1.0;
+        double originalAskPoolSize = askPoolSize;
         double price = bidPoolSize / askPoolSize;
-        double cutoff = price * (1 + askQuoteRange);
+        double cutoff = price * 2; // TODO - we should allow the user to configure their inventory range
+        double quoteCutoff = price * (1 + quoteRange);
         List<DistributionStep> distribution = new ArrayList<>();
         double stepSize = appConfigStore.get()
                 .orElseThrow(() -> new TradingException(ErrorCode.APP_CONFIG_NOT_FOUND))
@@ -135,8 +140,12 @@ public class PricingUtils {
             price = bidPoolSize / askPoolSize;
             bidSize = bidSize + stepSize;
         }
+        double volume = distribution.stream().map(DistributionStep::getSize).mapToDouble(d -> d).sum();
+        double scale = originalAskPoolSize / volume;
+        distribution.forEach(d -> d.setSize(d.getSize() * scale * scalingFactor));
+        distribution = distribution.stream().filter(d -> d.getPrice() <= quoteCutoff).collect(Collectors.toList());
         if(distribution.size() > orderCount) {
-            distribution = aggregateDistribution(distribution, orderCount);
+            distribution = aggregateDistribution(distribution, orderCount, MarketSide.SELL);
         }
         return distribution;
     }
@@ -146,29 +155,53 @@ public class PricingUtils {
      *
      * @param distribution {@link List<DistributionStep>}
      * @param orderCount the number of orders
+     * @param side {@link MarketSide}
      *
      * @return {@link List<DistributionStep>}
      */
     private List<DistributionStep> aggregateDistribution(
             List<DistributionStep> distribution,
-            int orderCount
+            int orderCount,
+            MarketSide side
     ) {
-        List<Double> prices = distribution.stream().map(DistributionStep::getPrice).collect(Collectors.toList());
-        List<Double> sizes = distribution.stream().map(DistributionStep::getSize).collect(Collectors.toList());
-        int partitionSize = (int) Math.ceil((double) prices.size() / (double) orderCount);
-        List<List<Double>> pricePartitions = ListUtils.partition(prices, partitionSize)
-                .stream().filter(p -> p.size() == partitionSize).toList();
-        List<List<Double>> sizePartitions = ListUtils.partition(sizes, partitionSize)
-                .stream().filter(p -> p.size() == partitionSize).toList();
-        distribution = new ArrayList<>();
-        int length = Math.min(pricePartitions.size(), orderCount);
-        for (int i = 0; i < length; i++) {
-            DistributionStep step = new DistributionStep()
-                    .setPrice(pricePartitions.get(i).get(pricePartitions.get(i).size() - 1))
-                    .setSize(sizePartitions.get(i).stream().mapToDouble(Double::doubleValue).sum());
-            distribution.add(step);
+        if(distribution.size() <= 1) {
+            return distribution;
         }
-        return distribution;
+        // TODO - make this work for asks as well
+        double maxPrice = distribution.stream().max(Comparator.comparing(DistributionStep::getPrice)).get().getPrice();
+        double minPrice = distribution.stream().min(Comparator.comparing(DistributionStep::getPrice)).get().getPrice();
+        double range = maxPrice - minPrice;
+        double stepSize = range / orderCount;
+        List<Double> aggregatePrices = DoubleStream.iterate(minPrice, d -> d + stepSize)
+                .boxed()
+                .limit((int) (1 + (maxPrice - minPrice) / stepSize))
+                .toList();
+        double previousPrice = 0;
+        List<DistributionStep> aggregateDistribution = new ArrayList<>();
+        for(double price : aggregatePrices) {
+            double finalPreviousPrice = previousPrice;
+            if(side.equals(MarketSide.BUY)) {
+                double notionalSize = distribution.stream()
+                        .filter(d -> d.getPrice() > finalPreviousPrice && d.getPrice() <= price)
+                        .map(d -> d.getPrice() * d.getSize())
+                        .mapToDouble(d -> d)
+                        .sum();
+                aggregateDistribution.add(new DistributionStep()
+                        .setPrice(price)
+                        .setSize(notionalSize / price));
+            } else {
+                double size = distribution.stream()
+                        .filter(d -> d.getPrice() > finalPreviousPrice && d.getPrice() <= price)
+                        .mapToDouble(DistributionStep::getSize)
+                        .sum();
+                aggregateDistribution.add(new DistributionStep()
+                        .setPrice(price)
+                        .setSize(size));
+            }
+            previousPrice = price;
+        }
+        aggregateDistribution.remove(0);
+        return aggregateDistribution;
     }
 
     /**

@@ -7,6 +7,7 @@ import com.vega.protocol.model.DistributionStep;
 import com.vega.protocol.store.AppConfigStore;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
@@ -37,37 +38,39 @@ public class PricingUtilsTest {
         Assertions.assertEquals(scalingFactor, 0.5);
     }
 
-    private void getBidDistribution(int expectedSize, int maxSize, double expectedVolume, double scalingFactor) {
+    private void getBidDistribution(int expectedSize, int maxSize, double scalingFactor) {
+        double bidPoolSize = 50000d;
         List<DistributionStep> distribution = pricingUtils.getBidDistribution(
-                scalingFactor, 50000d, 2.5d, 0.05d, maxSize);
+                scalingFactor, bidPoolSize, 2.5d, 0.999d, maxSize);
         Assertions.assertEquals(distribution.size(), expectedSize);
-        double volume = distribution.stream().mapToDouble(DistributionStep::getSize).sum();
-        Assertions.assertEquals(volume, expectedVolume, 0.01);
+        double volume = distribution.stream().map(d -> d.getPrice() * d.getSize()).mapToDouble(d -> d).sum();
+        Assertions.assertEquals(volume, bidPoolSize * scalingFactor, bidPoolSize / 20d);
     }
 
-    private void getAskDistribution(int expectedSize, int maxSize, double expectedVolume, double scalingFactor) {
+    private void getAskDistribution(int expectedSize, int maxSize, double scalingFactor) {
+        double askPoolSize = 2.5d;
         List<DistributionStep> distribution = pricingUtils.getAskDistribution(
-                scalingFactor, 50000d, 2.5d, 0.05d, maxSize);
+                scalingFactor, 50000d, askPoolSize, 2d, maxSize);
         Assertions.assertEquals(distribution.size(), expectedSize);
-        double volume = distribution.stream().mapToDouble(DistributionStep::getSize).sum();
-        Assertions.assertEquals(volume, expectedVolume, 0.01);
+        double volume = distribution.stream().map(DistributionStep::getSize).mapToDouble(d -> d).sum();
+        Assertions.assertEquals(volume, askPoolSize * scalingFactor, askPoolSize / 20d);
     }
 
     @Test
     public void testGetBidDistribution() {
-        getBidDistribution(10, 10, 0.05, 1.0);
+        getBidDistribution(10, 10, 1.0);
     }
 
     @Test
     public void testGetAskDistribution() {
-        getAskDistribution(10, 10, 0.05, 1.0);
+        getAskDistribution(10, 10, 1.0);
     }
 
     @Test
     public void testGetBidDistributionMissingConfig() {
         Mockito.when(appConfigStore.get()).thenReturn(Optional.empty());
         try {
-            getBidDistribution(10, 10, 0.05, 1.0);
+            getBidDistribution(10, 10, 1.0);
             Assertions.fail();
         } catch(TradingException e) {
             Assertions.assertEquals(e.getMessage(), ErrorCode.APP_CONFIG_NOT_FOUND);
@@ -78,7 +81,7 @@ public class PricingUtilsTest {
     public void testGetAskDistributionMissingConfig() {
         Mockito.when(appConfigStore.get()).thenReturn(Optional.empty());
         try {
-            getAskDistribution(10, 10, 0.05, 1.0);
+            getAskDistribution(10, 10, 1.0);
             Assertions.fail();
         } catch(TradingException e) {
             Assertions.assertEquals(e.getMessage(), ErrorCode.APP_CONFIG_NOT_FOUND);
@@ -87,22 +90,22 @@ public class PricingUtilsTest {
 
     @Test
     public void testGetBidDistributionWithScalingApplied() {
-        getBidDistribution(10, 10, 0.02, 0.5);
+        getBidDistribution(10, 10, 0.5);
     }
 
     @Test
     public void testGetAskDistributionWithScalingApplied() {
-        getAskDistribution(10, 10, 0.02, 0.5);
+        getAskDistribution(10, 10, 0.5);
     }
 
     @Test
     public void testGetBidDistributionWithoutAggregation() {
-        getBidDistribution(52, 100, 0.07, 1.0);
+        getBidDistribution(5521, 10000, 1.0);
     }
 
     @Test
     public void testGetAskDistributionWithoutAggregation() {
-        getAskDistribution(51, 100, 0.07, 1.0);
+        getAskDistribution(635, 10000, 1.0);
     }
 
     // TODO - add tests to ensure that inventory is correctly distributed between zero and infinity
