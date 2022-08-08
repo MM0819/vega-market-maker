@@ -6,6 +6,7 @@ import com.vega.protocol.model.LiquidityCommitment;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
 import org.mockito.Mockito;
 
 public class HedgeExposureTaskTest {
@@ -31,7 +32,16 @@ public class HedgeExposureTaskTest {
 
     @Test
     public void testExecuteNotInitialized() {
+        hedgeExposureTask.execute();
         Mockito.when(dataInitializer.isInitialized()).thenReturn(false);
+    }
+
+    @Test
+    public void testExecuteDisabled() {
+        hedgeExposureTask = new HedgeExposureTask(dataInitializer, webSocketInitializer, false);
+        Mockito.when(dataInitializer.isInitialized()).thenReturn(true);
+        Mockito.when(webSocketInitializer.isVegaWebSocketsInitialized()).thenReturn(true);
+        Mockito.when(webSocketInitializer.isBinanceWebSocketInitialized()).thenReturn(true);
         hedgeExposureTask.execute();
     }
 

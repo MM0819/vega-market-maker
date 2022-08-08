@@ -56,11 +56,17 @@ public class UpdateQuotesTaskTest {
                 .setPricingStepSize(0.1);
     }
 
-    @BeforeEach
-    public void setup() {
-        updateQuotesTask = new UpdateQuotesTask(MARKET_ID, true, PARTY_ID, referencePriceStore,
+    private UpdateQuotesTask getTask(
+            final boolean enabled
+    ) {
+        return new UpdateQuotesTask(MARKET_ID, enabled, PARTY_ID, referencePriceStore,
                 appConfigStore, orderStore, vegaApiClient, marketService, accountService, positionService,
                 pricingUtils, dataInitializer, webSocketInitializer);
+    }
+
+    @BeforeEach
+    public void setup() {
+        updateQuotesTask = getTask(true);
     }
 
     private void execute(
@@ -119,6 +125,17 @@ public class UpdateQuotesTaskTest {
         for(Order order : currentOrders.stream().filter(o -> o.getSide().equals(MarketSide.SELL)).toList()) {
             Mockito.verify(vegaApiClient, Mockito.times(modifier)).cancelOrder(order.getId(), PARTY_ID);
         }
+    }
+
+    @Test
+    public void testExecuteDisabled() {
+        updateQuotesTask = getTask(false);
+        Mockito.when(dataInitializer.isInitialized()).thenReturn(true);
+        Mockito.when(webSocketInitializer.isVegaWebSocketsInitialized()).thenReturn(true);
+        Mockito.when(webSocketInitializer.isBinanceWebSocketInitialized()).thenReturn(true);
+        updateQuotesTask.execute();
+        Mockito.verify(vegaApiClient, Mockito.times(0)).submitLiquidityCommitment(
+                Mockito.any(LiquidityCommitment.class), Mockito.anyString(), Mockito.anyBoolean());
     }
 
     @Test

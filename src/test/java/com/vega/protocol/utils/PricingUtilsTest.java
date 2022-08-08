@@ -141,6 +141,4 @@ public class PricingUtilsTest {
     public void testGetAskDistributionWithoutAggregation() {
         getAskDistribution(846, 10000, 1.0, 2.0, 2.0);
     }
-
-    // TODO - add tests to ensure that inventory is correctly distributed between zero and infinity
 }

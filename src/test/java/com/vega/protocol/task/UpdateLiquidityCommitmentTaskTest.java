@@ -53,11 +53,17 @@ public class UpdateLiquidityCommitmentTaskTest {
                 .setPricingStepSize(0.1);
     }
 
-    @BeforeEach
-    public void setup() {
-        updateLiquidityCommitmentTask = new UpdateLiquidityCommitmentTask(MARKET_ID, true, PARTY_ID,
+    private UpdateLiquidityCommitmentTask getTask(
+            final boolean enabled
+    ) {
+        return new UpdateLiquidityCommitmentTask(MARKET_ID, enabled, PARTY_ID,
                 marketService, accountService, positionService, appConfigStore, vegaApiClient, referencePriceStore,
                 liquidityCommitmentStore, pricingUtils, dataInitializer, webSocketInitializer);
+    }
+
+    @BeforeEach
+    public void setup() {
+        updateLiquidityCommitmentTask = getTask(true);
     }
 
     @Test
@@ -84,6 +90,17 @@ public class UpdateLiquidityCommitmentTaskTest {
         updateLiquidityCommitmentTask.execute();
         Mockito.verify(vegaApiClient, Mockito.times(1)).submitLiquidityCommitment(
                 Mockito.any(LiquidityCommitment.class), Mockito.anyString(), Mockito.anyBoolean()); // TODO - fix assertion
+    }
+
+    @Test
+    public void testExecuteDisabled() {
+        updateLiquidityCommitmentTask = getTask(false);
+        Mockito.when(dataInitializer.isInitialized()).thenReturn(true);
+        Mockito.when(webSocketInitializer.isVegaWebSocketsInitialized()).thenReturn(true);
+        Mockito.when(webSocketInitializer.isBinanceWebSocketInitialized()).thenReturn(true);
+        updateLiquidityCommitmentTask.execute();
+        Mockito.verify(vegaApiClient, Mockito.times(0)).submitLiquidityCommitment(
+                Mockito.any(LiquidityCommitment.class), Mockito.anyString(), Mockito.anyBoolean());
     }
 
     @Test
