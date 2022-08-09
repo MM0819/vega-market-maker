@@ -68,7 +68,6 @@ public class PricingUtils {
      * @param bidPoolSize the size of the bid pool
      * @param askPoolSize the size of the ask pool
      * @param quoteRange the range to provide quotes for
-     * @param inventoryRange the range to distribute inventory across
      * @param orderCount the target order count
      *
      * @return {@link List} of {@link DistributionStep}
@@ -78,13 +77,10 @@ public class PricingUtils {
             double bidPoolSize,
             double askPoolSize,
             double quoteRange,
-            double inventoryRange,
             int orderCount
     ) {
-        double originalBidPoolSize = bidPoolSize;
         double price = bidPoolSize / askPoolSize;
-        double cutoff = price * (1 - inventoryRange);
-        double quoteCutoff = price * (1 - quoteRange);
+        double cutoff = price * (1 - quoteRange);
         double askSize = 1 / price;
         List<DistributionStep> distribution = new ArrayList<>();
         double stepSize = appConfigStore.get()
@@ -100,10 +96,6 @@ public class PricingUtils {
             price = bidPoolSize / askPoolSize;
             askSize = askSize + stepSize;
         }
-        double volume = distribution.stream().map(d -> d.getPrice() * d.getSize()).mapToDouble(d -> d).sum();
-        double scale = originalBidPoolSize / volume;
-        distribution.forEach(d -> d.setSize(d.getSize() * scale * scalingFactor));
-        distribution = distribution.stream().filter(d -> d.getPrice() >= quoteCutoff).collect(Collectors.toList());
         if(distribution.size() > orderCount) {
             distribution = aggregateDistribution(distribution, orderCount, MarketSide.BUY);
         }
@@ -118,7 +110,6 @@ public class PricingUtils {
      * @param bidPoolSize the size of our bid pool (i.e. total collateral)
      * @param askPoolSize the size of our ask pool (derived from bid pool and reference price)
      * @param quoteRange the range to provide quotes for
-     * @param inventoryRange the range to distribute inventory across
      * @param orderCount the number of orders
      *
      * @return {@link List} of {@link DistributionStep}
@@ -128,14 +119,11 @@ public class PricingUtils {
             double bidPoolSize,
             double askPoolSize,
             double quoteRange,
-            double inventoryRange,
             int orderCount
     ) {
         double bidSize = 1.0;
-        double originalAskPoolSize = askPoolSize;
         double price = bidPoolSize / askPoolSize;
-        double cutoff = price * (1 + inventoryRange);
-        double quoteCutoff = price * (1 + quoteRange);
+        double cutoff = price * (1 + quoteRange);
         List<DistributionStep> distribution = new ArrayList<>();
         double stepSize = appConfigStore.get()
                 .orElseThrow(() -> new TradingException(ErrorCode.APP_CONFIG_NOT_FOUND))
@@ -150,10 +138,6 @@ public class PricingUtils {
             price = bidPoolSize / askPoolSize;
             bidSize = bidSize + stepSize;
         }
-        double volume = distribution.stream().map(DistributionStep::getSize).mapToDouble(d -> d).sum();
-        double scale = originalAskPoolSize / volume;
-        distribution.forEach(d -> d.setSize(d.getSize() * scale * scalingFactor));
-        distribution = distribution.stream().filter(d -> d.getPrice() <= quoteCutoff).collect(Collectors.toList());
         if(distribution.size() > orderCount) {
             distribution = aggregateDistribution(distribution, orderCount, MarketSide.SELL);
         }

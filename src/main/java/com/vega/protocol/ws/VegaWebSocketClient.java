@@ -30,6 +30,7 @@ public class VegaWebSocketClient extends WebSocketClient {
         subscription {
             accounts(partyId: "PARTY_ID") {
                 balance
+                type
                 asset {
                     symbol
                     decimals
@@ -272,7 +273,7 @@ public class VegaWebSocketClient extends WebSocketClient {
                 JSONObject marketObject = accountObject.optJSONObject("market");
                 AccountType type = AccountType.valueOf(accountObject.getString("type").toUpperCase());
                 String id = String.format("%s-%s-%s", asset, partyId, type);
-                if(marketObject != null) {
+                if(marketObject != null && !type.equals(AccountType.GENERAL)) {
                     String marketId = marketObject.getString("id");
                     id = String.format("%s-%s", id, marketId);
                 }
@@ -359,7 +360,9 @@ public class VegaWebSocketClient extends WebSocketClient {
                         .setSide(side);
                 orderStore.update(order);
                 JSONObject liquidityProvisionObject = ordersObject.optJSONObject("liquidityProvision");
-                handleLiquidityProvision(liquidityProvisionObject, liquidityProvisionIds, market);
+                if(liquidityProvisionObject != null) {
+                    handleLiquidityProvision(liquidityProvisionObject, liquidityProvisionIds, market);
+                }
             } catch(Exception e) {
                 log.info(data.toString());
                 log.error(e.getMessage(), e);

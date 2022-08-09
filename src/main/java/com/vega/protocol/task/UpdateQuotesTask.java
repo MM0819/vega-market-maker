@@ -24,6 +24,8 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -85,7 +87,7 @@ public class UpdateQuotesTask extends TradingTask {
             return;
         }
         if(!taskEnabled) {
-            log.warn("Cannot execute {} because it is disabled", getClass().getSimpleName());
+            log.debug("Cannot execute {} because it is disabled", getClass().getSimpleName());
             return;
         }
         log.info("Updating quotes...");
@@ -109,10 +111,10 @@ public class UpdateQuotesTask extends TradingTask {
                 referencePrice, exposure, bidPoolSize, askPoolSize);
         List<DistributionStep> askDistribution = pricingUtils.getAskDistribution(
                 exposure.doubleValue() < 0 ? scalingFactor : 1.0, bidPoolSize.doubleValue(), askPoolSize.doubleValue(),
-                config.getAskQuoteRange(), config.getAskLiquidityRange(), config.getOrderCount());
+                config.getAskQuoteRange(), config.getOrderCount());
         List<DistributionStep> bidDistribution = pricingUtils.getBidDistribution(
                 exposure.doubleValue() > 0 ? scalingFactor : 1.0, bidPoolSize.doubleValue(), askPoolSize.doubleValue(),
-                config.getBidQuoteRange(), config.getBidLiquidityRange(), config.getOrderCount());
+                config.getBidQuoteRange(), config.getOrderCount());
         if(bidDistribution.size() == 0) {
             log.warn("Bid distribution was empty !!");
             return;
@@ -149,41 +151,63 @@ public class UpdateQuotesTask extends TradingTask {
         ).collect(Collectors.toList());
         List<Order> currentOrders = orderStore.getItems();
         List<Order> currentBids = currentOrders.stream()
-                .filter(o -> o.getSide().equals(MarketSide.BUY))
+                .filter(o -> o.getSide().equals(MarketSide.BUY) && o.getStatus().equals(OrderStatus.ACTIVE))
                 .collect(Collectors.toList());
         List<Order> currentAsks = currentOrders.stream()
-                .filter(o -> o.getSide().equals(MarketSide.SELL))
+                .filter(o -> o.getSide().equals(MarketSide.SELL) && o.getStatus().equals(OrderStatus.ACTIVE))
                 .collect(Collectors.toList());
-        bids.sort(Comparator.comparing(Order::getPrice));
-        currentBids.sort(Comparator.comparing(Order::getPrice));
-        asks.sort(Comparator.comparing(Order::getPrice).reversed());
-        currentAsks.sort(Comparator.comparing(Order::getPrice).reversed());
-        int askCount = Math.max(asks.size(), currentAsks.size());
-        int bidCount = Math.max(bids.size(), currentBids.size());
-        updateSideOfBook(bids, currentBids, bidCount);
-        updateSideOfBook(asks, currentAsks, askCount);
+        bids.sort(Comparator.comparing(Order::getPrice).reversed());
+        currentBids.sort(Comparator.comparing(Order::getPrice).reversed());
+        asks.sort(Comparator.comparing(Order::getPrice));
+        currentAsks.sort(Comparator.comparing(Order::getPrice));
+        updateQuotes(bids, asks, currentBids, currentAsks);
         log.info("Quotes successfully updated!");
     }
 
     /**
-     * Update one side of the order book one order at a time, alternating between submit and cancel
+     * Reprice the quotes
      *
-     * @param newOrders {@link List<Order>}
-     * @param currentOrders {@link List<Order>}
-     * @param count total iterations
+     * @param newBids {@link List<Order>}
+     * @param newAsks {@link List<Order>}
+     * @param currentBids {@link List<Order>}
+     * @param currentAsks {@link List<Order>}
      */
-    private void updateSideOfBook(
-            List<Order> newOrders,
-            List<Order> currentOrders,
-            int count
+    private void updateQuotes(
+            List<Order> newBids,
+            List<Order> newAsks,
+            List<Order> currentBids,
+            List<Order> currentAsks
     ) {
+        int requiredBids = newBids.size();
+        int requiredAsks = newAsks.size();
+        int count = Math.min(requiredBids, requiredAsks);
+        ExecutorService executorService = Executors.newFixedThreadPool(32);
         for(int i=0; i<count; i++) {
-            if(i < newOrders.size()) {
-                vegaApiClient.submitOrder(newOrders.get(i), partyId);
-            }
-            if(i < currentOrders.size()) {
-                vegaApiClient.cancelOrder(currentOrders.get(i).getId(), partyId);
-            }
+            int x = i;
+            executorService.submit(() -> updateSideOfBook(currentAsks, newAsks, x));
+            executorService.submit(() -> updateSideOfBook(currentBids, newBids, x));
+        }
+    }
+
+    private void updateSideOfBook(
+            final List<Order> currentOrders,
+            final List<Order> newOrders,
+            final int i
+    ) {
+        if(currentOrders.size() > i && newOrders.size() > i) {
+            Order currentOrder = currentOrders.get(i);
+            Order newOrder = newOrders.get(i);
+            BigDecimal sizeDelta = newOrder.getSize().subtract(currentOrder.getSize());
+            BigDecimal price = newOrder.getPrice();
+            Market market = newOrder.getMarket();
+            String partyId = newOrder.getPartyId();
+            vegaApiClient.amendOrder(currentOrder.getId(), sizeDelta, price, market, partyId);
+        } else if(currentOrders.size() < i && newOrders.size() > i) {
+            Order newOrder = newOrders.get(i);
+            vegaApiClient.submitOrder(newOrder, partyId);
+        } else if(currentOrders.size() > i && newOrders.size() < i) {
+            Order currentOrder = currentOrders.get(i);
+            vegaApiClient.cancelOrder(currentOrder.getId(), partyId);
         }
     }
 }

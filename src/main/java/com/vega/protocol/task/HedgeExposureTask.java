@@ -28,7 +28,7 @@ public class HedgeExposureTask extends TradingTask {
             return;
         }
         if(!taskEnabled) {
-            log.warn("Cannot execute {} because it is disabled", getClass().getSimpleName());
+            log.debug("Cannot execute {} because it is disabled", getClass().getSimpleName());
             return;
         }
         // TODO - implement hedging on Binance or IG (for non-crypto)

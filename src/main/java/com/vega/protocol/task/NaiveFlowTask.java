@@ -65,7 +65,7 @@ public class NaiveFlowTask extends TradingTask {
             return;
         }
         if(!taskEnabled) {
-            log.warn("Cannot execute {} because it is disabled", getClass().getSimpleName());
+            log.debug("Cannot execute {} because it is disabled", getClass().getSimpleName());
             return;
         }
         updateBias();

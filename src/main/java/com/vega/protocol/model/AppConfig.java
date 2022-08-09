@@ -8,8 +8,6 @@ import lombok.experimental.Accessors;
 public class AppConfig {
     private Double bidQuoteRange;
     private Double askQuoteRange;
-    private Double bidLiquidityRange;
-    private Double askLiquidityRange;
     private Double bidSizeFactor;
     private Double askSizeFactor;
     private Integer orderCount;

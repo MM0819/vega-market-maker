@@ -88,8 +88,6 @@ public class DataInitializer {
                 .setAskSizeFactor(askSizeFactor)
                 .setBidQuoteRange(bidQuoteRange)
                 .setAskQuoteRange(askQuoteRange)
-                .setBidLiquidityRange(bidLiquidityRange)
-                .setAskLiquidityRange(askLiquidityRange)
                 .setPricingStepSize(pricingStepSize);
         appConfigStore.update(config);
         vegaApiClient.getAssets().forEach(assetStore::add);

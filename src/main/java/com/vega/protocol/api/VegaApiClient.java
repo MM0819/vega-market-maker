@@ -163,8 +163,8 @@ public class VegaApiClient {
                 BigDecimal balance = BigDecimal.valueOf(accountObject.getDouble("balance"));
                 AccountType type = AccountType.valueOf(accountObject.getString("type")
                         .replace("ACCOUNT_TYPE_", ""));
-                String id = String.format("%s-%s-%s", asset, partyId, type);
-                if(!marketId.equals("!")) {
+                String id = String.format("%s-%s-%s", asset.getSymbol(), partyId, type);
+                if(!marketId.equals("!") && !type.equals(AccountType.GENERAL)) {
                     id = String.format("%s-%s", id, marketId);
                 }
                 Account account = new Account()
@@ -352,7 +352,91 @@ public class VegaApiClient {
                     .body(cancellation)
                     .asJson();
             if(response.getBody().toString().contains("couldn't get last block height")) {
+                log.info("Trying to cancel {} again...", id);
                 return cancelOrder(id, partyId, attempt+1);
+            }
+            if(response.getBody().toString().contains("error")) {
+                throw new TradingException(response.getBody().getObject().getString("error"));
+            }
+            String txHash = response.getBody().getObject().getString("txHash");
+            return Optional.of(txHash);
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            if(response != null) {
+                log.info(response.getBody().toString());
+            }
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * Amend order
+     *
+     * @param orderId the order ID
+     * @param sizeDelta the change in size
+     * @param price the order price
+     * @param market {@link Market}
+     * @param partyId the party ID
+     *
+     * @return {@link Optional<String>}
+     */
+    public Optional<String> amendOrder(
+            final String orderId,
+            final BigDecimal sizeDelta,
+            final BigDecimal price,
+            final Market market,
+            final String partyId
+    ) {
+        return amendOrder(orderId, sizeDelta, price, market, partyId, 1);
+    }
+
+    /**
+     * Amend order with recursive retry
+     *
+     * @param orderId the order ID
+     * @param sizeDelta the change in size
+     * @param price the order price
+     * @param market {@link Market}
+     * @param partyId the party ID
+     * @param attempt the attempt count
+     *
+     * @return {@link Optional<String>}
+     */
+    private Optional<String> amendOrder(
+            final String orderId,
+            final BigDecimal sizeDelta,
+            final BigDecimal price,
+            final Market market,
+            final String partyId,
+            final int attempt
+    ) {
+        if(attempt >= 10) {
+            return Optional.empty();
+        }
+        HttpResponse<JsonNode> response = null;
+        try {
+            JSONObject orderAmendment = new JSONObject()
+                    .put("marketId", market.getId())
+                    .put("sizeDelta", decimalUtils.convertFromDecimals(
+                            market.getDecimalPlaces(), sizeDelta).toBigInteger().toString())
+                    .put("price", new JSONObject()
+                            .put("value", decimalUtils.convertFromDecimals(market.getPositionDecimalPlaces(), price)
+                                    .toBigInteger().toString()))
+                    .put("orderId", orderId);
+            JSONObject submission = new JSONObject()
+                    .put("orderAmendment", orderAmendment)
+                    .put("pubKey", partyId)
+                    .put("propagate", true);
+            String token = getToken().orElseThrow(() -> new TradingException(ErrorCode.GET_VEGA_TOKEN_FAILED));
+            Map<String, String> headers = new HashMap<>();
+            headers.put("Authorization", String.format("Bearer %s", token));
+            response = Unirest.post(String.format("%s/api/v1/command/sync", walletUrl))
+                    .headers(headers)
+                    .body(submission)
+                    .asJson();
+            if(response.getBody().toString().contains("couldn't get last block height")) {
+                log.info("Trying to create new order again...");
+                return amendOrder(orderId, sizeDelta, price, market, partyId, attempt+1);
             }
             if(response.getBody().toString().contains("error")) {
                 throw new TradingException(response.getBody().getObject().getString("error"));
@@ -377,7 +461,7 @@ public class VegaApiClient {
      *
      * @return {@link Optional<String>}
      */
-    public Optional<String> submitOrder(
+    private Optional<String> submitOrder(
             final Order order,
             final String partyId,
             final int attempt
@@ -413,6 +497,7 @@ public class VegaApiClient {
                     .body(submission)
                     .asJson();
             if(response.getBody().toString().contains("couldn't get last block height")) {
+                log.info("Trying to create new order again...");
                 return submitOrder(order, partyId, attempt+1);
             }
             if(response.getBody().toString().contains("error")) {

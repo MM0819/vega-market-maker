@@ -76,7 +76,7 @@ public class UpdateLiquidityCommitmentTask extends TradingTask {
             return;
         }
         if(!taskEnabled) {
-            log.warn("Cannot execute {} because it is disabled", getClass().getSimpleName());
+            log.debug("Cannot execute {} because it is disabled", getClass().getSimpleName());
             return;
         }
         log.info("Updating liquidity commitment...");
@@ -99,10 +99,10 @@ public class UpdateLiquidityCommitmentTask extends TradingTask {
         log.info("Exposure = {}\nBid pool size = {}\nAsk pool size = {}", exposure, bidPoolSize, askPoolSize);
         List<DistributionStep> askDistribution = pricingUtils.getAskDistribution(
                 exposure.doubleValue() < 0 ? scalingFactor : 1.0, bidPoolSize.doubleValue(), askPoolSize.doubleValue(),
-                config.getAskQuoteRange(), config.getAskLiquidityRange(), config.getOrderCount());
+                config.getAskQuoteRange(), config.getOrderCount());
         List<DistributionStep> bidDistribution = pricingUtils.getBidDistribution(
                 exposure.doubleValue() > 0 ? scalingFactor : 1.0, bidPoolSize.doubleValue(), askPoolSize.doubleValue(),
-                config.getBidQuoteRange(), config.getBidLiquidityRange(), config.getOrderCount());
+                config.getBidQuoteRange(), config.getOrderCount());
         BigDecimal commitmentAmount = BigDecimal.valueOf((config.getAskQuoteRange() + config.getBidQuoteRange()) / 4)
                 .multiply(balance);
         List<LiquidityCommitmentOffset> liquidityCommitmentBids = bidDistribution.stream()
