@@ -164,7 +164,7 @@ public class VegaApiClient {
                 AccountType type = AccountType.valueOf(accountObject.getString("type")
                         .replace("ACCOUNT_TYPE_", ""));
                 String id = String.format("%s-%s-%s", asset.getSymbol(), partyId, type);
-                if(!marketId.equals("!") && !type.equals(AccountType.GENERAL)) {
+                if(!type.equals(AccountType.GENERAL)) {
                     id = String.format("%s-%s", id, marketId);
                 }
                 Account account = new Account()
@@ -335,7 +335,6 @@ public class VegaApiClient {
         if(attempt >= 10) {
             return Optional.empty();
         }
-        HttpResponse<JsonNode> response = null;
         try {
             JSONObject orderCancellation = new JSONObject()
                     .put("marketId", marketId)
@@ -347,7 +346,7 @@ public class VegaApiClient {
             String token = getToken().orElseThrow(() -> new TradingException(ErrorCode.GET_VEGA_TOKEN_FAILED));
             Map<String, String> headers = new HashMap<>();
             headers.put("Authorization", String.format("Bearer %s", token));
-            response = Unirest.post(String.format("%s/api/v1/command/sync", walletUrl))
+            HttpResponse<JsonNode> response = Unirest.post(String.format("%s/api/v1/command/sync", walletUrl))
                     .headers(headers)
                     .body(cancellation)
                     .asJson();
@@ -362,9 +361,6 @@ public class VegaApiClient {
             return Optional.of(txHash);
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            if(response != null) {
-                log.info(response.getBody().toString());
-            }
         }
         return Optional.empty();
     }
@@ -413,7 +409,6 @@ public class VegaApiClient {
         if(attempt >= 10) {
             return Optional.empty();
         }
-        HttpResponse<JsonNode> response = null;
         try {
             JSONObject orderAmendment = new JSONObject()
                     .put("marketId", market.getId())
@@ -430,7 +425,7 @@ public class VegaApiClient {
             String token = getToken().orElseThrow(() -> new TradingException(ErrorCode.GET_VEGA_TOKEN_FAILED));
             Map<String, String> headers = new HashMap<>();
             headers.put("Authorization", String.format("Bearer %s", token));
-            response = Unirest.post(String.format("%s/api/v1/command/sync", walletUrl))
+            HttpResponse<JsonNode> response = Unirest.post(String.format("%s/api/v1/command/sync", walletUrl))
                     .headers(headers)
                     .body(submission)
                     .asJson();
@@ -445,9 +440,6 @@ public class VegaApiClient {
             return Optional.of(txHash);
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            if(response != null) {
-                log.info(response.getBody().toString());
-            }
         }
         return Optional.empty();
     }
@@ -469,7 +461,6 @@ public class VegaApiClient {
         if(attempt >= 10) {
             return Optional.empty();
         }
-        HttpResponse<JsonNode> response = null;
         try {
             String reference = String.format("%s-%s", partyId, UUID.randomUUID());
             Market market = order.getMarket();
@@ -492,7 +483,7 @@ public class VegaApiClient {
             String token = getToken().orElseThrow(() -> new TradingException(ErrorCode.GET_VEGA_TOKEN_FAILED));
             Map<String, String> headers = new HashMap<>();
             headers.put("Authorization", String.format("Bearer %s", token));
-            response = Unirest.post(String.format("%s/api/v1/command/sync", walletUrl))
+            HttpResponse<JsonNode> response = Unirest.post(String.format("%s/api/v1/command/sync", walletUrl))
                     .headers(headers)
                     .body(submission)
                     .asJson();
@@ -507,9 +498,6 @@ public class VegaApiClient {
             return Optional.of(txHash);
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            if(response != null) {
-                log.info(response.getBody().toString());
-            }
         }
         return Optional.empty();
     }
@@ -580,7 +568,6 @@ public class VegaApiClient {
         if(attempt >= 10) {
             return Optional.empty();
         }
-        HttpResponse<JsonNode> response = null;
         try {
             Market market = liquidityCommitment.getMarket();
             BigDecimal commitmentAmount = liquidityCommitment.getCommitmentAmount();
@@ -601,7 +588,7 @@ public class VegaApiClient {
             String token = getToken().orElseThrow(() -> new TradingException(ErrorCode.GET_VEGA_TOKEN_FAILED));
             Map<String, String> headers = new HashMap<>();
             headers.put("Authorization", String.format("Bearer %s", token));
-            response = Unirest.post(String.format("%s/api/v1/command/sync", walletUrl))
+            HttpResponse<JsonNode> response = Unirest.post(String.format("%s/api/v1/command/sync", walletUrl))
                     .headers(headers)
                     .body(submission)
                     .asJson();
@@ -615,9 +602,6 @@ public class VegaApiClient {
             return Optional.of(txHash);
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            if(response != null) {
-                log.info(response.getBody().toString());
-            }
         }
         return Optional.empty();
     }

@@ -2,6 +2,7 @@ package com.vega.protocol.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.vega.protocol.constant.OrderStatus;
 import com.vega.protocol.model.Order;
 import com.vega.protocol.store.OrderStore;
 import org.junit.jupiter.api.Assertions;
@@ -33,6 +34,19 @@ public class OrderControllerTest {
         Order order = new Order().setId("12345");
         store.update(order);
         MvcResult result = mvc.perform(MockMvcRequestBuilders.get("/order"))
+                .andExpect(status().isOk())
+                .andReturn();
+        String body = result.getResponse().getContentAsString();
+        List<Order> orders = new ObjectMapper().readValue(body, new TypeReference<>() {});
+        Assertions.assertEquals(orders.size(), 1);
+        Assertions.assertEquals(orders.get(0).getId(), "12345");
+    }
+
+    @Test
+    public void testGetOrdersByStatus() throws Exception {
+        Order order = new Order().setId("12345").setStatus(OrderStatus.ACTIVE);
+        store.update(order);
+        MvcResult result = mvc.perform(MockMvcRequestBuilders.get("/order/status/ACTIVE"))
                 .andExpect(status().isOk())
                 .andReturn();
         String body = result.getResponse().getContentAsString();

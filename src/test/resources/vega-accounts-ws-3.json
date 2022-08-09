@@ -11,6 +11,18 @@
         "market": null,
         "type": "General"
       }, {
+        "balance": "999576419",
+        "asset": {
+          "symbol": "tDAI",
+          "decimals": 5,
+          "name": "tDAI TEST"
+        },
+        "market": {
+          "id": "5e6035fe6a6df78c9ec44b333c231e63d357acef0a0620d2c243f5865d1dc0d8",
+          "name": "AAVEDAI Monthly (30 Jun 2022)"
+        },
+        "type": "General"
+      }, {
         "balance": "298662",
         "asset": {
           "symbol": "tDAI",

@@ -86,8 +86,12 @@ public class VegaApiClientTest {
         return new JSONObject().put("txHash", "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
     }
 
-    private JSONObject errorJson() throws JSONException {
+    private JSONObject missingBlockJson() throws JSONException {
         return new JSONObject().put("error", "couldn't get last block height");
+    }
+
+    private JSONObject errorGenericJson() throws JSONException {
+        return new JSONObject().put("error", "something went wrong");
     }
 
     private void mockGetToken(
@@ -250,6 +254,22 @@ public class VegaApiClientTest {
         return Optional.empty();
     }
 
+    private Optional<String> amendOrder(
+            final JSONObject jsonResponse
+    ) {
+        Mockito.when(decimalUtils.convertFromDecimals(Mockito.anyInt(), Mockito.any(BigDecimal.class)))
+                .thenReturn(BigDecimal.ONE);
+        try(MockedStatic<Unirest> mockStatic = Mockito.mockStatic(Unirest.class)) {
+            mockGetToken(mockStatic, tokenJson());
+            mockSubmitTransaction(mockStatic, jsonResponse);
+            Market market = new Market().setDecimalPlaces(1).setPositionDecimalPlaces(1);
+            return vegaApiClient.amendOrder("1", BigDecimal.ONE, BigDecimal.ONE, market, PARTY_ID);
+        } catch(Exception e) {
+            Assertions.fail();
+        }
+        return Optional.empty();
+    }
+
     private Optional<String> cancelOrder(
             final JSONObject jsonResponse
     ) {
@@ -295,7 +315,13 @@ public class VegaApiClientTest {
 
     @Test
     public void testSubmitLiquidityCommitmentWithWalletError() throws JSONException {
-        Optional<String> txHash = submitLiquidityCommitment(errorJson(), false);
+        Optional<String> txHash = submitLiquidityCommitment(missingBlockJson(), false);
+        Assertions.assertTrue(txHash.isEmpty());
+    }
+
+    @Test
+    public void testSubmitLiquidityCommitmentWithGenericError() throws JSONException {
+        Optional<String> txHash = submitLiquidityCommitment(errorGenericJson(), false);
         Assertions.assertTrue(txHash.isEmpty());
     }
 
@@ -307,7 +333,31 @@ public class VegaApiClientTest {
 
     @Test
     public void testSubmitOrderWithWalletError() throws JSONException {
-        Optional<String> txHash = submitOrder(errorJson());
+        Optional<String> txHash = submitOrder(missingBlockJson());
+        Assertions.assertTrue(txHash.isEmpty());
+    }
+
+    @Test
+    public void testSubmitOrderWithGenericError() throws JSONException {
+        Optional<String> txHash = submitOrder(errorGenericJson());
+        Assertions.assertTrue(txHash.isEmpty());
+    }
+
+    @Test
+    public void testAmendOrder() throws JSONException {
+        Optional<String> txHash = amendOrder(txHashJson());
+        Assertions.assertTrue(txHash.isPresent());
+    }
+
+    @Test
+    public void testAmendOrderWithWalletError() throws JSONException {
+        Optional<String> txHash = amendOrder(missingBlockJson());
+        Assertions.assertTrue(txHash.isEmpty());
+    }
+
+    @Test
+    public void testAmendOrderWithGenericError() throws JSONException {
+        Optional<String> txHash = amendOrder(errorGenericJson());
         Assertions.assertTrue(txHash.isEmpty());
     }
 
@@ -319,7 +369,13 @@ public class VegaApiClientTest {
 
     @Test
     public void testCancelOrderWithWalletError() throws JSONException {
-        Optional<String> txHash = cancelOrder(errorJson());
+        Optional<String> txHash = cancelOrder(missingBlockJson());
+        Assertions.assertTrue(txHash.isEmpty());
+    }
+
+    @Test
+    public void testCancelOrderWithGenericError() throws JSONException {
+        Optional<String> txHash = cancelOrder(errorGenericJson());
         Assertions.assertTrue(txHash.isEmpty());
     }
 
@@ -444,6 +500,21 @@ public class VegaApiClientTest {
         try(MockedStatic<Unirest> mockStatic = Mockito.mockStatic(Unirest.class)) {
             mockGetToken(mockStatic, new JSONObject());
             Optional<String> txHash = vegaApiClient.cancelOrder("1", PARTY_ID);
+            Assertions.assertTrue(txHash.isEmpty());
+        } catch(Exception e) {
+            Assertions.fail();
+        }
+    }
+
+    @Test
+    public void testAmendOrderWithMissingToken() {
+        Mockito.when(decimalUtils.convertFromDecimals(Mockito.anyInt(), Mockito.any(BigDecimal.class)))
+                .thenReturn(BigDecimal.ONE);
+        try(MockedStatic<Unirest> mockStatic = Mockito.mockStatic(Unirest.class)) {
+            mockGetToken(mockStatic, new JSONObject());
+            Market market = new Market().setDecimalPlaces(1).setPositionDecimalPlaces(1);
+            Optional<String> txHash = vegaApiClient.amendOrder("1",
+                    BigDecimal.ONE, BigDecimal.ONE, market, PARTY_ID);
             Assertions.assertTrue(txHash.isEmpty());
         } catch(Exception e) {
             Assertions.fail();

@@ -37,39 +37,41 @@ public class PricingUtilsTest {
         Assertions.assertEquals(scalingFactor, 0.5);
     }
 
-    private void getBidDistribution(int expectedSize, int maxSize, double scalingFactor, double quoteRange) {
+    private void getBidDistribution(int expectedSize, double expectedVolume,
+                                    int maxSize, double scalingFactor, double quoteRange) {
         double bidPoolSize = 50000d;
         List<DistributionStep> distribution = pricingUtils.getBidDistribution(
                 scalingFactor, bidPoolSize, 2.5d, quoteRange, maxSize);
         Assertions.assertEquals(distribution.size(), expectedSize);
         double volume = distribution.stream().map(d -> d.getPrice() * d.getSize()).mapToDouble(d -> d).sum();
-        Assertions.assertEquals(volume, bidPoolSize * scalingFactor, bidPoolSize / 20d);
+        Assertions.assertEquals(volume, expectedVolume, 10d);
     }
 
-    private void getAskDistribution(int expectedSize, int maxSize, double scalingFactor, double quoteRange) {
+    private void getAskDistribution(int expectedSize, double expectedVolume,
+                                    int maxSize, double scalingFactor, double quoteRange) {
         double askPoolSize = 2.5d;
         List<DistributionStep> distribution = pricingUtils.getAskDistribution(
                 scalingFactor, 50000d, askPoolSize, quoteRange, maxSize);
         Assertions.assertEquals(distribution.size(), expectedSize);
         double volume = distribution.stream().map(DistributionStep::getSize).mapToDouble(d -> d).sum();
-        Assertions.assertEquals(volume, askPoolSize * scalingFactor, askPoolSize / 20d);
+        Assertions.assertEquals(volume, expectedVolume, 0.01d);
     }
 
     @Test
     public void testGetBidDistribution() {
-        getBidDistribution(10, 10, 1.0, 0.05);
+        getBidDistribution(10, 1250, 10, 1.0, 0.05);
     }
 
     @Test
     public void testGetAskDistribution() {
-        getAskDistribution(10, 10, 1.0, 0.05);
+        getAskDistribution(10, 0.059, 10, 1.0, 0.05);
     }
 
     @Test
     public void testGetBidDistributionMissingConfig() {
         Mockito.when(appConfigStore.get()).thenReturn(Optional.empty());
         try {
-            getBidDistribution(10, 10, 1.0, 0.999);
+            getBidDistribution(10, 1.0, 10, 1.0, 0.999);
             Assertions.fail();
         } catch(TradingException e) {
             Assertions.assertEquals(e.getMessage(), ErrorCode.APP_CONFIG_NOT_FOUND);
@@ -80,7 +82,7 @@ public class PricingUtilsTest {
     public void testGetAskDistributionMissingConfig() {
         Mockito.when(appConfigStore.get()).thenReturn(Optional.empty());
         try {
-            getAskDistribution(10, 10, 1.0, 2.0);
+            getAskDistribution(10, 1.0, 10, 1.0, 2.0);
             Assertions.fail();
         } catch(TradingException e) {
             Assertions.assertEquals(e.getMessage(), ErrorCode.APP_CONFIG_NOT_FOUND);
@@ -89,21 +91,21 @@ public class PricingUtilsTest {
 
     @Test
     public void testGetBidDistributionWithScalingApplied() {
-        getBidDistribution(10, 10, 0.5, 0.999);
+        getBidDistribution(10, 24740, 10, 0.5, 0.999);
     }
 
     @Test
     public void testGetAskDistributionWithScalingApplied() {
-        getAskDistribution(10, 10, 0.5, 2.0);
+        getAskDistribution(10, 0.76, 10, 0.5, 2.0);
     }
 
     @Test
     public void testGetBidDistributionWithoutAggregation() {
-        getBidDistribution(5521, 10000, 1.0, 0.999);
+        getBidDistribution(5521, 48420, 10000, 1.0, 0.999);
     }
 
     @Test
     public void testGetAskDistributionWithoutAggregation() {
-        getAskDistribution(846, 10000, 1.0, 2.0);
+        getAskDistribution(846, 1.05, 10000, 1.0, 2.0);
     }
 }

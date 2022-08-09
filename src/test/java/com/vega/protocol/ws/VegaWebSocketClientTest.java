@@ -118,7 +118,7 @@ public class VegaWebSocketClientTest {
 
     @Test
     public void testHandleAccountsMany() {
-        handleAccounts(2);
+        handleAccounts(3);
     }
 
     @Test
@@ -127,7 +127,7 @@ public class VegaWebSocketClientTest {
         try(InputStream is = getClass().getClassLoader().getResourceAsStream("vega-orders-ws.json")) {
             String marketsJson = IOUtils.toString(Objects.requireNonNull(is), StandardCharsets.UTF_8);
             vegaWebSocketClient.onMessage(marketsJson);
-            Mockito.verify(orderStore, Mockito.times(2)).update(Mockito.any(Order.class));
+            Mockito.verify(orderStore, Mockito.times(3)).update(Mockito.any(Order.class));
             Mockito.verify(liquidityCommitmentStore, Mockito.times(1))
                     .update(Mockito.any(LiquidityCommitment.class));
         } catch (Exception e) {
