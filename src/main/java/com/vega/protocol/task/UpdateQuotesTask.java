@@ -42,6 +42,7 @@ public class UpdateQuotesTask extends TradingTask {
     private final PositionService positionService;
     private final PricingUtils pricingUtils;
     private final String partyId;
+    private final Integer threadPoolSize;
 
     public UpdateQuotesTask(@Value("${vega.market.id}") String marketId,
                             @Value("${update.quotes.enabled}") Boolean taskEnabled,
@@ -55,7 +56,8 @@ public class UpdateQuotesTask extends TradingTask {
                             PositionService positionService,
                             PricingUtils pricingUtils,
                             DataInitializer dataInitializer,
-                            WebSocketInitializer webSocketInitializer) {
+                            WebSocketInitializer webSocketInitializer,
+                            @Value("${thread.pool.size}") Integer threadPoolSize) {
         super(dataInitializer, webSocketInitializer, taskEnabled);
         this.appConfigStore = appConfigStore;
         this.marketId = marketId;
@@ -67,6 +69,7 @@ public class UpdateQuotesTask extends TradingTask {
         this.positionService = positionService;
         this.pricingUtils = pricingUtils;
         this.partyId = partyId;
+        this.threadPoolSize = threadPoolSize;
     }
 
     /**
@@ -178,10 +181,11 @@ public class UpdateQuotesTask extends TradingTask {
             List<Order> currentBids,
             List<Order> currentAsks
     ) {
-        int requiredBids = newBids.size();
-        int requiredAsks = newAsks.size();
-        int count = Math.min(requiredBids, requiredAsks);
-        ExecutorService executorService = Executors.newFixedThreadPool(32);
+        int count = Math.max(
+                Math.max(newBids.size(), newAsks.size()),
+                Math.max(currentBids.size(), currentAsks.size())
+        );
+        ExecutorService executorService = Executors.newFixedThreadPool(threadPoolSize);
         for(int i=0; i<count; i++) {
             int x = i;
             executorService.submit(() -> updateSideOfBook(currentAsks, newAsks, x));
@@ -189,12 +193,19 @@ public class UpdateQuotesTask extends TradingTask {
         }
     }
 
+    /**
+     * Update one side of the order book (for given step)
+     *
+     * @param currentOrders {@link List<Order>}
+     * @param newOrders {@link List<Order>}
+     * @param i the current step
+     */
     private void updateSideOfBook(
             final List<Order> currentOrders,
             final List<Order> newOrders,
             final int i
     ) {
-        if(currentOrders.size() > i && newOrders.size() > i) {
+        if (currentOrders.size() > i && newOrders.size() > i) {
             Order currentOrder = currentOrders.get(i);
             Order newOrder = newOrders.get(i);
             BigDecimal sizeDelta = newOrder.getSize().subtract(currentOrder.getSize());
@@ -202,10 +213,10 @@ public class UpdateQuotesTask extends TradingTask {
             Market market = newOrder.getMarket();
             String partyId = newOrder.getPartyId();
             vegaApiClient.amendOrder(currentOrder.getId(), sizeDelta, price, market, partyId);
-        } else if(currentOrders.size() < i && newOrders.size() > i) {
+        } else if (currentOrders.size() <= i && newOrders.size() > i) {
             Order newOrder = newOrders.get(i);
             vegaApiClient.submitOrder(newOrder, partyId);
-        } else if(currentOrders.size() > i && newOrders.size() < i) {
+        } else if (currentOrders.size() > i) {
             Order currentOrder = currentOrders.get(i);
             vegaApiClient.cancelOrder(currentOrder.getId(), partyId);
         }

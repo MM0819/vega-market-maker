@@ -60,7 +60,7 @@ public class UpdateQuotesTaskTest {
     ) {
         return new UpdateQuotesTask(MARKET_ID, enabled, PARTY_ID, referencePriceStore,
                 appConfigStore, orderStore, vegaApiClient, marketService, accountService, positionService,
-                pricingUtils, dataInitializer, webSocketInitializer);
+                pricingUtils, dataInitializer, webSocketInitializer, 16);
     }
 
     @BeforeEach
@@ -71,7 +71,9 @@ public class UpdateQuotesTaskTest {
     private void execute(
             final BigDecimal exposure,
             final BigDecimal balance,
-            final MarketTradingMode tradingMode
+            final MarketTradingMode tradingMode,
+            final int bidDistributionSize,
+            final int askDistributionSize
     ) {
         Mockito.when(dataInitializer.isInitialized()).thenReturn(true);
         Mockito.when(webSocketInitializer.isVegaWebSocketsInitialized()).thenReturn(true);
@@ -85,51 +87,51 @@ public class UpdateQuotesTaskTest {
         Mockito.when(referencePriceStore.get()).thenReturn(Optional.of(
                 new ReferencePrice().setMidPrice(BigDecimal.valueOf(20000))));
         List<Order> currentOrders = new ArrayList<>();
-        for(int i=0; i<3; i++) {
+        for(int i=0; i<4; i++) {
             currentOrders.add(new Order()
                     .setSide(MarketSide.SELL)
                     .setId(String.valueOf(i+1))
                     .setPrice(BigDecimal.ONE)
-                    .setStatus(OrderStatus.ACTIVE));
+                    .setSize(BigDecimal.TEN)
+                    .setStatus(i % 2 == 0 ? OrderStatus.ACTIVE : OrderStatus.CANCELLED));
         }
-        for(int i=0; i<3; i++) {
+        for(int i=0; i<4; i++) {
             currentOrders.add(new Order()
                     .setSide(MarketSide.BUY)
                     .setId(String.valueOf(i+4))
                     .setPrice(BigDecimal.ONE)
-                    .setStatus(OrderStatus.ACTIVE));
+                    .setSize(BigDecimal.TEN)
+                    .setStatus(i % 2 == 0 ? OrderStatus.ACTIVE : OrderStatus.CANCELLED));
+        }
+        List<DistributionStep> bidDistribution = new ArrayList<>();
+        List<DistributionStep> askDistribution = new ArrayList<>();
+        for(int i=0; i<bidDistributionSize; i++) {
+            bidDistribution.add(new DistributionStep().setPrice(1d).setSize(1d));
+        }
+        for(int i=0; i<askDistributionSize; i++) {
+            askDistribution.add(new DistributionStep().setPrice(1d).setSize(1d));
         }
         Mockito.when(orderStore.getItems()).thenReturn(currentOrders);
         Mockito.when(pricingUtils.getScalingFactor(Mockito.anyDouble())).thenReturn(1d);
         Mockito.when(pricingUtils.getBidDistribution(
                         Mockito.anyDouble(), Mockito.anyDouble(), Mockito.anyDouble(),
                         Mockito.anyDouble(), Mockito.anyInt()))
-                .thenReturn(List.of(new DistributionStep().setPrice(1d).setSize(1d)));
+                .thenReturn(bidDistribution);
         Mockito.when(pricingUtils.getAskDistribution(
                         Mockito.anyDouble(), Mockito.anyDouble(), Mockito.anyDouble(),
                         Mockito.anyDouble(), Mockito.anyInt()))
-                .thenReturn(List.of(
-                        new DistributionStep().setPrice(1d).setSize(1d),
-                        new DistributionStep().setPrice(1d).setSize(1d),
-                        new DistributionStep().setPrice(1d).setSize(1d),
-                        new DistributionStep().setPrice(1d).setSize(1d)
-                ));
+                .thenReturn(askDistribution);
         updateQuotesTask.execute();
         int modifier = 1;
-        if(balance.doubleValue() == 0) {
+        if(balance.doubleValue() == 0 || bidDistributionSize == 0 || askDistributionSize == 0) {
             modifier = 0;
         }
-        // TODO - fix following assertions after switching to amend orders
-//        Mockito.verify(vegaApiClient, Mockito.times(3 * modifier))
-//                .amendOrder(Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyString());
-//        Mockito.verify(vegaApiClient, Mockito.times(5 * modifier))
-//                .submitOrder(Mockito.any(Order.class), Mockito.anyString()); // TODO - fix assertion
-//        for(Order order : currentOrders.stream().filter(o -> o.getSide().equals(MarketSide.BUY)).toList()) {
-//            Mockito.verify(vegaApiClient, Mockito.times(modifier)).cancelOrder(order.getId(), PARTY_ID);
-//        }
-//        for(Order order : currentOrders.stream().filter(o -> o.getSide().equals(MarketSide.SELL)).toList()) {
-//            Mockito.verify(vegaApiClient, Mockito.times(modifier)).cancelOrder(order.getId(), PARTY_ID);
-//        }
+        Mockito.verify(vegaApiClient, Mockito.times(3 * modifier))
+                .amendOrder(Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyString());
+        Mockito.verify(vegaApiClient, Mockito.times(modifier))
+                .cancelOrder(Mockito.anyString(), Mockito.anyString());
+        Mockito.verify(vegaApiClient, Mockito.times(modifier))
+                .submitOrder(Mockito.any(Order.class), Mockito.anyString());
     }
 
     @Test
@@ -145,22 +147,38 @@ public class UpdateQuotesTaskTest {
 
     @Test
     public void testExecute() {
-        execute(BigDecimal.ZERO, BigDecimal.valueOf(100000), MarketTradingMode.CONTINUOUS);
+        execute(BigDecimal.ZERO, BigDecimal.valueOf(100000),
+                MarketTradingMode.CONTINUOUS, 3, 1);
+    }
+
+    @Test
+    public void testExecuteMissingBidDistribution() {
+        execute(BigDecimal.ZERO, BigDecimal.valueOf(100000),
+                MarketTradingMode.CONTINUOUS, 0, 1);
+    }
+
+    @Test
+    public void testExecuteMissingAskDistribution() {
+        execute(BigDecimal.ZERO, BigDecimal.valueOf(100000),
+                MarketTradingMode.CONTINUOUS, 3, 0);
     }
 
     @Test
     public void testExecuteZerBalance() {
-        execute(BigDecimal.ZERO, BigDecimal.ZERO, MarketTradingMode.CONTINUOUS);
+        execute(BigDecimal.ZERO, BigDecimal.ZERO,
+                MarketTradingMode.CONTINUOUS, 3, 1);
     }
 
     @Test
     public void testExecuteLongPosition() {
-        execute(BigDecimal.valueOf(1000L), BigDecimal.valueOf(100000), MarketTradingMode.MONITORING_AUCTION);
+        execute(BigDecimal.valueOf(1000L), BigDecimal.valueOf(100000),
+                MarketTradingMode.MONITORING_AUCTION, 3, 1);
     }
 
     @Test
     public void testExecuteShortPosition() {
-        execute(BigDecimal.valueOf(-1000L), BigDecimal.valueOf(100000), MarketTradingMode.CONTINUOUS);
+        execute(BigDecimal.valueOf(-1000L), BigDecimal.valueOf(100000),
+                MarketTradingMode.CONTINUOUS, 3, 1);
     }
 
     @Test

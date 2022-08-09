@@ -54,7 +54,7 @@ public class WebSocketInitializerTest {
     public void testInitializePolygon() throws InterruptedException {
         webSocketInitializer = getWebSocketInitializer(true, ReferencePriceSource.POLYGON);
         webSocketInitializer.initialize();
-        Thread.sleep(500L);
+        Thread.sleep(1000L);
         Assertions.assertNull(webSocketInitializer.getBinanceWebSocketClient());
         Assertions.assertTrue(webSocketInitializer.getVegaWebSocketClient().isOpen());
         Assertions.assertTrue(webSocketInitializer.getPolygonWebSocketClient().isOpen());
