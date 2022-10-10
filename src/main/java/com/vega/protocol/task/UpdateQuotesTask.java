@@ -43,6 +43,7 @@ public class UpdateQuotesTask extends TradingTask {
     private final PricingUtils pricingUtils;
     private final String partyId;
     private final Integer threadPoolSize;
+    private final String updateQuotesCronExpression;
 
     public UpdateQuotesTask(@Value("${vega.market.id}") String marketId,
                             @Value("${update.quotes.enabled}") Boolean taskEnabled,
@@ -57,7 +58,8 @@ public class UpdateQuotesTask extends TradingTask {
                             PricingUtils pricingUtils,
                             DataInitializer dataInitializer,
                             WebSocketInitializer webSocketInitializer,
-                            @Value("${thread.pool.size}") Integer threadPoolSize) {
+                            @Value("${thread.pool.size}") Integer threadPoolSize,
+                            @Value("${update.quotes.cron.expression}") String updateQuotesCronExpression) {
         super(dataInitializer, webSocketInitializer, taskEnabled);
         this.appConfigStore = appConfigStore;
         this.marketId = marketId;
@@ -70,6 +72,7 @@ public class UpdateQuotesTask extends TradingTask {
         this.pricingUtils = pricingUtils;
         this.partyId = partyId;
         this.threadPoolSize = threadPoolSize;
+        this.updateQuotesCronExpression = updateQuotesCronExpression;
     }
 
     /**
@@ -77,7 +80,7 @@ public class UpdateQuotesTask extends TradingTask {
      */
     @Override
     public String getCronExpression() {
-        return "*/15 * * * * *";
+        return updateQuotesCronExpression;
     }
 
     /**
@@ -212,12 +215,16 @@ public class UpdateQuotesTask extends TradingTask {
             BigDecimal price = newOrder.getPrice();
             Market market = newOrder.getMarket();
             String partyId = newOrder.getPartyId();
+            log.info("AMEND {}: sizeDelta = {}; price = {}", currentOrder.getId(), sizeDelta, price);
             vegaApiClient.amendOrder(currentOrder.getId(), sizeDelta, price, market, partyId);
         } else if (currentOrders.size() <= i && newOrders.size() > i) {
             Order newOrder = newOrders.get(i);
+            log.info("CREATE: side = {}; size = {}; price = {}",
+                    newOrder.getSize(), newOrder.getSize(), newOrder.getPrice());
             vegaApiClient.submitOrder(newOrder, partyId);
         } else if (currentOrders.size() > i) {
             Order currentOrder = currentOrders.get(i);
+            log.info("CANCEL {}", currentOrder.getId());
             vegaApiClient.cancelOrder(currentOrder.getId(), partyId);
         }
     }

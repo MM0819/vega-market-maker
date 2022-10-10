@@ -355,7 +355,7 @@ public class VegaApiClient {
                 return cancelOrder(id, partyId, attempt+1);
             }
             if(response.getBody().toString().contains("error")) {
-                throw new TradingException(response.getBody().getObject().getString("error"));
+                throw new TradingException(response.getBody().toString());
             }
             String txHash = response.getBody().getObject().getString("txHash");
             return Optional.of(txHash);
@@ -413,9 +413,9 @@ public class VegaApiClient {
             JSONObject orderAmendment = new JSONObject()
                     .put("marketId", market.getId())
                     .put("sizeDelta", decimalUtils.convertFromDecimals(
-                            market.getDecimalPlaces(), sizeDelta).toBigInteger().toString())
+                            market.getPositionDecimalPlaces(), sizeDelta).toBigInteger().toString())
                     .put("price", new JSONObject()
-                            .put("value", decimalUtils.convertFromDecimals(market.getPositionDecimalPlaces(), price)
+                            .put("value", decimalUtils.convertFromDecimals(market.getDecimalPlaces(), price)
                                     .toBigInteger().toString()))
                     .put("orderId", orderId);
             JSONObject submission = new JSONObject()
@@ -430,11 +430,11 @@ public class VegaApiClient {
                     .body(submission)
                     .asJson();
             if(response.getBody().toString().contains("couldn't get last block height")) {
-                log.info("Trying to create new order again...");
+                log.info("Trying to amend order again...");
                 return amendOrder(orderId, sizeDelta, price, market, partyId, attempt+1);
             }
             if(response.getBody().toString().contains("error")) {
-                throw new TradingException(response.getBody().getObject().getString("error"));
+                throw new TradingException(response.getBody().toString());
             }
             String txHash = response.getBody().getObject().getString("txHash");
             return Optional.of(txHash);
@@ -492,7 +492,7 @@ public class VegaApiClient {
                 return submitOrder(order, partyId, attempt+1);
             }
             if(response.getBody().toString().contains("error")) {
-                throw new TradingException(response.getBody().getObject().getString("error"));
+                throw new TradingException(response.getBody().toString());
             }
             String txHash = response.getBody().getObject().getString("txHash");
             return Optional.of(txHash);
