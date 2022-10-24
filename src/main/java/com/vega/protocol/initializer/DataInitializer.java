@@ -5,7 +5,11 @@ import com.vega.protocol.model.AppConfig;
 import com.vega.protocol.store.*;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @Component
 public class DataInitializer {
@@ -19,7 +23,6 @@ public class DataInitializer {
     private final AssetStore assetStore;
     private final VegaApiClient vegaApiClient;
     private final String partyId;
-    private final String marketId;
     private final Double fee;
     private final Double spread;
     private final Integer orderCount;
@@ -28,6 +31,7 @@ public class DataInitializer {
     private final Double bidQuoteRange;
     private final Double askQuoteRange;
     private final Double pricingStepSize;
+    private final Integer threadPoolSize;
 
     @Getter
     private boolean initialized = false;
@@ -41,7 +45,6 @@ public class DataInitializer {
                            AssetStore assetStore,
                            VegaApiClient vegaApiClient,
                            @Value("${vega.party.id}") String partyId,
-                           @Value("${vega.market.id}") String marketId,
                            @Value("${fee}") Double fee,
                            @Value("${spread}") Double spread,
                            @Value("${order.count}") Integer orderCount,
@@ -49,7 +52,8 @@ public class DataInitializer {
                            @Value("${ask.size.factor}") Double askSizeFactor,
                            @Value("${bid.quote.range}") Double bidQuoteRange,
                            @Value("${ask.quote.range}") Double askQuoteRange,
-                           @Value("${pricing.step.size}") Double pricingStepSize) {
+                           @Value("${pricing.step.size}") Double pricingStepSize,
+                           @Value("${thread.pool.size}") Integer threadPoolSize) {
         this.orderStore = orderStore;
         this.marketStore = marketStore;
         this.positionStore = positionStore;
@@ -59,10 +63,10 @@ public class DataInitializer {
         this.assetStore = assetStore;
         this.vegaApiClient = vegaApiClient;
         this.partyId = partyId;
-        this.marketId = marketId;
         this.fee = fee;
         this.spread = spread;
         this.orderCount = orderCount;
+        this.threadPoolSize = threadPoolSize;
         this.bidSizeFactor = bidSizeFactor;
         this.askSizeFactor = askSizeFactor;
         this.bidQuoteRange = bidQuoteRange;
@@ -84,12 +88,20 @@ public class DataInitializer {
                 .setAskQuoteRange(askQuoteRange)
                 .setPricingStepSize(pricingStepSize);
         appConfigStore.update(config);
-        vegaApiClient.getAssets().forEach(assetStore::add);
-        vegaApiClient.getMarkets().forEach(marketStore::add);
-        vegaApiClient.getAccounts(partyId).forEach(accountStore::add);
-        vegaApiClient.getPositions(partyId).forEach(positionStore::add);
-        vegaApiClient.getOpenOrders(partyId).forEach(orderStore::add);
-        vegaApiClient.getLiquidityCommitments(partyId).forEach(liquidityCommitmentStore::add);
+        updateState();
         initialized = true;
     }
+
+    @Scheduled(cron = "* * * * * *")
+    private void updateState() {
+        ExecutorService executorService = Executors.newFixedThreadPool(threadPoolSize);
+        executorService.submit(() -> vegaApiClient.getAssets().forEach(assetStore::update));
+        executorService.submit(() -> vegaApiClient.getMarkets().forEach(marketStore::update));
+        executorService.submit(() -> vegaApiClient.getAccounts(partyId).forEach(accountStore::update));
+        executorService.submit(() -> vegaApiClient.getPositions(partyId).forEach(positionStore::update));
+        executorService.submit(() -> vegaApiClient.getOpenOrders(partyId).forEach(orderStore::update));
+        executorService.submit(() -> vegaApiClient.getLiquidityCommitments(partyId)
+                .forEach(liquidityCommitmentStore::update));
+    }
+
 }

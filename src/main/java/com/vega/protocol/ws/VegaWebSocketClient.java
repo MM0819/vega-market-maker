@@ -23,7 +23,8 @@ import java.util.List;
 @Slf4j
 public class VegaWebSocketClient extends WebSocketClient {
 
-    private static final String ACCOUNTS_QUERY = """
+    private static final String ACCOUNTS_QUERY =
+    """
         subscription {
             accounts(partyId: "PARTY_ID") {
                 balance
@@ -34,21 +35,22 @@ public class VegaWebSocketClient extends WebSocketClient {
         }
     """;
 
-    private static final String ORDERS_QUERY = """
-                subscription {
-                    orders(partyId: "PARTY_ID", marketId: "MARKET_ID") {
-                        id
-                        price
-                        side
-                        type
-                        size
-                        remaining
-                        status
-                        marketId
-                        liquidityProvisionId
-                    }
-                }
-            """;
+    private static final String ORDERS_QUERY =
+    """
+        subscription {
+            orders(partyId: "PARTY_ID", marketId: "MARKET_ID") {
+                id
+                price
+                side
+                type
+                size
+                remaining
+                status
+                marketId
+                liquidityProvisionId
+            }
+        }
+    """;
 
     private static final String POSITIONS_QUERY =
     """
@@ -482,7 +484,7 @@ public class VegaWebSocketClient extends WebSocketClient {
     ) {
         JSONArray array = new JSONArray();
         try {
-            array = data.optJSONArray(key);
+            array = data.getJSONArray(key);
         } catch(Exception e) {
             JSONObject obj = data.optJSONObject(key);
             array = obj != null ? array.put(obj) : null;
