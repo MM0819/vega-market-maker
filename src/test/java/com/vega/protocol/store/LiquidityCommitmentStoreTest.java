@@ -2,7 +2,7 @@ package com.vega.protocol.store;
 
 import com.vega.protocol.model.LiquidityCommitment;
 
-public class LiquidityCommitmentStoreTest extends SingleItemStoreTest<LiquidityCommitment, LiquidityCommitmentStore> {
+public class LiquidityCommitmentStoreTest extends MultipleItemStoreTest<LiquidityCommitment, LiquidityCommitmentStore> {
 
     private final LiquidityCommitmentStore store = new LiquidityCommitmentStore();
 

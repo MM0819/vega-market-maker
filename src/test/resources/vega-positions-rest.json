@@ -1,31 +1,24 @@
 {
-  "positions": [
-    {
-      "marketId": "10c4b1114d2f6fda239b73d018bca55888b6018f0ac70029972a17fea0a6a56e",
-      "partyId": "6817f2b4d9464716c6756d2827d893872b1d33839e211c27a650629e428dc35c",
-      "openVolume": "-1",
-      "realisedPnl": "0",
-      "unrealisedPnl": "0",
-      "averageEntryPrice": "0",
-      "updatedAt": "1659636445037694000"
-    },
-    {
-      "marketId": "10c4b1114d2f6fda239b73d018bca55888b6018f0ac70029972a17fea0a6a56e",
-      "partyId": "6817f2b4d9464716c6756d2827d893872b1d33839e211c27a650629e428dc35c",
-      "openVolume": "1",
-      "realisedPnl": "0",
-      "unrealisedPnl": "0",
-      "averageEntryPrice": "0",
-      "updatedAt": "1659636445037694000"
-    },
-    {
-      "marketId": "10c4b1114d2f6fda239b73d018bca55888b6018f0ac70029972a17fea0a6a56e",
-      "partyId": "6817f2b4d9464716c6756d2827d893872b1d33839e211c27a650629e428dc35c",
-      "openVolume": "0",
-      "realisedPnl": "0",
-      "unrealisedPnl": "0",
-      "averageEntryPrice": "0",
-      "updatedAt": "1659636445037694000"
+  "positions": {
+    "edges": [
+      {
+        "node": {
+          "marketId": "8cc9497287ace959700e4168a025385d6bd9bc7ae028c337cc7db70f5e792dc2",
+          "partyId": "f1d3e4338b83e632ac8beb075c9d8d0e2b0a76b2fdd07871c0c90efc82ac9d1f",
+          "openVolume": "0",
+          "realisedPnl": "40299863193278565415469407",
+          "unrealisedPnl": "0",
+          "averageEntryPrice": "8187",
+          "updatedAt": "1666360800059412000"
+        },
+        "cursor": "eyJ2ZWdhX3RpbWUiOiIyMDIyLTEwLTIxVDE0OjAwOjAwLjA1OTQxMloiLCJwYXJ0eV9pZCI6ImYxZDNlNDMzOGI4M2U2MzJhYzhiZWIwNzVjOWQ4ZDBlMmIwYTc2YjJmZGQwNzg3MWMwYzkwZWZjODJhYzlkMWYiLCJtYXJrZXRfaWQiOiI4Y2M5NDk3Mjg3YWNlOTU5NzAwZTQxNjhhMDI1Mzg1ZDZiZDliYzdhZTAyOGMzMzdjYzdkYjcwZjVlNzkyZGMyIn0="
+      }
+    ],
+    "pageInfo": {
+      "hasNextPage": false,
+      "hasPreviousPage": false,
+      "startCursor": "eyJ2ZWdhX3RpbWUiOiIyMDIyLTEwLTIxVDE0OjAwOjAwLjA1OTQxMloiLCJwYXJ0eV9pZCI6ImYxZDNlNDMzOGI4M2U2MzJhYzhiZWIwNzVjOWQ4ZDBlMmIwYTc2YjJmZGQwNzg3MWMwYzkwZWZjODJhYzlkMWYiLCJtYXJrZXRfaWQiOiI4Y2M5NDk3Mjg3YWNlOTU5NzAwZTQxNjhhMDI1Mzg1ZDZiZDliYzdhZTAyOGMzMzdjYzdkYjcwZjVlNzkyZGMyIn0=",
+      "endCursor": "eyJ2ZWdhX3RpbWUiOiIyMDIyLTEwLTIxVDE0OjAwOjAwLjA1OTQxMloiLCJwYXJ0eV9pZCI6ImYxZDNlNDMzOGI4M2U2MzJhYzhiZWIwNzVjOWQ4ZDBlMmIwYTc2YjJmZGQwNzg3MWMwYzkwZWZjODJhYzlkMWYiLCJtYXJrZXRfaWQiOiI4Y2M5NDk3Mjg3YWNlOTU5NzAwZTQxNjhhMDI1Mzg1ZDZiZDliYzdhZTAyOGMzMzdjYzdkYjcwZjVlNzkyZGMyIn0="
     }
-  ]
+  }
 }

@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Optional;
+import java.util.List;
 
 @RestController
 @RequestMapping("/liquidity-commitment")
@@ -20,7 +20,7 @@ public class LiquidityCommitmentController {
     }
 
     @GetMapping
-    public ResponseEntity<Optional<LiquidityCommitment>> get() {
-        return ResponseEntity.ok(liquidityCommitmentStore.get());
+    public ResponseEntity<List<LiquidityCommitment>> get() {
+        return ResponseEntity.ok(liquidityCommitmentStore.getItems());
     }
 }

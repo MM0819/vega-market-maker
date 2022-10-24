@@ -122,8 +122,9 @@ public class UpdateLiquidityCommitmentTask extends TradingTask {
                 .setFee(BigDecimal.valueOf(config.getFee()))
                 .setBids(liquidityCommitmentBids)
                 .setAsks(liquidityCommitmentAsks);
-        vegaApiClient.submitLiquidityCommitment(liquidityCommitment, partyId,
-                liquidityCommitmentStore.get().isPresent());
+        boolean hasCommitment = liquidityCommitmentStore.getItems().stream()
+                .anyMatch(c -> c.getMarket().getId().equals(marketId));
+        vegaApiClient.submitLiquidityCommitment(liquidityCommitment, partyId, hasCommitment);
         log.info("Liquidity commitment successfully updated!");
     }
 }

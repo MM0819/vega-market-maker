@@ -18,6 +18,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -75,7 +76,7 @@ public class UpdateLiquidityCommitmentTaskTest {
         Mockito.when(appConfigStore.get()).thenReturn(Optional.of(getAppConfig()));
         Mockito.when(referencePriceStore.get()).thenReturn(Optional.of(
                 new ReferencePrice().setMidPrice(BigDecimal.valueOf(20000))));
-        Mockito.when(liquidityCommitmentStore.get()).thenReturn(Optional.empty());
+        Mockito.when(liquidityCommitmentStore.getItems()).thenReturn(Collections.emptyList());
         Mockito.when(pricingUtils.getScalingFactor(Mockito.anyDouble())).thenReturn(1d);
         Mockito.when(pricingUtils.getBidDistribution(
                 Mockito.anyDouble(), Mockito.anyDouble(), Mockito.anyDouble(), Mockito.anyDouble(), Mockito.anyInt()))
@@ -123,7 +124,7 @@ public class UpdateLiquidityCommitmentTaskTest {
         Mockito.when(appConfigStore.get()).thenReturn(Optional.of(getAppConfig()));
         Mockito.when(referencePriceStore.get()).thenReturn(Optional.of(
                 new ReferencePrice().setMidPrice(BigDecimal.valueOf(20000))));
-        Mockito.when(liquidityCommitmentStore.get()).thenReturn(Optional.empty());
+        Mockito.when(liquidityCommitmentStore.getItems()).thenReturn(Collections.emptyList());
         updateLiquidityCommitmentTask.execute();
         Mockito.verify(vegaApiClient, Mockito.times(1)).submitLiquidityCommitment(
                 Mockito.any(LiquidityCommitment.class), Mockito.anyString(), Mockito.anyBoolean()); // TODO - fix assertion
@@ -140,7 +141,8 @@ public class UpdateLiquidityCommitmentTaskTest {
         Mockito.when(appConfigStore.get()).thenReturn(Optional.of(getAppConfig()));
         Mockito.when(referencePriceStore.get()).thenReturn(Optional.of(
                 new ReferencePrice().setMidPrice(BigDecimal.valueOf(20000))));
-        Mockito.when(liquidityCommitmentStore.get()).thenReturn(Optional.of(new LiquidityCommitment()));
+        Mockito.when(liquidityCommitmentStore.getItems()).thenReturn(
+                List.of(new LiquidityCommitment().setMarket(new Market().setId(MARKET_ID))));
         updateLiquidityCommitmentTask.execute();
         Mockito.verify(vegaApiClient, Mockito.times(1)).submitLiquidityCommitment(
                 Mockito.any(LiquidityCommitment.class), Mockito.anyString(), Mockito.anyBoolean()); // TODO - fix assertion

@@ -14,6 +14,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
+import java.util.List;
+
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @AutoConfigureMockMvc
@@ -34,7 +36,7 @@ public class LiquidityCommitmentControllerTest {
                 .andExpect(status().isOk())
                 .andReturn();
         String body = result.getResponse().getContentAsString();
-        LiquidityCommitment commitment = new ObjectMapper().readValue(body, new TypeReference<>() {});
-        Assertions.assertEquals(commitment.getId(), "12345");
+        List<LiquidityCommitment> commitments = new ObjectMapper().readValue(body, new TypeReference<>() {});
+        Assertions.assertEquals(commitments.get(0).getId(), "12345");
     }
 }

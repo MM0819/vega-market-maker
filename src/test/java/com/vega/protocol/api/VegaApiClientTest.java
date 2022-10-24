@@ -37,7 +37,7 @@ public class VegaApiClientTest {
     private static final String WALLET_URL = "http://localhost:1789";
     private static final String WALLET_USER = "trading";
     private static final String WALLET_PASSWORD = "password123";
-    private static final String NODE_URL = "https://lb.testnet.vega.xyz/datanode/rest";
+    private static final String NODE_URL = "https://api.n09.testnet.vega.xyz";
     private static final String MARKET_ID = "10c4b1114d2f6fda239b73d018bca55888b6018f0ac70029972a17fea0a6a56e";
     private static final String PARTY_ID = "6817f2b4d9464716c6756d2827d893872b1d33839e211c27a650629e428dc35c";
     private final MarketStore marketStore = Mockito.mock(MarketStore.class);
@@ -144,7 +144,7 @@ public class VegaApiClientTest {
             try(InputStream is = getClass().getClassLoader().getResourceAsStream("vega-accounts-rest.json")) {
                 String accountsJson = IOUtils.toString(Objects.requireNonNull(is), StandardCharsets.UTF_8);
                 mockGetToken(mockStatic, tokenJson());
-                mockGetRequest(String.format("/parties/%s/accounts", PARTY_ID), mockStatic, new JSONObject(accountsJson));
+                mockGetRequest(String.format("/accounts?filter.partyIds=%s", PARTY_ID), mockStatic, new JSONObject(accountsJson));
                 List<Account> accounts = vegaApiClient.getAccounts(PARTY_ID);
                 Assertions.assertEquals(expectedAccounts, accounts.size());
             } catch (Exception e) {
@@ -164,7 +164,7 @@ public class VegaApiClientTest {
             try(InputStream is = getClass().getClassLoader().getResourceAsStream("vega-positions-rest.json")) {
                 String marketsJson = IOUtils.toString(Objects.requireNonNull(is), StandardCharsets.UTF_8);
                 mockGetToken(mockStatic, tokenJson());
-                mockGetRequest(String.format("/parties/%s/positions", PARTY_ID), mockStatic, new JSONObject(marketsJson));
+                mockGetRequest(String.format("/positions?partyId=%s", PARTY_ID), mockStatic, new JSONObject(marketsJson));
                 List<Position> positions = vegaApiClient.getPositions(PARTY_ID);
                 Assertions.assertEquals(expectedPositions, positions.size());
             } catch (Exception e) {
@@ -184,7 +184,7 @@ public class VegaApiClientTest {
             try(InputStream is = getClass().getClassLoader().getResourceAsStream("vega-orders-rest.json")) {
                 String marketsJson = IOUtils.toString(Objects.requireNonNull(is), StandardCharsets.UTF_8);
                 mockGetToken(mockStatic, tokenJson());
-                mockGetRequest(String.format("/parties/%s/orders", PARTY_ID), mockStatic, new JSONObject(marketsJson));
+                mockGetRequest(String.format("/orders?partyId=%s&liveOnly=true", PARTY_ID), mockStatic, new JSONObject(marketsJson));
                 List<Order> orders = vegaApiClient.getOpenOrders(PARTY_ID);
                 Assertions.assertEquals(expectedOrders, orders.size());
             } catch (Exception e) {
@@ -226,10 +226,10 @@ public class VegaApiClientTest {
                     .getResourceAsStream(String.format("vega-liquidity-provisions-rest-%s.json", idx))) {
                 String marketsJson = IOUtils.toString(Objects.requireNonNull(is), StandardCharsets.UTF_8);
                 mockGetToken(mockStatic, tokenJson());
-                mockGetRequest(String.format("/liquidity-provisions/party/%s/market/%s", PARTY_ID, MARKET_ID),
+                mockGetRequest(String.format("/liquidity/provisions?partyId=%s", PARTY_ID),
                         mockStatic, new JSONObject(marketsJson));
-                Optional<LiquidityCommitment> commitment = vegaApiClient.getLiquidityCommitment(PARTY_ID, MARKET_ID);
-                Assertions.assertEquals(isPresent, commitment.isPresent());
+                List<LiquidityCommitment> commitments = vegaApiClient.getLiquidityCommitments(PARTY_ID);
+                Assertions.assertEquals(commitments.size(), isPresent ? 1 : 0);
             } catch (Exception e) {
                 Assertions.fail();
             }
@@ -387,7 +387,7 @@ public class VegaApiClientTest {
                 mockGetToken(mockStatic, tokenJson());
                 mockGetRequest("/assets", mockStatic, new JSONObject(accountsJson));
                 List<Asset> assets = vegaApiClient.getAssets();
-                Assertions.assertEquals(16, assets.size());
+                Assertions.assertEquals(20, assets.size());
             } catch (Exception e) {
                 Assertions.fail();
             }
@@ -398,7 +398,7 @@ public class VegaApiClientTest {
 
     @Test
     public void testGetAccounts() {
-        getAccounts(Optional.of(new Asset().setDecimalPlaces(1)), 3);
+        getAccounts(Optional.of(new Asset().setDecimalPlaces(1)), 1);
     }
 
     @Test
@@ -408,7 +408,7 @@ public class VegaApiClientTest {
 
     @Test
     public void testGetMarkets() {
-        getMarkets(Optional.of(new Asset()), 1);
+        getMarkets(Optional.of(new Asset()), 14);
     }
 
     @Test
@@ -418,7 +418,7 @@ public class VegaApiClientTest {
 
     @Test
     public void testGetPositions() {
-        getPositions(Optional.of(new Market()), 3);
+        getPositions(Optional.of(new Market()), 1);
     }
 
     @Test

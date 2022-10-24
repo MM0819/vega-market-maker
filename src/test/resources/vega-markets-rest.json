@@ -1,136 +1,1983 @@
 {
-  "markets": [
-    {
-      "id": "5e6035fe6a6df78c9ec44b333c231e63d357acef0a0620d2c243f5865d1dc0d8",
-      "tradableInstrument": {
-        "instrument": {
-          "id": "",
-          "code": "AAVEDAI.MF21",
-          "name": "AAVEDAI Monthly (30 Jun 2022)",
-          "metadata": {
-            "tags": [
-              "formerly:2839D9B2329C9E70",
-              "base:AAVE",
-              "quote:DAI",
-              "class:fx/crypto",
-              "monthly",
-              "sector:defi"
-            ]
-          },
-          "future": {
-            "settlementAsset": "6d9d35f657589e40ddfb448b7ad4a7463b66efb307527fedd2aa7df1bbd5ea61",
-            "quoteName": "DAI",
-            "oracleSpecForSettlementPrice": {
-              "id": "c2c8b417c58d071a9c6ea24a2cf756656f8497fa627d51542edb64c6a76aabc9",
-              "createdAt": "0",
-              "updatedAt": "0",
-              "pubKeys": [
-                "0x8873a1ecb80ba0ffd1e55acc0572df27381a9b65e0b6d6a9f095c92329eb29ea"
-              ],
-              "filters": [
-                {
-                  "key": {
-                    "name": "prices.AAVE.value",
-                    "type": "TYPE_INTEGER"
-                  },
-                  "conditions": [
+  "markets": {
+    "edges": [
+      {
+        "node": {
+          "id": "af3eaf2ceb506007d4ced8d8e8e6b6d147ae2ae05020474c602106f48385afe8",
+          "tradableInstrument": {
+            "instrument": {
+              "id": "",
+              "code": "GRTUSDT",
+              "name": "Graph USDT",
+              "metadata": {
+                "tags": [
+                  "formerly:076BB86A5AA41E3E",
+                  "base:GRT",
+                  "quote:USDT",
+                  "class:fx/crypto",
+                  "sector:crypto",
+                  "settlement-expiry-date:2022-10-28T15:10:20.000Z"
+                ]
+              },
+              "future": {
+                "settlementAsset": "8e5553ee4e95db51523640d1d03b00c8ab31dd69d787e169b0d958ef52e19a0a",
+                "quoteName": "USD",
+                "oracleSpecForSettlementData": {
+                  "id": "f5957957257effb10fec3226ee3723c7470e99fbf336ccf933b0b0d3b68d5795",
+                  "createdAt": "0",
+                  "updatedAt": "0",
+                  "pubKeys": [
+                    "0xfCEAdAFab14d46e20144F48824d0C09B1a03F2BC"
+                  ],
+                  "filters": [
                     {
-                      "operator": "OPERATOR_EQUALS",
-                      "value": "1"
-                    }
-                  ]
-                }
-              ],
-              "status": "STATUS_UNSPECIFIED"
-            },
-            "oracleSpecForTradingTermination": {
-              "id": "52f7365bb153e81f24acf0f538caf19999ea8caef5309639108febeae09822ab",
-              "createdAt": "0",
-              "updatedAt": "0",
-              "pubKeys": [
-                "0x8873a1ecb80ba0ffd1e55acc0572df27381a9b65e0b6d6a9f095c92329eb29ea"
-              ],
-              "filters": [
-                {
-                  "key": {
-                    "name": "termination.AAVE.value",
-                    "type": "TYPE_BOOLEAN"
-                  },
-                  "conditions": [
+                      "key": {
+                        "name": "prices.GRT.value",
+                        "type": "TYPE_INTEGER"
+                      },
+                      "conditions": [
+                        {
+                          "operator": "OPERATOR_GREATER_THAN",
+                          "value": "0"
+                        }
+                      ]
+                    },
                     {
-                      "operator": "OPERATOR_EQUALS",
-                      "value": "1"
+                      "key": {
+                        "name": "prices.GRT.timestamp",
+                        "type": "TYPE_TIMESTAMP"
+                      },
+                      "conditions": [
+                        {
+                          "operator": "OPERATOR_GREATER_THAN",
+                          "value": "1666965333"
+                        }
+                      ]
                     }
-                  ]
-                }
-              ],
-              "status": "STATUS_UNSPECIFIED"
+                  ],
+                  "status": "STATUS_UNSPECIFIED"
+                },
+                "oracleSpecForTradingTermination": {
+                  "id": "882b49bfc834f4fa4f59c5dd3c2bd988742fec123a82c9aa64dc3297898f8816",
+                  "createdAt": "0",
+                  "updatedAt": "0",
+                  "pubKeys": [
+                    "0xfCEAdAFab14d46e20144F48824d0C09B1a03F2BC"
+                  ],
+                  "filters": [
+                    {
+                      "key": {
+                        "name": "vegaprotocol.builtin.timestamp",
+                        "type": "TYPE_TIMESTAMP"
+                      },
+                      "conditions": [
+                        {
+                          "operator": "OPERATOR_GREATER_THAN_OR_EQUAL",
+                          "value": "1666965595"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "STATUS_UNSPECIFIED"
+                },
+                "oracleSpecBinding": {
+                  "settlementDataProperty": "prices.GRT.value",
+                  "tradingTerminationProperty": "vegaprotocol.builtin.timestamp"
+                },
+                "settlementDataDecimals": 0
+              }
             },
-            "oracleSpecBinding": {
-              "settlementPriceProperty": "prices.AAVE.value",
-              "tradingTerminationProperty": "termination.AAVE.value"
+            "marginCalculator": {
+              "scalingFactors": {
+                "searchLevel": 1.1,
+                "initialMargin": 2.5,
+                "collateralRelease": 2.7
+              }
             },
-            "settlementPriceDecimals": 0
-          }
-        },
-        "marginCalculator": {
-          "scalingFactors": {
-            "searchLevel": 1.1,
-            "initialMargin": 2.5,
-            "collateralRelease": 2.7
-          }
-        },
-        "logNormalRiskModel": {
-          "riskAversionParameter": 0.01,
-          "tau": 0.0001140771161,
-          "params": {
-            "mu": 0,
-            "r": 0.016,
-            "sigma": 0.5
-          }
-        }
-      },
-      "decimalPlaces": "5",
-      "fees": {
-        "factors": {
-          "makerFee": "0.0002",
-          "infrastructureFee": "0.0005",
-          "liquidityFee": "0.01"
-        }
-      },
-      "openingAuction": {
-        "duration": "204",
-        "volume": "0"
-      },
-      "priceMonitoringSettings": {
-        "parameters": {
-          "triggers": [
-            {
-              "horizon": "43200",
-              "probability": "0.9999999",
-              "auctionExtension": "600"
+            "logNormalRiskModel": {
+              "riskAversionParameter": 0.01,
+              "tau": 0.0001140771161,
+              "params": {
+                "mu": 0,
+                "r": 0.016,
+                "sigma": 0.3
+              }
             }
-          ]
+          },
+          "decimalPlaces": "5",
+          "fees": {
+            "factors": {
+              "makerFee": "0.0002",
+              "infrastructureFee": "0.0005",
+              "liquidityFee": "0"
+            }
+          },
+          "openingAuction": {
+            "duration": "1117",
+            "volume": "0"
+          },
+          "priceMonitoringSettings": {
+            "parameters": {
+              "triggers": [
+                {
+                  "horizon": "10800",
+                  "probability": "0.9999999",
+                  "auctionExtension": "120"
+                },
+                {
+                  "horizon": "3600",
+                  "probability": "0.999999999",
+                  "auctionExtension": "60"
+                }
+              ]
+            }
+          },
+          "liquidityMonitoringParameters": {
+            "targetStakeParameters": {
+              "timeWindow": "3600",
+              "scalingFactor": 10
+            },
+            "triggeringRatio": 0.1,
+            "auctionExtension": "1"
+          },
+          "tradingMode": "TRADING_MODE_OPENING_AUCTION",
+          "state": "STATE_PENDING",
+          "marketTimestamps": {
+            "proposed": "1666598782413473934",
+            "pending": "1666599860795194770",
+            "open": "1666598782413475051",
+            "close": "0"
+          },
+          "positionDecimalPlaces": "0"
         },
-        "updateFrequency": "0"
+        "cursor": "eyJ2ZWdhVGltZSI6IjIwMjItMTAtMjRUMDg6MjQ6MjAuNzk1MTk0WiIsImlkIjoiYWYzZWFmMmNlYjUwNjAwN2Q0Y2VkOGQ4ZThlNmI2ZDE0N2FlMmFlMDUwMjA0NzRjNjAyMTA2ZjQ4Mzg1YWZlOCJ9"
       },
-      "liquidityMonitoringParameters": {
-        "targetStakeParameters": {
-          "timeWindow": "3600",
-          "scalingFactor": 10
+      {
+        "node": {
+          "id": "8cc9497287ace959700e4168a025385d6bd9bc7ae028c337cc7db70f5e792dc2",
+          "tradableInstrument": {
+            "instrument": {
+              "id": "",
+              "code": "GRTBUSD",
+              "name": "Graph BUSD",
+              "metadata": {
+                "tags": [
+                  "formerly:076BB86A5AA41E3E",
+                  "base:GRT",
+                  "quote:BUSD",
+                  "class:fx/crypto",
+                  "sector:crypto"
+                ]
+              },
+              "future": {
+                "settlementAsset": "72f051ea66686ae004086f1ad086866f720f25896319abf3427cae101a58d985",
+                "quoteName": "USD",
+                "oracleSpecForSettlementData": {
+                  "id": "8ca1cfc795363a94336aba1e75e35fb49dcc7c5ed96f9bbfc1c1a9a424af61d7",
+                  "createdAt": "0",
+                  "updatedAt": "0",
+                  "pubKeys": [
+                    "0xfCEAdAFab14d46e20144F48824d0C09B1a03F2BC"
+                  ],
+                  "filters": [
+                    {
+                      "key": {
+                        "name": "prices.GRT.value",
+                        "type": "TYPE_INTEGER"
+                      },
+                      "conditions": [
+                        {
+                          "operator": "OPERATOR_GREATER_THAN",
+                          "value": "0"
+                        }
+                      ]
+                    },
+                    {
+                      "key": {
+                        "name": "prices.GRT.timestamp",
+                        "type": "TYPE_TIMESTAMP"
+                      },
+                      "conditions": [
+                        {
+                          "operator": "OPERATOR_GREATER_THAN",
+                          "value": "1666091427"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "STATUS_UNSPECIFIED"
+                },
+                "oracleSpecForTradingTermination": {
+                  "id": "f50bce9f71a68d53a270962fec102258ac4be14a9bce48cfaf3aefb95323ea6d",
+                  "createdAt": "0",
+                  "updatedAt": "0",
+                  "pubKeys": [
+                    "0xfCEAdAFab14d46e20144F48824d0C09B1a03F2BC"
+                  ],
+                  "filters": [
+                    {
+                      "key": {
+                        "name": "vegaprotocol.builtin.timestamp",
+                        "type": "TYPE_TIMESTAMP"
+                      },
+                      "conditions": [
+                        {
+                          "operator": "OPERATOR_GREATER_THAN_OR_EQUAL",
+                          "value": "1666360800"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "STATUS_UNSPECIFIED"
+                },
+                "oracleSpecBinding": {
+                  "settlementDataProperty": "prices.GRT.value",
+                  "tradingTerminationProperty": "vegaprotocol.builtin.timestamp"
+                },
+                "settlementDataDecimals": 0
+              }
+            },
+            "marginCalculator": {
+              "scalingFactors": {
+                "searchLevel": 1.1,
+                "initialMargin": 2.5,
+                "collateralRelease": 2.7
+              }
+            },
+            "logNormalRiskModel": {
+              "riskAversionParameter": 0.01,
+              "tau": 0.0001140771161,
+              "params": {
+                "mu": 0,
+                "r": 0.016,
+                "sigma": 0.3
+              }
+            }
+          },
+          "decimalPlaces": "5",
+          "fees": {
+            "factors": {
+              "makerFee": "0.0002",
+              "infrastructureFee": "0.0005",
+              "liquidityFee": "0.01"
+            }
+          },
+          "openingAuction": {
+            "duration": "862",
+            "volume": "0"
+          },
+          "priceMonitoringSettings": {
+            "parameters": {
+              "triggers": [
+                {
+                  "horizon": "10800",
+                  "probability": "0.9999999",
+                  "auctionExtension": "120"
+                }
+              ]
+            }
+          },
+          "liquidityMonitoringParameters": {
+            "targetStakeParameters": {
+              "timeWindow": "3600",
+              "scalingFactor": 10
+            },
+            "triggeringRatio": 0,
+            "auctionExtension": "1"
+          },
+          "tradingMode": "TRADING_MODE_NO_TRADING",
+          "state": "STATE_SETTLED",
+          "marketTimestamps": {
+            "proposed": "1666092135504875687",
+            "pending": "1666092938009912221",
+            "open": "1666097917126156044",
+            "close": "0"
+          },
+          "positionDecimalPlaces": "0"
         },
-        "triggeringRatio": 0,
-        "auctionExtension": "1"
+        "cursor": "eyJ2ZWdhVGltZSI6IjIwMjItMTAtMjFUMTQ6MDA6MDAuMDU5NDEyWiIsImlkIjoiOGNjOTQ5NzI4N2FjZTk1OTcwMGU0MTY4YTAyNTM4NWQ2YmQ5YmM3YWUwMjhjMzM3Y2M3ZGI3MGY1ZTc5MmRjMiJ9"
       },
-      "tradingMode": "TRADING_MODE_CONTINUOUS",
-      "state": "STATE_ACTIVE",
-      "marketTimestamps": {
-        "proposed": "1658937989868324416",
-        "pending": "1658938065631665615",
-        "open": "1658938838041114911",
-        "close": "0"
+      {
+        "node": {
+          "id": "21360c0709eecfdeb10c98fe6985b91f28daf8dce12516abf12811194cfee33b",
+          "tradableInstrument": {
+            "instrument": {
+              "id": "",
+              "code": "BTCUSD.MF21",
+              "name": "BTCUSD Monthly (Nov 2022)",
+              "metadata": {
+                "tags": [
+                  "formerly:076BB86A5AA41E3E",
+                  "base:BTC",
+                  "quote:USD",
+                  "class:fx/crypto",
+                  "monthly",
+                  "sector:crypto",
+                  "auto:btcusd"
+                ]
+              },
+              "future": {
+                "settlementAsset": "b340c130096819428a62e5df407fd6abe66e444b89ad64f670beb98621c9c663",
+                "quoteName": "USD",
+                "oracleSpecForSettlementData": {
+                  "id": "3f25aea16ea1b2cbc04f920c820c436ff1414587551662e345b4b13819d2bb45",
+                  "createdAt": "0",
+                  "updatedAt": "0",
+                  "pubKeys": [
+                    "69464e35bcb8e8a2900ca0f87acaf252d50cf2ab2fc73694845a16b7c8a0dc6f"
+                  ],
+                  "filters": [
+                    {
+                      "key": {
+                        "name": "prices.BTC.value",
+                        "type": "TYPE_INTEGER"
+                      },
+                      "conditions": [
+                        {
+                          "operator": "OPERATOR_EQUALS",
+                          "value": "1"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "STATUS_UNSPECIFIED"
+                },
+                "oracleSpecForTradingTermination": {
+                  "id": "24d3b115f26664621071a4d3b282eb2b750200b864f192ef81bb686c280a7267",
+                  "createdAt": "0",
+                  "updatedAt": "0",
+                  "pubKeys": [
+                    "69464e35bcb8e8a2900ca0f87acaf252d50cf2ab2fc73694845a16b7c8a0dc6f"
+                  ],
+                  "filters": [
+                    {
+                      "key": {
+                        "name": "termination.BTC.value",
+                        "type": "TYPE_BOOLEAN"
+                      },
+                      "conditions": [
+                        {
+                          "operator": "OPERATOR_EQUALS",
+                          "value": "1"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "STATUS_UNSPECIFIED"
+                },
+                "oracleSpecBinding": {
+                  "settlementDataProperty": "prices.BTC.value",
+                  "tradingTerminationProperty": "termination.BTC.value"
+                },
+                "settlementDataDecimals": 0
+              }
+            },
+            "marginCalculator": {
+              "scalingFactors": {
+                "searchLevel": 1.1,
+                "initialMargin": 2.5,
+                "collateralRelease": 2.7
+              }
+            },
+            "logNormalRiskModel": {
+              "riskAversionParameter": 0.0001,
+              "tau": 0.0000190129,
+              "params": {
+                "mu": 0,
+                "r": 0.016,
+                "sigma": 1.25
+              }
+            }
+          },
+          "decimalPlaces": "5",
+          "fees": {
+            "factors": {
+              "makerFee": "0.0002",
+              "infrastructureFee": "0.0005",
+              "liquidityFee": "0.01"
+            }
+          },
+          "openingAuction": {
+            "duration": "120",
+            "volume": "0"
+          },
+          "priceMonitoringSettings": {
+            "parameters": {
+              "triggers": [
+                {
+                  "horizon": "43200",
+                  "probability": "0.9999999",
+                  "auctionExtension": "600"
+                },
+                {
+                  "horizon": "300",
+                  "probability": "0.9999",
+                  "auctionExtension": "60"
+                }
+              ]
+            }
+          },
+          "liquidityMonitoringParameters": {
+            "targetStakeParameters": {
+              "timeWindow": "3600",
+              "scalingFactor": 10
+            },
+            "triggeringRatio": 0,
+            "auctionExtension": "1"
+          },
+          "tradingMode": "TRADING_MODE_MONITORING_AUCTION",
+          "state": "STATE_SUSPENDED",
+          "marketTimestamps": {
+            "proposed": "1666030261109107084",
+            "pending": "1666030261109107084",
+            "open": "1666031253964349988",
+            "close": "0"
+          },
+          "positionDecimalPlaces": "0"
+        },
+        "cursor": "eyJ2ZWdhVGltZSI6IjIwMjItMTAtMjFUMTA6MTQ6MjYuNjg1NjAzWiIsImlkIjoiMjEzNjBjMDcwOWVlY2ZkZWIxMGM5OGZlNjk4NWI5MWYyOGRhZjhkY2UxMjUxNmFiZjEyODExMTk0Y2ZlZTMzYiJ9"
       },
-      "positionDecimalPlaces": "0"
+      {
+        "node": {
+          "id": "b80c38b6969356f36b8169c1b9a5e219d7663d1111397836a57dc78150153940",
+          "tradableInstrument": {
+            "instrument": {
+              "id": "",
+              "code": "TSLA.QM21",
+              "name": "Tesla Quarterly (Jan 2023)",
+              "metadata": {
+                "tags": [
+                  "formerly:5A86B190C384997F",
+                  "quote:EURO",
+                  "ticker:TSLA",
+                  "class:equities/single-stock-futures",
+                  "sector:tech",
+                  "listing_venue:NASDAQ",
+                  "country:US",
+                  "auto:tsla"
+                ]
+              },
+              "future": {
+                "settlementAsset": "177e8f6c25a955bd18475084b99b2b1d37f28f3dec393fab7755a7e69c3d8c3b",
+                "quoteName": "EURO",
+                "oracleSpecForSettlementData": {
+                  "id": "a3ac176797b43656251efe11235d7197ada78094fd1a6d10968de5a6ee801862",
+                  "createdAt": "0",
+                  "updatedAt": "0",
+                  "pubKeys": [
+                    "69464e35bcb8e8a2900ca0f87acaf252d50cf2ab2fc73694845a16b7c8a0dc6f"
+                  ],
+                  "filters": [
+                    {
+                      "key": {
+                        "name": "prices.TSLA.value",
+                        "type": "TYPE_INTEGER"
+                      },
+                      "conditions": [
+                        {
+                          "operator": "OPERATOR_EQUALS",
+                          "value": "1"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "STATUS_UNSPECIFIED"
+                },
+                "oracleSpecForTradingTermination": {
+                  "id": "5883b2417d81217c94950671b282a628f7da3419a58d22d88fbd015e83765236",
+                  "createdAt": "0",
+                  "updatedAt": "0",
+                  "pubKeys": [
+                    "69464e35bcb8e8a2900ca0f87acaf252d50cf2ab2fc73694845a16b7c8a0dc6f"
+                  ],
+                  "filters": [
+                    {
+                      "key": {
+                        "name": "termination.TSLA.value",
+                        "type": "TYPE_BOOLEAN"
+                      },
+                      "conditions": [
+                        {
+                          "operator": "OPERATOR_EQUALS",
+                          "value": "1"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "STATUS_UNSPECIFIED"
+                },
+                "oracleSpecBinding": {
+                  "settlementDataProperty": "prices.TSLA.value",
+                  "tradingTerminationProperty": "termination.TSLA.value"
+                },
+                "settlementDataDecimals": 0
+              }
+            },
+            "marginCalculator": {
+              "scalingFactors": {
+                "searchLevel": 1.1,
+                "initialMargin": 2.5,
+                "collateralRelease": 2.7
+              }
+            },
+            "logNormalRiskModel": {
+              "riskAversionParameter": 0.01,
+              "tau": 0.0001140771161,
+              "params": {
+                "mu": 0,
+                "r": 0.016,
+                "sigma": 0.8
+              }
+            }
+          },
+          "decimalPlaces": "5",
+          "fees": {
+            "factors": {
+              "makerFee": "0.0002",
+              "infrastructureFee": "0.0005",
+              "liquidityFee": "0.001"
+            }
+          },
+          "openingAuction": {
+            "duration": "120",
+            "volume": "0"
+          },
+          "priceMonitoringSettings": {
+            "parameters": {
+              "triggers": [
+                {
+                  "horizon": "43200",
+                  "probability": "0.9999999",
+                  "auctionExtension": "600"
+                }
+              ]
+            }
+          },
+          "liquidityMonitoringParameters": {
+            "targetStakeParameters": {
+              "timeWindow": "3600",
+              "scalingFactor": 10
+            },
+            "triggeringRatio": 0.7,
+            "auctionExtension": "1"
+          },
+          "tradingMode": "TRADING_MODE_MONITORING_AUCTION",
+          "state": "STATE_SUSPENDED",
+          "marketTimestamps": {
+            "proposed": "1666030261109107084",
+            "pending": "1666030261109107084",
+            "open": "1666031253964349988",
+            "close": "0"
+          },
+          "positionDecimalPlaces": "0"
+        },
+        "cursor": "eyJ2ZWdhVGltZSI6IjIwMjItMTAtMjBUMTU6MTQ6MDguMDE3NDc3WiIsImlkIjoiYjgwYzM4YjY5NjkzNTZmMzZiODE2OWMxYjlhNWUyMTlkNzY2M2QxMTExMzk3ODM2YTU3ZGM3ODE1MDE1Mzk0MCJ9"
+      },
+      {
+        "node": {
+          "id": "b4d0a070f5cc73a7d53b23d6f63f8cb52e937ed65d2469a3af4cc1e80e155fcf",
+          "tradableInstrument": {
+            "instrument": {
+              "id": "",
+              "code": "AAPL.MF21",
+              "name": "Apple Monthly (Nov 2022)",
+              "metadata": {
+                "tags": [
+                  "formerly:4899E01009F1A721",
+                  "quote:USD",
+                  "ticker:AAPL",
+                  "class:equities/single-stock-futures",
+                  "sector:tech",
+                  "listing_venue:NASDAQ",
+                  "country:US",
+                  "auto:aapl"
+                ]
+              },
+              "future": {
+                "settlementAsset": "c9fe6fc24fce121b2cc72680543a886055abb560043fda394ba5376203b7527d",
+                "quoteName": "USD",
+                "oracleSpecForSettlementData": {
+                  "id": "9a8db6a47b3f240636f341b34bf06a682c361312a4afcd8cee139e14a2ec9e49",
+                  "createdAt": "0",
+                  "updatedAt": "0",
+                  "pubKeys": [
+                    "69464e35bcb8e8a2900ca0f87acaf252d50cf2ab2fc73694845a16b7c8a0dc6f"
+                  ],
+                  "filters": [
+                    {
+                      "key": {
+                        "name": "prices.AAPL.value",
+                        "type": "TYPE_INTEGER"
+                      },
+                      "conditions": [
+                        {
+                          "operator": "OPERATOR_EQUALS",
+                          "value": "1"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "STATUS_UNSPECIFIED"
+                },
+                "oracleSpecForTradingTermination": {
+                  "id": "3e83541c5f79af0fb085f964994177b7d35a8013805a8a321c23bf15298259d5",
+                  "createdAt": "0",
+                  "updatedAt": "0",
+                  "pubKeys": [
+                    "69464e35bcb8e8a2900ca0f87acaf252d50cf2ab2fc73694845a16b7c8a0dc6f"
+                  ],
+                  "filters": [
+                    {
+                      "key": {
+                        "name": "termination.AAPL.value",
+                        "type": "TYPE_BOOLEAN"
+                      },
+                      "conditions": [
+                        {
+                          "operator": "OPERATOR_EQUALS",
+                          "value": "1"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "STATUS_UNSPECIFIED"
+                },
+                "oracleSpecBinding": {
+                  "settlementDataProperty": "prices.AAPL.value",
+                  "tradingTerminationProperty": "termination.AAPL.value"
+                },
+                "settlementDataDecimals": 0
+              }
+            },
+            "marginCalculator": {
+              "scalingFactors": {
+                "searchLevel": 1.1,
+                "initialMargin": 2.5,
+                "collateralRelease": 2.7
+              }
+            },
+            "logNormalRiskModel": {
+              "riskAversionParameter": 0.1,
+              "tau": 0.0001140771161,
+              "params": {
+                "mu": 0,
+                "r": 0.016,
+                "sigma": 0.3
+              }
+            }
+          },
+          "decimalPlaces": "5",
+          "fees": {
+            "factors": {
+              "makerFee": "0.0002",
+              "infrastructureFee": "0.0005",
+              "liquidityFee": "0.001"
+            }
+          },
+          "openingAuction": {
+            "duration": "120",
+            "volume": "0"
+          },
+          "priceMonitoringSettings": {
+            "parameters": {
+              "triggers": [
+                {
+                  "horizon": "43200",
+                  "probability": "0.9999999",
+                  "auctionExtension": "600"
+                }
+              ]
+            }
+          },
+          "liquidityMonitoringParameters": {
+            "targetStakeParameters": {
+              "timeWindow": "3600",
+              "scalingFactor": 10
+            },
+            "triggeringRatio": 0.7,
+            "auctionExtension": "1"
+          },
+          "tradingMode": "TRADING_MODE_MONITORING_AUCTION",
+          "state": "STATE_SUSPENDED",
+          "marketTimestamps": {
+            "proposed": "1666030261109107084",
+            "pending": "1666030261109107084",
+            "open": "1666031262834599549",
+            "close": "0"
+          },
+          "positionDecimalPlaces": "0"
+        },
+        "cursor": "eyJ2ZWdhVGltZSI6IjIwMjItMTAtMjBUMTU6MTQ6MDYuNTg1NDgzWiIsImlkIjoiYjRkMGEwNzBmNWNjNzNhN2Q1M2IyM2Q2ZjYzZjhjYjUyZTkzN2VkNjVkMjQ2OWEzYWY0Y2MxZTgwZTE1NWZjZiJ9"
+      },
+      {
+        "node": {
+          "id": "c7075eebe699920f6aa53caa43aa09e62c1c17c0e051b6ff89fa9b4d875339d5",
+          "tradableInstrument": {
+            "instrument": {
+              "id": "",
+              "code": "ETHBTC.QM21",
+              "name": "ETHBTC Quarterly (Jan 2023)",
+              "metadata": {
+                "tags": [
+                  "formerly:1F0BB6EB5703B099",
+                  "base:ETH",
+                  "quote:BTC",
+                  "class:fx/crypto",
+                  "quarterly",
+                  "sector:crypto",
+                  "auto:ethbtc"
+                ]
+              },
+              "future": {
+                "settlementAsset": "cee709223217281d7893b650850ae8ee8a18b7539b5658f9b4cc24de95dd18ad",
+                "quoteName": "BTC",
+                "oracleSpecForSettlementData": {
+                  "id": "cb24dbabbcdb8618e982b58f1d9ae9a8e2edec64e1e839ab5a975086d18cbf0b",
+                  "createdAt": "0",
+                  "updatedAt": "0",
+                  "pubKeys": [
+                    "69464e35bcb8e8a2900ca0f87acaf252d50cf2ab2fc73694845a16b7c8a0dc6f"
+                  ],
+                  "filters": [
+                    {
+                      "key": {
+                        "name": "prices.ETH.value",
+                        "type": "TYPE_INTEGER"
+                      },
+                      "conditions": [
+                        {
+                          "operator": "OPERATOR_EQUALS",
+                          "value": "1"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "STATUS_UNSPECIFIED"
+                },
+                "oracleSpecForTradingTermination": {
+                  "id": "c806b550d007102934e5671ab97bd39ec8077bb3be755c162bdf08f2a94e0777",
+                  "createdAt": "0",
+                  "updatedAt": "0",
+                  "pubKeys": [
+                    "69464e35bcb8e8a2900ca0f87acaf252d50cf2ab2fc73694845a16b7c8a0dc6f"
+                  ],
+                  "filters": [
+                    {
+                      "key": {
+                        "name": "termination.ETH.value",
+                        "type": "TYPE_BOOLEAN"
+                      },
+                      "conditions": [
+                        {
+                          "operator": "OPERATOR_EQUALS",
+                          "value": "1"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "STATUS_UNSPECIFIED"
+                },
+                "oracleSpecBinding": {
+                  "settlementDataProperty": "prices.ETH.value",
+                  "tradingTerminationProperty": "termination.ETH.value"
+                },
+                "settlementDataDecimals": 0
+              }
+            },
+            "marginCalculator": {
+              "scalingFactors": {
+                "searchLevel": 1.1,
+                "initialMargin": 2.5,
+                "collateralRelease": 2.7
+              }
+            },
+            "logNormalRiskModel": {
+              "riskAversionParameter": 0.01,
+              "tau": 0.0001140771161,
+              "params": {
+                "mu": 0,
+                "r": 0.016,
+                "sigma": 0.3
+              }
+            }
+          },
+          "decimalPlaces": "5",
+          "fees": {
+            "factors": {
+              "makerFee": "0.0002",
+              "infrastructureFee": "0.0005",
+              "liquidityFee": "0.001"
+            }
+          },
+          "openingAuction": {
+            "duration": "120",
+            "volume": "0"
+          },
+          "priceMonitoringSettings": {
+            "parameters": {
+              "triggers": [
+                {
+                  "horizon": "43200",
+                  "probability": "0.9999999",
+                  "auctionExtension": "600"
+                }
+              ]
+            }
+          },
+          "liquidityMonitoringParameters": {
+            "targetStakeParameters": {
+              "timeWindow": "3600",
+              "scalingFactor": 10
+            },
+            "triggeringRatio": 0.7,
+            "auctionExtension": "1"
+          },
+          "tradingMode": "TRADING_MODE_MONITORING_AUCTION",
+          "state": "STATE_SUSPENDED",
+          "marketTimestamps": {
+            "proposed": "1666030261109107084",
+            "pending": "1666030261109107084",
+            "open": "1666031253964349988",
+            "close": "0"
+          },
+          "positionDecimalPlaces": "0"
+        },
+        "cursor": "eyJ2ZWdhVGltZSI6IjIwMjItMTAtMjBUMTU6MTQ6MDMuNTc0MjM3WiIsImlkIjoiYzcwNzVlZWJlNjk5OTIwZjZhYTUzY2FhNDNhYTA5ZTYyYzFjMTdjMGUwNTFiNmZmODlmYTliNGQ4NzUzMzlkNSJ9"
+      },
+      {
+        "node": {
+          "id": "76d38a283170841f51d88f06640d3fb118e9511816363cd4028e6ece23e83ff9",
+          "tradableInstrument": {
+            "instrument": {
+              "id": "",
+              "code": "AAVEDAI.MF21",
+              "name": "AAVEDAI Monthly (Nov 2022)",
+              "metadata": {
+                "tags": [
+                  "formerly:2839D9B2329C9E70",
+                  "base:AAVE",
+                  "quote:DAI",
+                  "class:fx/crypto",
+                  "monthly",
+                  "sector:defi",
+                  "auto:aavedai"
+                ]
+              },
+              "future": {
+                "settlementAsset": "b340c130096819428a62e5df407fd6abe66e444b89ad64f670beb98621c9c663",
+                "quoteName": "DAI",
+                "oracleSpecForSettlementData": {
+                  "id": "3bd96594cc6035222bdad94edc2f892aca410b6be51a2f6d0d0c4c9aeda66887",
+                  "createdAt": "0",
+                  "updatedAt": "0",
+                  "pubKeys": [
+                    "69464e35bcb8e8a2900ca0f87acaf252d50cf2ab2fc73694845a16b7c8a0dc6f"
+                  ],
+                  "filters": [
+                    {
+                      "key": {
+                        "name": "prices.AAVE.value",
+                        "type": "TYPE_INTEGER"
+                      },
+                      "conditions": [
+                        {
+                          "operator": "OPERATOR_EQUALS",
+                          "value": "1"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "STATUS_UNSPECIFIED"
+                },
+                "oracleSpecForTradingTermination": {
+                  "id": "ceb89f5c8db960800f56cee3059dd014a65fc0ef8742a79d6997b31261aeaa19",
+                  "createdAt": "0",
+                  "updatedAt": "0",
+                  "pubKeys": [
+                    "69464e35bcb8e8a2900ca0f87acaf252d50cf2ab2fc73694845a16b7c8a0dc6f"
+                  ],
+                  "filters": [
+                    {
+                      "key": {
+                        "name": "termination.AAVE.value",
+                        "type": "TYPE_BOOLEAN"
+                      },
+                      "conditions": [
+                        {
+                          "operator": "OPERATOR_EQUALS",
+                          "value": "1"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "STATUS_UNSPECIFIED"
+                },
+                "oracleSpecBinding": {
+                  "settlementDataProperty": "prices.AAVE.value",
+                  "tradingTerminationProperty": "termination.AAVE.value"
+                },
+                "settlementDataDecimals": 0
+              }
+            },
+            "marginCalculator": {
+              "scalingFactors": {
+                "searchLevel": 1.1,
+                "initialMargin": 2.5,
+                "collateralRelease": 2.7
+              }
+            },
+            "logNormalRiskModel": {
+              "riskAversionParameter": 0.01,
+              "tau": 0.0001140771161,
+              "params": {
+                "mu": 0,
+                "r": 0.016,
+                "sigma": 0.5
+              }
+            }
+          },
+          "decimalPlaces": "5",
+          "fees": {
+            "factors": {
+              "makerFee": "0.0002",
+              "infrastructureFee": "0.0005",
+              "liquidityFee": "0.001"
+            }
+          },
+          "openingAuction": {
+            "duration": "120",
+            "volume": "0"
+          },
+          "priceMonitoringSettings": {
+            "parameters": {
+              "triggers": [
+                {
+                  "horizon": "43200",
+                  "probability": "0.9999999",
+                  "auctionExtension": "600"
+                }
+              ]
+            }
+          },
+          "liquidityMonitoringParameters": {
+            "targetStakeParameters": {
+              "timeWindow": "3600",
+              "scalingFactor": 10
+            },
+            "triggeringRatio": 0,
+            "auctionExtension": "1"
+          },
+          "tradingMode": "TRADING_MODE_MONITORING_AUCTION",
+          "state": "STATE_SUSPENDED",
+          "marketTimestamps": {
+            "proposed": "1666030261109107084",
+            "pending": "1666030261109107084",
+            "open": "1666031253964349988",
+            "close": "0"
+          },
+          "positionDecimalPlaces": "0"
+        },
+        "cursor": "eyJ2ZWdhVGltZSI6IjIwMjItMTAtMjBUMTU6MTM6NTAuMTUwODg2WiIsImlkIjoiNzZkMzhhMjgzMTcwODQxZjUxZDg4ZjA2NjQwZDNmYjExOGU5NTExODE2MzYzY2Q0MDI4ZTZlY2UyM2U4M2ZmOSJ9"
+      },
+      {
+        "node": {
+          "id": "bb70c11a9d3cf3cba7bc17caf075e3af3637e155f1a8366248bd0b4561ed589d",
+          "tradableInstrument": {
+            "instrument": {
+              "id": "",
+              "code": "UNIDAI.MF21",
+              "name": "UNIDAI Monthly (Nov 2022)",
+              "metadata": {
+                "tags": [
+                  "formerly:3C58ED2A4A6C5D7E",
+                  "base:UNI",
+                  "quote:DAI",
+                  "class:fx/crypto",
+                  "monthly",
+                  "sector:defi",
+                  "auto:unidai"
+                ]
+              },
+              "future": {
+                "settlementAsset": "b340c130096819428a62e5df407fd6abe66e444b89ad64f670beb98621c9c663",
+                "quoteName": "DAI",
+                "oracleSpecForSettlementData": {
+                  "id": "b696a19443500671252d28e523dff8413af2d9e49a0f69cf292602bc78716672",
+                  "createdAt": "0",
+                  "updatedAt": "0",
+                  "pubKeys": [
+                    "69464e35bcb8e8a2900ca0f87acaf252d50cf2ab2fc73694845a16b7c8a0dc6f"
+                  ],
+                  "filters": [
+                    {
+                      "key": {
+                        "name": "prices.UNI.value",
+                        "type": "TYPE_INTEGER"
+                      },
+                      "conditions": [
+                        {
+                          "operator": "OPERATOR_EQUALS",
+                          "value": "1"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "STATUS_UNSPECIFIED"
+                },
+                "oracleSpecForTradingTermination": {
+                  "id": "8bed4616e93a4b893ced04030ad2b0142772d7f6a5762060af4fcf9ad8c1414a",
+                  "createdAt": "0",
+                  "updatedAt": "0",
+                  "pubKeys": [
+                    "69464e35bcb8e8a2900ca0f87acaf252d50cf2ab2fc73694845a16b7c8a0dc6f"
+                  ],
+                  "filters": [
+                    {
+                      "key": {
+                        "name": "termination.UNI.value",
+                        "type": "TYPE_BOOLEAN"
+                      },
+                      "conditions": [
+                        {
+                          "operator": "OPERATOR_EQUALS",
+                          "value": "1"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "STATUS_UNSPECIFIED"
+                },
+                "oracleSpecBinding": {
+                  "settlementDataProperty": "prices.UNI.value",
+                  "tradingTerminationProperty": "termination.UNI.value"
+                },
+                "settlementDataDecimals": 0
+              }
+            },
+            "marginCalculator": {
+              "scalingFactors": {
+                "searchLevel": 1.1,
+                "initialMargin": 2.5,
+                "collateralRelease": 2.7
+              }
+            },
+            "logNormalRiskModel": {
+              "riskAversionParameter": 0.01,
+              "tau": 0.0001140771161,
+              "params": {
+                "mu": 0,
+                "r": 0.016,
+                "sigma": 0.5
+              }
+            }
+          },
+          "decimalPlaces": "5",
+          "fees": {
+            "factors": {
+              "makerFee": "0.0002",
+              "infrastructureFee": "0.0005",
+              "liquidityFee": "0.001"
+            }
+          },
+          "openingAuction": {
+            "duration": "120",
+            "volume": "0"
+          },
+          "priceMonitoringSettings": {
+            "parameters": {
+              "triggers": [
+                {
+                  "horizon": "43200",
+                  "probability": "0.9999999",
+                  "auctionExtension": "600"
+                }
+              ]
+            }
+          },
+          "liquidityMonitoringParameters": {
+            "targetStakeParameters": {
+              "timeWindow": "3600",
+              "scalingFactor": 10
+            },
+            "triggeringRatio": 0,
+            "auctionExtension": "1"
+          },
+          "tradingMode": "TRADING_MODE_MONITORING_AUCTION",
+          "state": "STATE_SUSPENDED",
+          "marketTimestamps": {
+            "proposed": "1666030261109107084",
+            "pending": "1666030261109107084",
+            "open": "1666031253964349988",
+            "close": "0"
+          },
+          "positionDecimalPlaces": "0"
+        },
+        "cursor": "eyJ2ZWdhVGltZSI6IjIwMjItMTAtMjBUMTQ6Mzk6NDQuNDk2MTUxWiIsImlkIjoiYmI3MGMxMWE5ZDNjZjNjYmE3YmMxN2NhZjA3NWUzYWYzNjM3ZTE1NWYxYTgzNjYyNDhiZDBiNDU2MWVkNTg5ZCJ9"
+      },
+      {
+        "node": {
+          "id": "a018b8dcf01ba74d4088bed75ddd355c84708a634143bcf89e6e4c755b5d2543",
+          "tradableInstrument": {
+            "instrument": {
+              "id": "",
+              "code": "SNXBUSDI",
+              "name": "SNX II BUSDI",
+              "metadata": {
+                "tags": [
+                  "formerly:076BB86A5AA41E3E",
+                  "base:SNX",
+                  "quote:tDAI",
+                  "class:fx/crypto",
+                  "sector:crypto"
+                ]
+              },
+              "future": {
+                "settlementAsset": "f7355ec52730c2e6ba02216da8501b4b6934cd363511e9d47ae5b97056d02703",
+                "quoteName": "USD",
+                "oracleSpecForSettlementData": {
+                  "id": "58610e3f233aa7a33d4d294448053074d4b2e80c0ada98cf53d246718eb5486a",
+                  "createdAt": "0",
+                  "updatedAt": "0",
+                  "pubKeys": [
+                    "0xfCEAdAFab14d46e20144F48824d0C09B1a03F2BC"
+                  ],
+                  "filters": [
+                    {
+                      "key": {
+                        "name": "prices.SNX.value",
+                        "type": "TYPE_INTEGER"
+                      },
+                      "conditions": [
+                        {
+                          "operator": "OPERATOR_GREATER_THAN",
+                          "value": "0"
+                        }
+                      ]
+                    },
+                    {
+                      "key": {
+                        "name": "prices.SNX.timestamp",
+                        "type": "TYPE_TIMESTAMP"
+                      },
+                      "conditions": [
+                        {
+                          "operator": "OPERATOR_GREATER_THAN",
+                          "value": "1666191933"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "STATUS_UNSPECIFIED"
+                },
+                "oracleSpecForTradingTermination": {
+                  "id": "0a5e971b9a3110f9b8c42f7025ef0ecb30cdd8255f6d1df4c83201a4848da6dd",
+                  "createdAt": "0",
+                  "updatedAt": "0",
+                  "pubKeys": [
+                    "0xfCEAdAFab14d46e20144F48824d0C09B1a03F2BC"
+                  ],
+                  "filters": [
+                    {
+                      "key": {
+                        "name": "vegaprotocol.builtin.timestamp",
+                        "type": "TYPE_TIMESTAMP"
+                      },
+                      "conditions": [
+                        {
+                          "operator": "OPERATOR_GREATER_THAN_OR_EQUAL",
+                          "value": "1666192933"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "STATUS_UNSPECIFIED"
+                },
+                "oracleSpecBinding": {
+                  "settlementDataProperty": "prices.SNX.value",
+                  "tradingTerminationProperty": "vegaprotocol.builtin.timestamp"
+                },
+                "settlementDataDecimals": 0
+              }
+            },
+            "marginCalculator": {
+              "scalingFactors": {
+                "searchLevel": 1.1,
+                "initialMargin": 2.5,
+                "collateralRelease": 2.7
+              }
+            },
+            "logNormalRiskModel": {
+              "riskAversionParameter": 0.01,
+              "tau": 0.0001140771161,
+              "params": {
+                "mu": 0,
+                "r": 0.016,
+                "sigma": 0.3
+              }
+            }
+          },
+          "decimalPlaces": "5",
+          "fees": {
+            "factors": {
+              "makerFee": "0.0002",
+              "infrastructureFee": "0.0005",
+              "liquidityFee": "0.01"
+            }
+          },
+          "openingAuction": {
+            "duration": "799",
+            "volume": "0"
+          },
+          "priceMonitoringSettings": {
+            "parameters": {
+              "triggers": [
+                {
+                  "horizon": "10800",
+                  "probability": "0.9999999",
+                  "auctionExtension": "120"
+                }
+              ]
+            }
+          },
+          "liquidityMonitoringParameters": {
+            "targetStakeParameters": {
+              "timeWindow": "3600",
+              "scalingFactor": 10
+            },
+            "triggeringRatio": 0,
+            "auctionExtension": "1"
+          },
+          "tradingMode": "TRADING_MODE_NO_TRADING",
+          "state": "STATE_SETTLED",
+          "marketTimestamps": {
+            "proposed": "1666190594461697043",
+            "pending": "1666191334586831469",
+            "open": "1666192148407956819",
+            "close": "0"
+          },
+          "positionDecimalPlaces": "0"
+        },
+        "cursor": "eyJ2ZWdhVGltZSI6IjIwMjItMTAtMjBUMDk6MzI6MjcuODQyNzc2WiIsImlkIjoiYTAxOGI4ZGNmMDFiYTc0ZDQwODhiZWQ3NWRkZDM1NWM4NDcwOGE2MzQxNDNiY2Y4OWU2ZTRjNzU1YjVkMjU0MyJ9"
+      },
+      {
+        "node": {
+          "id": "9bbe8cea4301e6ff4c3d55de590d257ba365ddd76aeefea614694c04da87eec9",
+          "tradableInstrument": {
+            "instrument": {
+              "id": "",
+              "code": "GRTBUSD",
+              "name": "Graph BUSD",
+              "metadata": {
+                "tags": [
+                  "formerly:076BB86A5AA41E3E",
+                  "base:GRT",
+                  "quote:BUSD",
+                  "class:fx/crypto",
+                  "sector:crypto"
+                ]
+              },
+              "future": {
+                "settlementAsset": "72f051ea66686ae004086f1ad086866f720f25896319abf3427cae101a58d985",
+                "quoteName": "USD",
+                "oracleSpecForSettlementData": {
+                  "id": "8ca1cfc795363a94336aba1e75e35fb49dcc7c5ed96f9bbfc1c1a9a424af61d7",
+                  "createdAt": "0",
+                  "updatedAt": "0",
+                  "pubKeys": [
+                    "0xfCEAdAFab14d46e20144F48824d0C09B1a03F2BC"
+                  ],
+                  "filters": [
+                    {
+                      "key": {
+                        "name": "prices.GRT.value",
+                        "type": "TYPE_INTEGER"
+                      },
+                      "conditions": [
+                        {
+                          "operator": "OPERATOR_GREATER_THAN",
+                          "value": "0"
+                        }
+                      ]
+                    },
+                    {
+                      "key": {
+                        "name": "prices.GRT.timestamp",
+                        "type": "TYPE_TIMESTAMP"
+                      },
+                      "conditions": [
+                        {
+                          "operator": "OPERATOR_GREATER_THAN",
+                          "value": "1666091427"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "STATUS_UNSPECIFIED"
+                },
+                "oracleSpecForTradingTermination": {
+                  "id": "f6b9c6fac447521d1565331cfa6135870a2c1722a3a58199c53527810d45fbcf",
+                  "createdAt": "0",
+                  "updatedAt": "0",
+                  "pubKeys": [
+                    "0xfCEAdAFab14d46e20144F48824d0C09B1a03F2BC"
+                  ],
+                  "filters": [
+                    {
+                      "key": {
+                        "name": "vegaprotocol.builtin.timestamp",
+                        "type": "TYPE_TIMESTAMP"
+                      },
+                      "conditions": [
+                        {
+                          "operator": "OPERATOR_GREATER_THAN_OR_EQUAL",
+                          "value": "1666091427"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "STATUS_UNSPECIFIED"
+                },
+                "oracleSpecBinding": {
+                  "settlementDataProperty": "prices.GRT.value",
+                  "tradingTerminationProperty": "vegaprotocol.builtin.timestamp"
+                },
+                "settlementDataDecimals": 0
+              }
+            },
+            "marginCalculator": {
+              "scalingFactors": {
+                "searchLevel": 1.1,
+                "initialMargin": 2.5,
+                "collateralRelease": 2.7
+              }
+            },
+            "logNormalRiskModel": {
+              "riskAversionParameter": 0.01,
+              "tau": 0.0001140771161,
+              "params": {
+                "mu": 0,
+                "r": 0.016,
+                "sigma": 0.3
+              }
+            }
+          },
+          "decimalPlaces": "5",
+          "fees": {
+            "factors": {
+              "makerFee": "0.0002",
+              "infrastructureFee": "0.0005",
+              "liquidityFee": "0.01"
+            }
+          },
+          "openingAuction": {
+            "duration": "1121",
+            "volume": "0"
+          },
+          "priceMonitoringSettings": {
+            "parameters": {
+              "triggers": [
+                {
+                  "horizon": "10800",
+                  "probability": "0.9999999",
+                  "auctionExtension": "120"
+                }
+              ]
+            }
+          },
+          "liquidityMonitoringParameters": {
+            "targetStakeParameters": {
+              "timeWindow": "3600",
+              "scalingFactor": 10
+            },
+            "triggeringRatio": 0,
+            "auctionExtension": "1"
+          },
+          "tradingMode": "TRADING_MODE_NO_TRADING",
+          "state": "STATE_SETTLED",
+          "marketTimestamps": {
+            "proposed": "1666088806135969326",
+            "pending": "1666089628565565359",
+            "open": "1666090329885997200",
+            "close": "0"
+          },
+          "positionDecimalPlaces": "0"
+        },
+        "cursor": "eyJ2ZWdhVGltZSI6IjIwMjItMTAtMjBUMDk6MzI6MjcuODQyNzc2WiIsImlkIjoiOWJiZThjZWE0MzAxZTZmZjRjM2Q1NWRlNTkwZDI1N2JhMzY1ZGRkNzZhZWVmZWE2MTQ2OTRjMDRkYTg3ZWVjOSJ9"
+      },
+      {
+        "node": {
+          "id": "03a7c3bf3ff23752c3057d033d935ed070f372092847a6f7f7737d11829ad155",
+          "tradableInstrument": {
+            "instrument": {
+              "id": "",
+              "code": "SNXtDAI",
+              "name": "SNX II tDAI",
+              "metadata": {
+                "tags": [
+                  "formerly:076BB86A5AA41E3E",
+                  "base:SNX",
+                  "quote:tDAI",
+                  "class:fx/crypto",
+                  "sector:crypto"
+                ]
+              },
+              "future": {
+                "settlementAsset": "16ae5dbb1fd7aa2ddef725703bfe66b3647a4da7b844bfdd04e985756f53d9d6",
+                "quoteName": "USD",
+                "oracleSpecForSettlementData": {
+                  "id": "118787a0724a59a15da8235b5e21cc9aee78b66dd92117076c4df856736cc82e",
+                  "createdAt": "0",
+                  "updatedAt": "0",
+                  "pubKeys": [
+                    "0xfCEAdAFab14d46e20144F48824d0C09B1a03F2BC"
+                  ],
+                  "filters": [
+                    {
+                      "key": {
+                        "name": "prices.SNX.value",
+                        "type": "TYPE_INTEGER"
+                      },
+                      "conditions": [
+                        {
+                          "operator": "OPERATOR_GREATER_THAN",
+                          "value": "0"
+                        }
+                      ]
+                    },
+                    {
+                      "key": {
+                        "name": "prices.SNX.timestamp",
+                        "type": "TYPE_TIMESTAMP"
+                      },
+                      "conditions": [
+                        {
+                          "operator": "OPERATOR_GREATER_THAN",
+                          "value": "1666188934"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "STATUS_UNSPECIFIED"
+                },
+                "oracleSpecForTradingTermination": {
+                  "id": "ca49b3d0a0cc216b7cba8a31f05473613b39b59ce1af4be71c20bc6dd6f68ca5",
+                  "createdAt": "0",
+                  "updatedAt": "0",
+                  "pubKeys": [
+                    "0xfCEAdAFab14d46e20144F48824d0C09B1a03F2BC"
+                  ],
+                  "filters": [
+                    {
+                      "key": {
+                        "name": "vegaprotocol.builtin.timestamp",
+                        "type": "TYPE_TIMESTAMP"
+                      },
+                      "conditions": [
+                        {
+                          "operator": "OPERATOR_GREATER_THAN_OR_EQUAL",
+                          "value": "1666188934"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "STATUS_UNSPECIFIED"
+                },
+                "oracleSpecBinding": {
+                  "settlementDataProperty": "prices.SNX.value",
+                  "tradingTerminationProperty": "vegaprotocol.builtin.timestamp"
+                },
+                "settlementDataDecimals": 0
+              }
+            },
+            "marginCalculator": {
+              "scalingFactors": {
+                "searchLevel": 1.1,
+                "initialMargin": 2.5,
+                "collateralRelease": 2.7
+              }
+            },
+            "logNormalRiskModel": {
+              "riskAversionParameter": 0.01,
+              "tau": 0.0001140771161,
+              "params": {
+                "mu": 0,
+                "r": 0.016,
+                "sigma": 0.3
+              }
+            }
+          },
+          "decimalPlaces": "5",
+          "fees": {
+            "factors": {
+              "makerFee": "0.0002",
+              "infrastructureFee": "0.0005",
+              "liquidityFee": "0"
+            }
+          },
+          "openingAuction": {
+            "duration": "958",
+            "volume": "0"
+          },
+          "priceMonitoringSettings": {
+            "parameters": {
+              "triggers": [
+                {
+                  "horizon": "10800",
+                  "probability": "0.9999999",
+                  "auctionExtension": "120"
+                }
+              ]
+            }
+          },
+          "liquidityMonitoringParameters": {
+            "targetStakeParameters": {
+              "timeWindow": "3600",
+              "scalingFactor": 10
+            },
+            "triggeringRatio": 0,
+            "auctionExtension": "1"
+          },
+          "tradingMode": "TRADING_MODE_NO_TRADING",
+          "state": "STATE_CANCELLED",
+          "marketTimestamps": {
+            "proposed": "1666187036326476319",
+            "pending": "1666187975570080351",
+            "open": "1666187036326477277",
+            "close": "0"
+          },
+          "positionDecimalPlaces": "0"
+        },
+        "cursor": "eyJ2ZWdhVGltZSI6IjIwMjItMTAtMTlUMTQ6MTU6MzQuMzgwMzczWiIsImlkIjoiMDNhN2MzYmYzZmYyMzc1MmMzMDU3ZDAzM2Q5MzVlZDA3MGYzNzIwOTI4NDdhNmY3Zjc3MzdkMTE4MjlhZDE1NSJ9"
+      },
+      {
+        "node": {
+          "id": "f9026570b1765e789cd6e1ae7c1030fa4262e0594ea319270ad563b8d0b13e44",
+          "tradableInstrument": {
+            "instrument": {
+              "id": "",
+              "code": "SNXtDAI",
+              "name": "SNX tDAI",
+              "metadata": {
+                "tags": [
+                  "formerly:076BB86A5AA41E3E",
+                  "base:SNX",
+                  "quote:tDAI",
+                  "class:fx/crypto",
+                  "sector:crypto"
+                ]
+              },
+              "future": {
+                "settlementAsset": "16ae5dbb1fd7aa2ddef725703bfe66b3647a4da7b844bfdd04e985756f53d9d6",
+                "quoteName": "USD",
+                "oracleSpecForSettlementData": {
+                  "id": "134304cc569a02b4f5444fe21e1fed1989abfcbeb2b76530f3c3528613f11048",
+                  "createdAt": "0",
+                  "updatedAt": "0",
+                  "pubKeys": [
+                    "0xfCEAdAFab14d46e20144F48824d0C09B1a03F2BC"
+                  ],
+                  "filters": [
+                    {
+                      "key": {
+                        "name": "prices.SNX.value",
+                        "type": "TYPE_INTEGER"
+                      },
+                      "conditions": [
+                        {
+                          "operator": "OPERATOR_GREATER_THAN",
+                          "value": "0"
+                        }
+                      ]
+                    },
+                    {
+                      "key": {
+                        "name": "prices.SNX.timestamp",
+                        "type": "TYPE_TIMESTAMP"
+                      },
+                      "conditions": [
+                        {
+                          "operator": "OPERATOR_GREATER_THAN",
+                          "value": "1666184833"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "STATUS_UNSPECIFIED"
+                },
+                "oracleSpecForTradingTermination": {
+                  "id": "4f9a60a0e781b11f7c7754e9c1a26c63a78bad159907cc1b4e214fd289c2ba0d",
+                  "createdAt": "0",
+                  "updatedAt": "0",
+                  "pubKeys": [
+                    "0xfCEAdAFab14d46e20144F48824d0C09B1a03F2BC"
+                  ],
+                  "filters": [
+                    {
+                      "key": {
+                        "name": "vegaprotocol.builtin.timestamp",
+                        "type": "TYPE_TIMESTAMP"
+                      },
+                      "conditions": [
+                        {
+                          "operator": "OPERATOR_GREATER_THAN_OR_EQUAL",
+                          "value": "1666186773"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "STATUS_UNSPECIFIED"
+                },
+                "oracleSpecBinding": {
+                  "settlementDataProperty": "prices.SNX.value",
+                  "tradingTerminationProperty": "vegaprotocol.builtin.timestamp"
+                },
+                "settlementDataDecimals": 0
+              }
+            },
+            "marginCalculator": {
+              "scalingFactors": {
+                "searchLevel": 1.1,
+                "initialMargin": 2.5,
+                "collateralRelease": 2.7
+              }
+            },
+            "logNormalRiskModel": {
+              "riskAversionParameter": 0.01,
+              "tau": 0.0001140771161,
+              "params": {
+                "mu": 0,
+                "r": 0.016,
+                "sigma": 0.3
+              }
+            }
+          },
+          "decimalPlaces": "5",
+          "fees": {
+            "factors": {
+              "makerFee": "0.0002",
+              "infrastructureFee": "0.0005",
+              "liquidityFee": "0"
+            }
+          },
+          "openingAuction": {
+            "duration": "1151",
+            "volume": "0"
+          },
+          "priceMonitoringSettings": {
+            "parameters": {
+              "triggers": [
+                {
+                  "horizon": "10800",
+                  "probability": "0.9999999",
+                  "auctionExtension": "120"
+                }
+              ]
+            }
+          },
+          "liquidityMonitoringParameters": {
+            "targetStakeParameters": {
+              "timeWindow": "3600",
+              "scalingFactor": 10
+            },
+            "triggeringRatio": 0,
+            "auctionExtension": "1"
+          },
+          "tradingMode": "TRADING_MODE_NO_TRADING",
+          "state": "STATE_CANCELLED",
+          "marketTimestamps": {
+            "proposed": "1666183382367452933",
+            "pending": "1666184434532258714",
+            "open": "1666183382367454084",
+            "close": "0"
+          },
+          "positionDecimalPlaces": "0"
+        },
+        "cursor": "eyJ2ZWdhVGltZSI6IjIwMjItMTAtMTlUMTM6Mzk6MzMuMTU1MDE5WiIsImlkIjoiZjkwMjY1NzBiMTc2NWU3ODljZDZlMWFlN2MxMDMwZmE0MjYyZTA1OTRlYTMxOTI3MGFkNTYzYjhkMGIxM2U0NCJ9"
+      },
+      {
+        "node": {
+          "id": "2aa3b546fc982eb9a3b887caad2c6366dc013f4a96cb5e82f0eec6c3ec68c815",
+          "tradableInstrument": {
+            "instrument": {
+              "id": "",
+              "code": "GRTBUSD",
+              "name": "Graph BUSD",
+              "metadata": {
+                "tags": [
+                  "formerly:076BB86A5AA41E3E",
+                  "base:GRT",
+                  "quote:BUSD",
+                  "class:fx/crypto",
+                  "sector:crypto"
+                ]
+              },
+              "future": {
+                "settlementAsset": "72f051ea66686ae004086f1ad086866f720f25896319abf3427cae101a58d985",
+                "quoteName": "USD",
+                "oracleSpecForSettlementData": {
+                  "id": "0cf1c2bcf232a97e7b8ef96f547a04f9002067ea798e174c005f4a0bef9cdb18",
+                  "createdAt": "0",
+                  "updatedAt": "0",
+                  "pubKeys": [
+                    "0xfCEAdAFab14d46e20144F48824d0C09B1a03F2BC"
+                  ],
+                  "filters": [
+                    {
+                      "key": {
+                        "name": "prices.GRT.value",
+                        "type": "TYPE_INTEGER"
+                      },
+                      "conditions": [
+                        {
+                          "operator": "OPERATOR_GREATER_THAN",
+                          "value": "0"
+                        }
+                      ]
+                    },
+                    {
+                      "key": {
+                        "name": "prices.GRT.timestamp",
+                        "type": "TYPE_TIMESTAMP"
+                      },
+                      "conditions": [
+                        {
+                          "operator": "OPERATOR_GREATER_THAN",
+                          "value": "1666088113"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "STATUS_UNSPECIFIED"
+                },
+                "oracleSpecForTradingTermination": {
+                  "id": "4bb8c4ec4b8c7a7d689ef17da587b3d88b9264f169604d15e50d4580cb635a08",
+                  "createdAt": "0",
+                  "updatedAt": "0",
+                  "pubKeys": [
+                    "0xfCEAdAFab14d46e20144F48824d0C09B1a03F2BC"
+                  ],
+                  "filters": [
+                    {
+                      "key": {
+                        "name": "vegaprotocol.builtin.timestamp",
+                        "type": "TYPE_TIMESTAMP"
+                      },
+                      "conditions": [
+                        {
+                          "operator": "OPERATOR_GREATER_THAN_OR_EQUAL",
+                          "value": "1666088113"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "STATUS_UNSPECIFIED"
+                },
+                "oracleSpecBinding": {
+                  "settlementDataProperty": "prices.GRT.value",
+                  "tradingTerminationProperty": "vegaprotocol.builtin.timestamp"
+                },
+                "settlementDataDecimals": 0
+              }
+            },
+            "marginCalculator": {
+              "scalingFactors": {
+                "searchLevel": 1.1,
+                "initialMargin": 2.5,
+                "collateralRelease": 2.7
+              }
+            },
+            "logNormalRiskModel": {
+              "riskAversionParameter": 0.01,
+              "tau": 0.0001140771161,
+              "params": {
+                "mu": 0,
+                "r": 0.016,
+                "sigma": 0.3
+              }
+            }
+          },
+          "decimalPlaces": "5",
+          "fees": {
+            "factors": {
+              "makerFee": "0.0002",
+              "infrastructureFee": "0.0005",
+              "liquidityFee": "0.01"
+            }
+          },
+          "openingAuction": {
+            "duration": "901",
+            "volume": "0"
+          },
+          "priceMonitoringSettings": {
+            "parameters": {
+              "triggers": [
+                {
+                  "horizon": "10800",
+                  "probability": "0.9999999",
+                  "auctionExtension": "120"
+                }
+              ]
+            }
+          },
+          "liquidityMonitoringParameters": {
+            "targetStakeParameters": {
+              "timeWindow": "3600",
+              "scalingFactor": 10
+            },
+            "triggeringRatio": 0,
+            "auctionExtension": "1"
+          },
+          "tradingMode": "TRADING_MODE_NO_TRADING",
+          "state": "STATE_CANCELLED",
+          "marketTimestamps": {
+            "proposed": "1666086812451567282",
+            "pending": "1666087514713907991",
+            "open": "1666086812451568183",
+            "close": "0"
+          },
+          "positionDecimalPlaces": "0"
+        },
+        "cursor": "eyJ2ZWdhVGltZSI6IjIwMjItMTAtMThUMTA6MTU6MTMuMzkxMzE2WiIsImlkIjoiMmFhM2I1NDZmYzk4MmViOWEzYjg4N2NhYWQyYzYzNjZkYzAxM2Y0YTk2Y2I1ZTgyZjBlZWM2YzNlYzY4YzgxNSJ9"
+      },
+      {
+        "node": {
+          "id": "49d85b887d8e75c04cbf4c544311432a2bf6a098710233cd9dc8c7dd24f64078",
+          "tradableInstrument": {
+            "instrument": {
+              "id": "",
+              "code": "LINKmUSD",
+              "name": "LINK mUSD",
+              "metadata": {
+                "tags": [
+                  "formerly:076BB86A5AA41E3E",
+                  "base:LINK",
+                  "quote:USD",
+                  "class:fx/crypto",
+                  "sector:crypto"
+                ]
+              },
+              "future": {
+                "settlementAsset": "9e0bb9bd7ea2ec51efcdc98b432b6f0b055b2ed7973cfac9b44899d6e6c5deab",
+                "quoteName": "USD",
+                "oracleSpecForSettlementData": {
+                  "id": "0a8ee3dc2e696b69107a1962a061e2fe8471227970a0b3f8833e0a22b4c0bcce",
+                  "createdAt": "0",
+                  "updatedAt": "0",
+                  "pubKeys": [
+                    "9d666ddfd25278835b3ce1c63d5a9bb74ee4be7b60c229e7254a7f214ac91899"
+                  ],
+                  "filters": [
+                    {
+                      "key": {
+                        "name": "prices.LINK.value",
+                        "type": "TYPE_INTEGER"
+                      },
+                      "conditions": [
+                        {
+                          "operator": "OPERATOR_GREATER_THAN",
+                          "value": "0"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "STATUS_UNSPECIFIED"
+                },
+                "oracleSpecForTradingTermination": {
+                  "id": "617dd62a8a3722e2499249f3e2567d1f0f873379a33604c8c599db969f6940cc",
+                  "createdAt": "0",
+                  "updatedAt": "0",
+                  "pubKeys": [
+                    "9d666ddfd25278835b3ce1c63d5a9bb74ee4be7b60c229e7254a7f214ac91899"
+                  ],
+                  "filters": [
+                    {
+                      "key": {
+                        "name": "trading.terminated.LINK",
+                        "type": "TYPE_BOOLEAN"
+                      },
+                      "conditions": [
+                        {
+                          "operator": "OPERATOR_EQUALS",
+                          "value": "true"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "STATUS_UNSPECIFIED"
+                },
+                "oracleSpecBinding": {
+                  "settlementDataProperty": "prices.LINK.value",
+                  "tradingTerminationProperty": "trading.terminated.LINK"
+                },
+                "settlementDataDecimals": 0
+              }
+            },
+            "marginCalculator": {
+              "scalingFactors": {
+                "searchLevel": 1.1,
+                "initialMargin": 2.5,
+                "collateralRelease": 2.7
+              }
+            },
+            "logNormalRiskModel": {
+              "riskAversionParameter": 0.01,
+              "tau": 0.0001140771161,
+              "params": {
+                "mu": 0,
+                "r": 0.016,
+                "sigma": 0.3
+              }
+            }
+          },
+          "decimalPlaces": "5",
+          "fees": {
+            "factors": {
+              "makerFee": "0.0002",
+              "infrastructureFee": "0.0005",
+              "liquidityFee": "0"
+            }
+          },
+          "openingAuction": {
+            "duration": "120",
+            "volume": "0"
+          },
+          "priceMonitoringSettings": {
+            "parameters": {
+              "triggers": [
+                {
+                  "horizon": "43200",
+                  "probability": "0.9999999",
+                  "auctionExtension": "300"
+                }
+              ]
+            }
+          },
+          "liquidityMonitoringParameters": {
+            "targetStakeParameters": {
+              "timeWindow": "3600",
+              "scalingFactor": 10
+            },
+            "triggeringRatio": 0,
+            "auctionExtension": "1"
+          },
+          "tradingMode": "TRADING_MODE_OPENING_AUCTION",
+          "state": "STATE_PENDING",
+          "marketTimestamps": {
+            "proposed": "1666030261109107084",
+            "pending": "1666030261109107084",
+            "open": "1666030261109107204",
+            "close": "0"
+          },
+          "positionDecimalPlaces": "0"
+        },
+        "cursor": "eyJ2ZWdhVGltZSI6IjIwMjItMTAtMTdUMTg6MTE6MDEuMTA5MTA3WiIsImlkIjoiNDlkODViODg3ZDhlNzVjMDRjYmY0YzU0NDMxMTQzMmEyYmY2YTA5ODcxMDIzM2NkOWRjOGM3ZGQyNGY2NDA3OCJ9"
+      }
+    ],
+    "pageInfo": {
+      "hasNextPage": false,
+      "hasPreviousPage": false,
+      "startCursor": "eyJ2ZWdhVGltZSI6IjIwMjItMTAtMjRUMDg6MjQ6MjAuNzk1MTk0WiIsImlkIjoiYWYzZWFmMmNlYjUwNjAwN2Q0Y2VkOGQ4ZThlNmI2ZDE0N2FlMmFlMDUwMjA0NzRjNjAyMTA2ZjQ4Mzg1YWZlOCJ9",
+      "endCursor": "eyJ2ZWdhVGltZSI6IjIwMjItMTAtMTdUMTg6MTE6MDEuMTA5MTA3WiIsImlkIjoiNDlkODViODg3ZDhlNzVjMDRjYmY0YzU0NDMxMTQzMmEyYmY2YTA5ODcxMDIzM2NkOWRjOGM3ZGQyNGY2NDA3OCJ9"
     }
-  ]
+  }
 }

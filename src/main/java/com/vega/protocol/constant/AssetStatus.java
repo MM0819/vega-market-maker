@@ -1,5 +1,5 @@
 package com.vega.protocol.constant;
 
 public enum AssetStatus {
-    ENABLED, REJECTED
+    ENABLED, REJECTED, PENDING_LISTING
 }

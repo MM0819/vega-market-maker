@@ -89,7 +89,7 @@ public class DataInitializer {
         vegaApiClient.getAccounts(partyId).forEach(accountStore::add);
         vegaApiClient.getPositions(partyId).forEach(positionStore::add);
         vegaApiClient.getOpenOrders(partyId).forEach(orderStore::add);
-        vegaApiClient.getLiquidityCommitment(partyId, marketId).ifPresent(liquidityCommitmentStore::update);
+        vegaApiClient.getLiquidityCommitments(partyId).forEach(liquidityCommitmentStore::add);
         initialized = true;
     }
 }

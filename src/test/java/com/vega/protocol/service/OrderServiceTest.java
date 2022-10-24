@@ -67,8 +67,10 @@ public class OrderServiceTest {
             JSONObject ordersJson = new JSONObject(
                     IOUtils.toString(Objects.requireNonNull(is), StandardCharsets.UTF_8));
             JSONArray ordersArray = ordersJson
-                    .getJSONArray("liquidityProvisions")
+                    .getJSONObject("liquidityProvisions")
+                    .getJSONArray("edges")
                     .getJSONObject(0)
+                    .getJSONObject("node")
                     .getJSONArray("buys");
             List<LiquidityCommitmentOffset> liquidityOrders =
                     orderService.parseLiquidityOrders(ordersArray, 5, false);

@@ -31,67 +31,27 @@ public class VegaWebSocketClient extends WebSocketClient {
             accounts(partyId: "PARTY_ID") {
                 balance
                 type
-                asset {
-                    symbol
-                    decimals
-                    name
-                    id
-                }
-                market {
-                    id
-                    name
-                    tradableInstrument {
-                        instrument {
-                            product {
-                                ...on Future {
-                                    settlementAsset {
-                                        id
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+                assetId
+                marketId
             }
         }
     """;
 
     private static final String ORDERS_QUERY = """
-        subscription {
-            orders(partyId: "PARTY_ID", marketId: "MARKET_ID") {
-                id
-                price
-                side
-                type
-                size
-                remaining
-                status
-                market {
-                    id
-                }
-                liquidityProvision {
-                    id
-                    status
-                    commitmentAmount
-                    fee
-                    sells {
-                        liquidityOrder {
-                            reference
-                            proportion
-                            offset
-                        }
-                    }
-                    buys {
-                        liquidityOrder {
-                            reference
-                            proportion
-                            offset
-                        }
+                subscription {
+                    orders(partyId: "PARTY_ID", marketId: "MARKET_ID") {
+                        id
+                        price
+                        side
+                        type
+                        size
+                        remaining
+                        status
+                        marketId
+                        liquidityProvisionId
                     }
                 }
-            }
-        }
-    """;
+            """;
 
     private static final String POSITIONS_QUERY =
     """
@@ -101,9 +61,7 @@ public class VegaWebSocketClient extends WebSocketClient {
                 realisedPNL
                 unrealisedPNL
                 averageEntryPrice
-                market {
-                    id
-                }
+                marketId
             }
         }
     """;
