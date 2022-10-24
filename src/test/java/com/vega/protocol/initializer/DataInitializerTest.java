@@ -23,7 +23,6 @@ public class DataInitializerTest {
     private AssetStore assetStore;
     private VegaApiClient vegaApiClient;
     private final String PARTY_ID = "1";
-    private final String MARKET_ID = "1";
     private final Double FEE = 0.001;
     private final Double SPREAD = 0.005;
     private final Integer ORDER_COUNT = 10;
@@ -55,8 +54,13 @@ public class DataInitializerTest {
         Mockito.when(vegaApiClient.getOpenOrders(PARTY_ID)).thenReturn(List.of(new Order()));
         Assertions.assertFalse(dataInitializer.isInitialized());
         dataInitializer.initialize();
-        Mockito.verify(marketStore, Mockito.times(1)).add(Mockito.any(Market.class));
-        Mockito.verify(orderStore, Mockito.times(1)).add(Mockito.any(Order.class));
+        try {
+            Thread.sleep(2000L);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+        Mockito.verify(marketStore, Mockito.times(1)).update(Mockito.any(Market.class));
+        Mockito.verify(orderStore, Mockito.times(1)).update(Mockito.any(Order.class));
         Assertions.assertTrue(dataInitializer.isInitialized());
     }
 }

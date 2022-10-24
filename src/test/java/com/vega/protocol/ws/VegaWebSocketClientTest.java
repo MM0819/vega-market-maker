@@ -128,8 +128,6 @@ public class VegaWebSocketClientTest {
             String marketsJson = IOUtils.toString(Objects.requireNonNull(is), StandardCharsets.UTF_8);
             vegaWebSocketClient.onMessage(marketsJson);
             Mockito.verify(orderStore, Mockito.times(3)).update(Mockito.any(Order.class));
-            Mockito.verify(liquidityCommitmentStore, Mockito.times(1))
-                    .update(Mockito.any(LiquidityCommitment.class));
         } catch (Exception e) {
             Assertions.fail();
         }
