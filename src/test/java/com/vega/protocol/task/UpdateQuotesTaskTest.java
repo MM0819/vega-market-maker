@@ -60,8 +60,7 @@ public class UpdateQuotesTaskTest {
     ) {
         return new UpdateQuotesTask(MARKET_ID, enabled, PARTY_ID, referencePriceStore,
                 appConfigStore, orderStore, vegaApiClient, marketService, accountService, positionService,
-                pricingUtils, dataInitializer, webSocketInitializer,
-                16, "*/15 * * * * *");
+                pricingUtils, dataInitializer, webSocketInitializer, "*/15 * * * * *");
     }
 
     @BeforeEach

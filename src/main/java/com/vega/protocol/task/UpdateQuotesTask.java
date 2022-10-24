@@ -24,8 +24,6 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Comparator;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -42,7 +40,6 @@ public class UpdateQuotesTask extends TradingTask {
     private final PositionService positionService;
     private final PricingUtils pricingUtils;
     private final String partyId;
-    private final Integer threadPoolSize;
     private final String updateQuotesCronExpression;
 
     public UpdateQuotesTask(@Value("${vega.market.id}") String marketId,
@@ -58,7 +55,6 @@ public class UpdateQuotesTask extends TradingTask {
                             PricingUtils pricingUtils,
                             DataInitializer dataInitializer,
                             WebSocketInitializer webSocketInitializer,
-                            @Value("${thread.pool.size}") Integer threadPoolSize,
                             @Value("${update.quotes.cron.expression}") String updateQuotesCronExpression) {
         super(dataInitializer, webSocketInitializer, taskEnabled);
         this.appConfigStore = appConfigStore;
@@ -71,7 +67,6 @@ public class UpdateQuotesTask extends TradingTask {
         this.positionService = positionService;
         this.pricingUtils = pricingUtils;
         this.partyId = partyId;
-        this.threadPoolSize = threadPoolSize;
         this.updateQuotesCronExpression = updateQuotesCronExpression;
     }
 
@@ -188,11 +183,10 @@ public class UpdateQuotesTask extends TradingTask {
                 Math.max(newBids.size(), newAsks.size()),
                 Math.max(currentBids.size(), currentAsks.size())
         );
-        ExecutorService executorService = Executors.newFixedThreadPool(threadPoolSize);
         for(int i=0; i<count; i++) {
             int x = i;
-            executorService.submit(() -> updateSideOfBook(currentAsks, newAsks, x));
-            executorService.submit(() -> updateSideOfBook(currentBids, newBids, x));
+            updateSideOfBook(currentAsks, newAsks, x);
+            updateSideOfBook(currentBids, newBids, x);
         }
     }
 
