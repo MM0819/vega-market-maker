@@ -608,6 +608,23 @@ public class VegaApiClient {
     }
 
     /**
+     * Submit a bulk instruction comprised of multiple cancellations, amendments and submissions
+     *
+     * @param cancellations {@link List<String>} orderIds
+     * @param amendments {@link List<Order>} updated orders
+     * @param submissions {@link List<Order>} new orders
+     *
+     * @return {@link Optional<String>}
+     */
+    public Optional<String> submitBulkInstruction(
+            final List<String> cancellations,
+            final List<Order> amendments,
+            final List<Order> submissions) {
+        // TODO - build and submit the bulk instruction
+        return Optional.empty();
+    }
+
+    /**
      * Get an authorization token from the wallet
      *
      * @return {@link Optional<String>}

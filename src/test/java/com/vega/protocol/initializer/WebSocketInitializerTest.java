@@ -26,7 +26,7 @@ public class WebSocketInitializerTest {
 
     private WebSocketInitializer getWebSocketInitializer(boolean enabled, ReferencePriceSource source) {
         return new WebSocketInitializer(
-                "wss://api.n09.testnet.vega.xyz/graphql",
+                "wss://api.n11.testnet.vega.xyz/graphql",
                 "wss://stream.binance.com:9443/stream",
                 "wss://socket.polygon.io/stocks",
                 enabled, enabled, enabled, "BTCUSDT", source, PARTY_ID, MARKET_ID,

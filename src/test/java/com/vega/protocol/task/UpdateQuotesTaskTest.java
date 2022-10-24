@@ -223,7 +223,8 @@ public class UpdateQuotesTaskTest {
     public void testExecuteNotInitialized() {
         Mockito.when(dataInitializer.isInitialized()).thenReturn(false);
         updateQuotesTask.execute();
-        Mockito.verify(vegaApiClient, Mockito.times(0)).submitOrder(Mockito.any(Order.class), Mockito.anyString());
+        Mockito.verify(vegaApiClient, Mockito.times(0))
+                .submitOrder(Mockito.any(Order.class), Mockito.anyString());
     }
 
     @Test

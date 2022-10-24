@@ -37,7 +37,7 @@ public class VegaApiClientTest {
     private static final String WALLET_URL = "http://localhost:1789";
     private static final String WALLET_USER = "trading";
     private static final String WALLET_PASSWORD = "password123";
-    private static final String NODE_URL = "https://api.n09.testnet.vega.xyz";
+    private static final String NODE_URL = "https://api.n11.testnet.vega.xyz";
     private static final String MARKET_ID = "10c4b1114d2f6fda239b73d018bca55888b6018f0ac70029972a17fea0a6a56e";
     private static final String PARTY_ID = "6817f2b4d9464716c6756d2827d893872b1d33839e211c27a650629e428dc35c";
     private final MarketStore marketStore = Mockito.mock(MarketStore.class);

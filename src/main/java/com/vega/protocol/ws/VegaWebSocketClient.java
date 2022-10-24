@@ -12,16 +12,13 @@ import org.java_websocket.drafts.Draft_6455;
 import org.java_websocket.handshake.ServerHandshake;
 import org.java_websocket.protocols.Protocol;
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
 import java.net.URI;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 @Slf4j
 public class VegaWebSocketClient extends WebSocketClient {
@@ -89,6 +86,42 @@ public class VegaWebSocketClient extends WebSocketClient {
                         }
                     }
                 }
+            }
+        }
+    """;
+
+    private static  final String LIQUIDITY_COMMITMENT_QUERY =
+    """
+        subscription {
+            liquidityProvisions(partyId: "PARTY_ID") {
+                id
+                partyID
+                marketID
+                commitmentAmount
+                fee
+                buys {
+                    order {
+                        id
+                    }
+                    liquidityOrder {
+                        reference
+                        proportion
+                        offset
+                    }
+                }
+                sells {
+                    order {
+                        id
+                    }
+                    liquidityOrder {
+                        reference
+                        proportion
+                        offset
+                    }
+                }
+                status
+                version
+                reference
             }
         }
     """;
@@ -187,6 +220,14 @@ public class VegaWebSocketClient extends WebSocketClient {
                     .put("type", "start")
                     .put("payload", accountsQuery);
             this.send(accountsSubscription.toString());
+            JSONObject liquidityCommitmentQuery = new JSONObject()
+                    .put("query", LIQUIDITY_COMMITMENT_QUERY
+                            .replace("PARTY_ID", partyId));
+            JSONObject liquidityCommitmentSubscription = new JSONObject()
+                    .put("id", "liquidityCommitment")
+                    .put("type", "start")
+                    .put("payload", liquidityCommitmentQuery);
+            this.send(liquidityCommitmentSubscription.toString());
         } catch(Exception e) {
             log.error(e.getMessage(), e);
         }
@@ -200,13 +241,15 @@ public class VegaWebSocketClient extends WebSocketClient {
         try {
             JSONObject jsonObject = new JSONObject(message);
             String id = jsonObject.optString("id");
-            if(StringUtils.hasText(id)) {
-                JSONObject data = jsonObject.getJSONObject("payload").getJSONObject("data");
+            JSONObject payload = jsonObject.optJSONObject("payload");
+            if(StringUtils.hasText(id) && payload != null) {
+                JSONObject data = payload.getJSONObject("data");
                 switch (id) {
                     case "markets" -> handleMarkets(data);
                     case "orders" -> handleOrders(data);
                     case "positions" -> handlePositions(data);
                     case "accounts" -> handleAccounts(data);
+                    case "liquidityCommitment" -> handleLiquidityCommitment(data);
                     default -> log.warn("Unsupported message");
                 }
             }
@@ -221,7 +264,7 @@ public class VegaWebSocketClient extends WebSocketClient {
      *
      * @param data {@link JSONObject}
      */
-    private void handleAccounts(JSONObject data) throws JSONException {
+    private void handleAccounts(JSONObject data) {
         JSONArray accountsArray = getDataAsArray(data, "accounts");
         for(int i=0; i<accountsArray.length(); i++) {
             try {
@@ -255,7 +298,7 @@ public class VegaWebSocketClient extends WebSocketClient {
      *
      * @param data {@link JSONObject}
      */
-    private void handlePositions(JSONObject data) throws JSONException {
+    private void handlePositions(JSONObject data) {
         JSONArray positionsArray = getDataAsArray(data, "positions");
         for(int i=0; i<positionsArray.length(); i++) {
             try {
@@ -290,9 +333,8 @@ public class VegaWebSocketClient extends WebSocketClient {
      *
      * @param data {@link JSONObject}
      */
-    private void handleOrders(JSONObject data) throws JSONException {
+    private void handleOrders(JSONObject data) {
         JSONArray ordersArray = getDataAsArray(data, "orders");
-        Set<String> liquidityProvisionIds = new HashSet<>();
         for(int i=0; i<ordersArray.length(); i++) {
             try {
                 JSONObject ordersObject = ordersArray.getJSONObject(i);
@@ -317,10 +359,6 @@ public class VegaWebSocketClient extends WebSocketClient {
                         .setMarket(market)
                         .setSide(side);
                 orderStore.update(order);
-                JSONObject liquidityProvisionObject = ordersObject.optJSONObject("liquidityProvision");
-                if(liquidityProvisionObject != null) {
-                    handleLiquidityProvision(liquidityProvisionObject, liquidityProvisionIds, market);
-                }
             } catch(Exception e) {
                 log.info(data.toString());
                 log.error(e.getMessage(), e);
@@ -329,40 +367,46 @@ public class VegaWebSocketClient extends WebSocketClient {
     }
 
     /**
-     * Handle JSON object for liquidition provision
+     * Handle JSON object for liquidity commitment
      *
-     * @param liquidityProvisionObject {@link JSONObject}
-     * @param liquidityProvisionIds used to prevent duplicate processing
-     * @param market {@link Market}
+     * @param data {@link JSONObject}
      */
-    private void handleLiquidityProvision(
-            final JSONObject liquidityProvisionObject,
-            final Set<String> liquidityProvisionIds,
-            final Market market
-    ) throws JSONException {
-        String id = liquidityProvisionObject.getString("id");
-        if(!liquidityProvisionIds.contains(id)) {
-            BigDecimal commitmentAmount = BigDecimal.valueOf(liquidityProvisionObject.getDouble("commitmentAmount"));
-            BigDecimal fee = BigDecimal.valueOf(liquidityProvisionObject.getDouble("fee"));
-            LiquidityCommitmentStatus status = LiquidityCommitmentStatus.valueOf(liquidityProvisionObject
-                    .getString("status").replaceAll("([a-z])([A-Z])", "$1_$2").toUpperCase());
-            JSONArray buysArray = liquidityProvisionObject.getJSONArray("buys");
-            JSONArray sellsArray = liquidityProvisionObject.getJSONArray("sells");
-            List<LiquidityCommitmentOffset> bids = orderService.parseLiquidityOrders(
-                    buysArray, market.getDecimalPlaces(), true);
-            List<LiquidityCommitmentOffset> asks = orderService.parseLiquidityOrders(
-                    sellsArray, market.getDecimalPlaces(), true);
-            LiquidityCommitment liquidityCommitment = new LiquidityCommitment()
-                    .setCommitmentAmount(commitmentAmount)
-                    .setFee(fee)
-                    .setStatus(status)
-                    .setId(id)
-                    .setPartyId(partyId)
-                    .setMarket(market)
-                    .setBids(bids)
-                    .setAsks(asks);
-            liquidityCommitmentStore.update(liquidityCommitment);
-            liquidityProvisionIds.add(id);
+    private void handleLiquidityCommitment(
+            final JSONObject data
+    ) {
+        JSONArray liquidityCommitmentsArray = getDataAsArray(data, "liquidityProvisions");
+        for(int i=0; i<liquidityCommitmentsArray.length(); i++) {
+            try {
+                JSONObject liquidityCommitmentObject = liquidityCommitmentsArray.getJSONObject(i)
+                        .getJSONObject("liquidityProvision");
+                String id = liquidityCommitmentObject.getString("id");
+                BigDecimal commitmentAmount = BigDecimal.valueOf(liquidityCommitmentObject.getDouble("commitmentAmount"));
+                BigDecimal fee = BigDecimal.valueOf(liquidityCommitmentObject.getDouble("fee"));
+                LiquidityCommitmentStatus status = LiquidityCommitmentStatus.valueOf(liquidityCommitmentObject
+                        .getString("status").replaceAll("([a-z])([A-Z])", "$1_$2").toUpperCase());
+                JSONArray buysArray = liquidityCommitmentObject.getJSONArray("buys");
+                JSONArray sellsArray = liquidityCommitmentObject.getJSONArray("sells");
+                String marketId = liquidityCommitmentObject.getString("marketID");
+                Market market = marketStore.getById(marketId)
+                        .orElseThrow(() -> new TradingException(ErrorCode.MARKET_NOT_FOUND));
+                List<LiquidityCommitmentOffset> bids = orderService.parseLiquidityOrders(
+                        buysArray, market.getDecimalPlaces(), true);
+                List<LiquidityCommitmentOffset> asks = orderService.parseLiquidityOrders(
+                        sellsArray, market.getDecimalPlaces(), true);
+                LiquidityCommitment liquidityCommitment = new LiquidityCommitment()
+                        .setCommitmentAmount(commitmentAmount)
+                        .setFee(fee)
+                        .setStatus(status)
+                        .setId(id)
+                        .setPartyId(partyId)
+                        .setMarket(market)
+                        .setBids(bids)
+                        .setAsks(asks);
+                liquidityCommitmentStore.update(liquidityCommitment);
+            } catch(Exception e) {
+                log.info(data.toString());
+                log.error(e.getMessage(), e);
+            }
         }
     }
 
@@ -371,7 +415,7 @@ public class VegaWebSocketClient extends WebSocketClient {
      *
      * @param data {@link JSONObject}
      */
-    private void handleMarkets(JSONObject data) throws JSONException {
+    private void handleMarkets(JSONObject data) {
         JSONArray marketsArray = getDataAsArray(data, "marketsData");
         for(int i=0; i<marketsArray.length(); i++) {
             try {
@@ -435,13 +479,14 @@ public class VegaWebSocketClient extends WebSocketClient {
     private JSONArray getDataAsArray(
             final JSONObject data,
             final String key
-    ) throws JSONException {
+    ) {
         JSONArray array = new JSONArray();
         try {
-            array = data.getJSONArray(key);
+            array = data.optJSONArray(key);
         } catch(Exception e) {
-            array.put(data.getJSONObject(key));
+            JSONObject obj = data.optJSONObject(key);
+            array = obj != null ? array.put(obj) : null;
         }
-        return array;
+        return array == null ? new JSONArray() : array;
     }
 }
