@@ -4,13 +4,12 @@ import com.vega.protocol.api.VegaApiClient;
 import com.vega.protocol.model.AppConfig;
 import com.vega.protocol.store.*;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
+@Slf4j
 @Component
 public class DataInitializer {
 
@@ -94,14 +93,12 @@ public class DataInitializer {
 
     @Scheduled(cron = "* * * * * *")
     private void updateState() {
-        ExecutorService executorService = Executors.newFixedThreadPool(threadPoolSize);
-        executorService.submit(() -> vegaApiClient.getAssets().forEach(assetStore::update));
-        executorService.submit(() -> vegaApiClient.getMarkets().forEach(marketStore::update));
-        executorService.submit(() -> vegaApiClient.getAccounts(partyId).forEach(accountStore::update));
-        executorService.submit(() -> vegaApiClient.getPositions(partyId).forEach(positionStore::update));
-        executorService.submit(() -> vegaApiClient.getOpenOrders(partyId).forEach(orderStore::update));
-        executorService.submit(() -> vegaApiClient.getLiquidityCommitments(partyId)
-                .forEach(liquidityCommitmentStore::update));
+        vegaApiClient.getAssets().forEach(assetStore::update);
+        vegaApiClient.getMarkets().forEach(marketStore::update);
+        vegaApiClient.getAccounts(partyId).forEach(accountStore::update);
+        vegaApiClient.getPositions(partyId).forEach(positionStore::update);
+        vegaApiClient.getOpenOrders(partyId).forEach(orderStore::update);
+        vegaApiClient.getLiquidityCommitments(partyId).forEach(liquidityCommitmentStore::update);
     }
 
 }

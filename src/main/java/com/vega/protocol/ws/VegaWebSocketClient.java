@@ -68,26 +68,10 @@ public class VegaWebSocketClient extends WebSocketClient {
     private static final String MARKETS_QUERY =
     """
         subscription {
-            marketsData {
-                market {
-                    id
-                    name
-                    decimalPlaces
-                    positionDecimalPlaces
-                    tradingMode
-                    state
-                  	tradableInstrument {
-    				    instrument {
-                            product {
-                                ...on Future {
-                                    settlementAsset {
-                                        id
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+            marketsData(marketIds: "MARKET_ID") {
+            	marketId
+            	marketState
+            	marketTradingMode
             }
         }
     """;
@@ -191,7 +175,8 @@ public class VegaWebSocketClient extends WebSocketClient {
                     .put("type", "connection_init");
             this.send(init.toString());
             JSONObject marketsQuery = new JSONObject()
-                    .put("query", MARKETS_QUERY);
+                    .put("query", MARKETS_QUERY
+                            .replace("MARKET_ID", marketId));
             JSONObject marketsSubscription = new JSONObject()
                     .put("id", "markets")
                     .put("type", "start")
@@ -271,8 +256,10 @@ public class VegaWebSocketClient extends WebSocketClient {
         for(int i=0; i<accountsArray.length(); i++) {
             try {
                 JSONObject accountObject = accountsArray.getJSONObject(i);
-                String asset = accountObject.getJSONObject("asset").getString("symbol");
-                int decimals = accountObject.getJSONObject("asset").getInt("decimals");
+                String assetId = accountObject.getString("assetId");
+                Asset asset = assetStore.getById(assetId).orElseThrow(() ->
+                        new TradingException(ErrorCode.ASSET_NOT_FOUND));
+                int decimals = asset.getDecimalPlaces();
                 JSONObject marketObject = accountObject.optJSONObject("market");
                 AccountType type = AccountType.valueOf(accountObject.getString("type").toUpperCase());
                 String id = String.format("%s-%s-%s", asset, partyId, type);
@@ -282,7 +269,7 @@ public class VegaWebSocketClient extends WebSocketClient {
                 }
                 BigDecimal balance = BigDecimal.valueOf(accountObject.getDouble("balance"));
                 Account account = new Account()
-                        .setAsset(asset)
+                        .setAsset(asset.getSymbol())
                         .setType(type)
                         .setBalance(decimalUtils.convertToDecimals(decimals, balance))
                         .setPartyId(partyId)
@@ -311,7 +298,7 @@ public class VegaWebSocketClient extends WebSocketClient {
                 BigDecimal unrealisedPnl = BigDecimal.valueOf(positionObject.getDouble("unrealisedPNL"));
                 BigDecimal realisedPnl = BigDecimal.valueOf(positionObject.getDouble("realisedPNL"));
                 BigDecimal entryPrice = BigDecimal.valueOf(positionObject.getDouble("averageEntryPrice"));
-                String marketId = positionObject.getJSONObject("market").getString("id");
+                String marketId = positionObject.getString("marketId");
                 Position position = new Position()
                         .setPartyId(partyId)
                         .setUnrealisedPnl(decimalUtils.convertToDecimals(market.getDecimalPlaces(), unrealisedPnl))
@@ -345,7 +332,7 @@ public class VegaWebSocketClient extends WebSocketClient {
                 BigDecimal size = BigDecimal.valueOf(ordersObject.getDouble("size"));
                 BigDecimal remainingSize = BigDecimal.valueOf(ordersObject.getDouble("remaining"));
                 BigDecimal price = BigDecimal.valueOf(ordersObject.getDouble("price"));
-                String marketId = ordersObject.getJSONObject("market").getString("id");
+                String marketId = ordersObject.getString("marketId");
                 Market market = marketStore.getById(marketId)
                         .orElseThrow(() -> new TradingException(ErrorCode.MARKET_NOT_FOUND));
                 OrderType type = OrderType.valueOf(ordersObject.getString("type").toUpperCase());
@@ -379,8 +366,7 @@ public class VegaWebSocketClient extends WebSocketClient {
         JSONArray liquidityCommitmentsArray = getDataAsArray(data, "liquidityProvisions");
         for(int i=0; i<liquidityCommitmentsArray.length(); i++) {
             try {
-                JSONObject liquidityCommitmentObject = liquidityCommitmentsArray.getJSONObject(i)
-                        .getJSONObject("liquidityProvision");
+                JSONObject liquidityCommitmentObject = liquidityCommitmentsArray.getJSONObject(i);
                 String id = liquidityCommitmentObject.getString("id");
                 BigDecimal commitmentAmount = BigDecimal.valueOf(liquidityCommitmentObject.getDouble("commitmentAmount"));
                 BigDecimal fee = BigDecimal.valueOf(liquidityCommitmentObject.getDouble("fee"));
@@ -421,32 +407,14 @@ public class VegaWebSocketClient extends WebSocketClient {
         JSONArray marketsArray = getDataAsArray(data, "marketsData");
         for(int i=0; i<marketsArray.length(); i++) {
             try {
-                JSONObject marketObject = marketsArray.getJSONObject(i).getJSONObject("market");
-                String id = marketObject.getString("id");
-                String name = marketObject.getString("name");
-                int decimalPlaces = marketObject.getInt("decimalPlaces");
-                MarketState state = MarketState.valueOf(marketObject.getString("state")
+                JSONObject marketObject = marketsArray.getJSONObject(i);
+                String id = marketObject.getString("marketId");
+                MarketState state = MarketState.valueOf(marketObject.getString("marketState")
                         .replaceAll("([a-z])([A-Z])", "$1_$2").toUpperCase());
-                MarketTradingMode tradingMode = MarketTradingMode.valueOf(marketObject.getString("tradingMode")
+                MarketTradingMode tradingMode = MarketTradingMode.valueOf(marketObject.getString("marketTradingMode")
                         .replaceAll("([a-z])([A-Z])", "$1_$2").toUpperCase());
-                String settlementAssetId = marketObject
-                        .getJSONObject("tradableInstrument")
-                        .getJSONObject("instrument")
-                        .getJSONObject("product")
-                        .getJSONObject("settlementAsset")
-                        .getString("id");
-                Asset asset = assetStore.getById(settlementAssetId)
-                        .orElseThrow(() -> new TradingException(ErrorCode.ASSET_NOT_FOUND));
-                int positionDecimalPlaces = marketObject.getInt("positionDecimalPlaces");
-                Market market = new Market()
-                        .setId(id)
-                        .setName(name)
-                        .setState(state)
-                        .setTradingMode(tradingMode)
-                        .setDecimalPlaces(decimalPlaces)
-                        .setPositionDecimalPlaces(positionDecimalPlaces)
-                        .setSettlementAsset(asset.getSymbol());
-                marketStore.update(market);
+                marketStore.getById(id).ifPresent(market ->
+                        marketStore.update(market.setState(state).setTradingMode(tradingMode)));
             } catch(Exception e) {
                 log.info(data.toString());
                 log.error(e.getMessage(), e);

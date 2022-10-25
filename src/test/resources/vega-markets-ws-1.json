@@ -2,23 +2,9 @@
   "payload": {
     "data": {
       "marketsData": {
-        "market": {
-          "id": "7738ae422f8a905a618cb5b113e1267f1d288417361741ed033762f89f64637d",
-          "name": "BTCUSD Monthly (30 Jun 2022)",
-          "decimalPlaces": 5,
-          "positionDecimalPlaces": 3,
-          "tradingMode": "OpeningAuction",
-          "state": "Pending",
-          "tradableInstrument": {
-            "instrument": {
-              "product": {
-                "settlementAsset": {
-                  "id": "4a12e42cf69da167fd265a88eef6c0a36da9f42891dad3b424884ac05faace09"
-                }
-              }
-            }
-          }
-        }
+        "marketId": "7738ae422f8a905a618cb5b113e1267f1d288417361741ed033762f89f64637d",
+        "marketTradingMode": "OpeningAuction",
+        "marketState": "Pending"
       }
     }
   },

@@ -52,6 +52,9 @@ public class VegaWebSocketClientTest {
             final Optional<Asset> asset,
             final int count
     ) {
+        if(count > 0) {
+            Mockito.when(marketStore.getById(Mockito.any())).thenReturn(Optional.of(new Market()));
+        }
         Mockito.when(assetStore.getById(Mockito.any())).thenReturn(asset);
         try(InputStream is = getClass().getClassLoader()
                 .getResourceAsStream(String.format("vega-markets-ws-%s.json", count == 0 ? count + 1 : count))) {
@@ -76,6 +79,7 @@ public class VegaWebSocketClientTest {
     }
 
     private void handleAccounts(int count) {
+        Mockito.when(assetStore.getById(Mockito.any())).thenReturn(Optional.of(new Asset().setDecimalPlaces(1)));
         try(InputStream is = getClass().getClassLoader()
                 .getResourceAsStream(String.format("vega-accounts-ws-%s.json", count))) {
             String accountsJson = IOUtils.toString(Objects.requireNonNull(is), StandardCharsets.UTF_8);

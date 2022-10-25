@@ -10,75 +10,7 @@
           "size": "1",
           "remaining": "1",
           "status": "Active",
-          "market": {
-            "id": "10c4b1114d2f6fda239b73d018bca55888b6018f0ac70029972a17fea0a6a56e"
-          },
-          "liquidityProvision": {
-            "id": "483e2825dbb233c97749cbe16825a80cc9d9b2a365236521937e2caf4036d2a7",
-            "status": "Active",
-            "commitmentAmount": "4405431273",
-            "fee": "0.001",
-            "sells": [
-              {
-                "liquidityOrder": {
-                  "reference": "BestAsk",
-                  "proportion": 10,
-                  "offset": "44"
-                }
-              },
-              {
-                "liquidityOrder": {
-                  "reference": "BestAsk",
-                  "proportion": 20,
-                  "offset": "22"
-                }
-              },
-              {
-                "liquidityOrder": {
-                  "reference": "BestAsk",
-                  "proportion": 30,
-                  "offset": "21"
-                }
-              },
-              {
-                "liquidityOrder": {
-                  "reference": "BestAsk",
-                  "proportion": 40,
-                  "offset": "20"
-                }
-              }
-            ],
-            "buys": [
-              {
-                "liquidityOrder": {
-                  "reference": "BestBid",
-                  "proportion": 40,
-                  "offset": "40"
-                }
-              },
-              {
-                "liquidityOrder": {
-                  "reference": "BestBid",
-                  "proportion": 30,
-                  "offset": "41"
-                }
-              },
-              {
-                "liquidityOrder": {
-                  "reference": "BestBid",
-                  "proportion": 20,
-                  "offset": "42"
-                }
-              },
-              {
-                "liquidityOrder": {
-                  "reference": "BestBid",
-                  "proportion": 10,
-                  "offset": "84"
-                }
-              }
-            ]
-          }
+          "marketId": "10c4b1114d2f6fda239b73d018bca55888b6018f0ac70029972a17fea0a6a56e"
         },
         {
           "id": "e13df96d6f6a63c0a53f25994996ca88a1e17acdb6a52ee8706b57a23c3d427f",
@@ -88,75 +20,7 @@
           "size": "415",
           "remaining": "415",
           "status": "Active",
-          "market": {
-            "id": "5e6035fe6a6df78c9ec44b333c231e63d357acef0a0620d2c243f5865d1dc0d8"
-          },
-          "liquidityProvision": {
-            "id": "483e2825dbb233c97749cbe16825a80cc9d9b2a365236521937e2caf4036d2a7",
-            "status": "Active",
-            "commitmentAmount": "4405431273",
-            "fee": "0.001",
-            "sells": [
-              {
-                "liquidityOrder": {
-                  "reference": "BestAsk",
-                  "proportion": 10,
-                  "offset": "44"
-                }
-              },
-              {
-                "liquidityOrder": {
-                  "reference": "BestAsk",
-                  "proportion": 20,
-                  "offset": "22"
-                }
-              },
-              {
-                "liquidityOrder": {
-                  "reference": "BestAsk",
-                  "proportion": 30,
-                  "offset": "21"
-                }
-              },
-              {
-                "liquidityOrder": {
-                  "reference": "BestAsk",
-                  "proportion": 40,
-                  "offset": "20"
-                }
-              }
-            ],
-            "buys": [
-              {
-                "liquidityOrder": {
-                  "reference": "BestBid",
-                  "proportion": 40,
-                  "offset": "40"
-                }
-              },
-              {
-                "liquidityOrder": {
-                  "reference": "BestBid",
-                  "proportion": 30,
-                  "offset": "41"
-                }
-              },
-              {
-                "liquidityOrder": {
-                  "reference": "BestBid",
-                  "proportion": 20,
-                  "offset": "42"
-                }
-              },
-              {
-                "liquidityOrder": {
-                  "reference": "BestBid",
-                  "proportion": 10,
-                  "offset": "84"
-                }
-              }
-            ]
-          }
+          "marketId": "5e6035fe6a6df78c9ec44b333c231e63d357acef0a0620d2c243f5865d1dc0d8"
         },
         {
           "id": "e13df96d6f6a63c0a53f25994996ca88a1e17acdb6a52ee8706b57a23c3d421f",
@@ -166,10 +30,7 @@
           "size": "415",
           "remaining": "415",
           "status": "Active",
-          "market": {
-            "id": "5e6035fe6a6df78c9ec44b333c231e63d357acef0a0620d2c243f5865d1dc0d8"
-          },
-          "liquidityProvision": null
+          "marketId": "5e6035fe6a6df78c9ec44b333c231e63d357acef0a0620d2c243f5865d1dc0d8"
         }
       ]
     }
