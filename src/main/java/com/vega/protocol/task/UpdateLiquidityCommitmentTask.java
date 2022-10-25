@@ -108,13 +108,13 @@ public class UpdateLiquidityCommitmentTask extends TradingTask {
         List<LiquidityCommitmentOffset> liquidityCommitmentBids = bidDistribution.stream()
                 .map(d -> new LiquidityCommitmentOffset()
                         .setReference(PeggedReference.MID)
-                        .setOffset(referencePrice.subtract(BigDecimal.valueOf(d.getPrice())))
+                        .setOffset(referencePrice.subtract(BigDecimal.valueOf(d.getPrice())).abs())
                         .setProportion(d.getSize().intValue()))
                 .collect(Collectors.toList());
         List<LiquidityCommitmentOffset> liquidityCommitmentAsks = askDistribution.stream()
                 .map(d -> new LiquidityCommitmentOffset()
                         .setReference(PeggedReference.MID)
-                        .setOffset(referencePrice.subtract(BigDecimal.valueOf(d.getPrice())))
+                        .setOffset(referencePrice.subtract(BigDecimal.valueOf(d.getPrice())).abs())
                         .setProportion(d.getSize().intValue()))
                 .collect(Collectors.toList());
         LiquidityCommitment liquidityCommitment = new LiquidityCommitment()

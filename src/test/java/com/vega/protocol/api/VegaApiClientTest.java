@@ -130,6 +130,7 @@ public class VegaApiClientTest {
         HttpResponse<JsonNode> response = Mockito.mock(HttpResponse.class);
         Mockito.when(request.asJson()).thenReturn(response);
         Mockito.when(response.getBody()).thenReturn(new JsonNode(jsonResponse.toString()));
+        Mockito.when(response.getStatus()).thenReturn(200);
         mockStatic.when(() -> Unirest.get(String.format("%s%s", NODE_URL, path))).thenReturn(request);
     }
 
