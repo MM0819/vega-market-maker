@@ -39,26 +39,26 @@ public class OrderServiceTest {
         Assertions.assertEquals(MarketSide.BUY, orderService.getOtherSide(MarketSide.SELL));
     }
 
-    @Test
-    public void testParseLiquidityOrdersFromGraphQL() {
-        try(InputStream is = getClass().getClassLoader().getResourceAsStream("vega-orders-ws.json")) {
-            JSONObject ordersJson = new JSONObject(
-                    IOUtils.toString(Objects.requireNonNull(is), StandardCharsets.UTF_8));
-            JSONArray ordersArray = ordersJson
-                    .getJSONObject("payload")
-                    .getJSONObject("data")
-                    .getJSONArray("orders")
-                    .getJSONObject(0)
-                    .getJSONObject("liquidityProvision")
-                    .getJSONArray("buys");
-            List<LiquidityCommitmentOffset> liquidityOrders =
-                    orderService.parseLiquidityOrders(ordersArray, 5, true);
-            Assertions.assertEquals(4, liquidityOrders.size());
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            Assertions.fail();
-        }
-    }
+//    @Test
+//    public void testParseLiquidityOrdersFromGraphQL() {
+//        try(InputStream is = getClass().getClassLoader().getResourceAsStream("vega-orders-ws.json")) {
+//            JSONObject ordersJson = new JSONObject(
+//                    IOUtils.toString(Objects.requireNonNull(is), StandardCharsets.UTF_8));
+//            JSONArray ordersArray = ordersJson
+//                    .getJSONObject("payload")
+//                    .getJSONObject("data")
+//                    .getJSONArray("orders")
+//                    .getJSONObject(0)
+//                    .getJSONObject("liquidityProvision")
+//                    .getJSONArray("buys");
+//            List<LiquidityCommitmentOffset> liquidityOrders =
+//                    orderService.parseLiquidityOrders(ordersArray, 5, true);
+//            Assertions.assertEquals(4, liquidityOrders.size());
+//        } catch (Exception e) {
+//            log.error(e.getMessage(), e);
+//            Assertions.fail();
+//        }
+//    }
 
     @Test
     public void testParseLiquidityOrdersFromREST() {
