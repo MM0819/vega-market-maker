@@ -91,7 +91,6 @@ public class DataInitializer {
         initialized = true;
     }
 
-    @Scheduled(cron = "* * * * * *")
     private void updateState() {
         vegaApiClient.getAssets().forEach(assetStore::update);
         vegaApiClient.getMarkets().forEach(marketStore::update);

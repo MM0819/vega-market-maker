@@ -203,6 +203,7 @@ public class VegaApiClient {
                 Asset settlementAsset = assetStore.getById(settlementAssetId)
                         .orElseThrow(() -> new TradingException(ErrorCode.ASSET_NOT_FOUND));
                 int decimalPlaces = marketObject.getInt("decimalPlaces");
+                int positionDecimalPlaces = marketObject.getInt("positionDecimalPlaces");
                 MarketState state = MarketState.valueOf(marketObject.getString("state")
                         .replace("STATE_", ""));
                 MarketTradingMode tradingMode = MarketTradingMode.valueOf(marketObject.getString("tradingMode")
@@ -211,6 +212,7 @@ public class VegaApiClient {
                         .setName(name)
                         .setSettlementAsset(settlementAsset.getSymbol())
                         .setDecimalPlaces(decimalPlaces)
+                        .setPositionDecimalPlaces(positionDecimalPlaces)
                         .setId(id)
                         .setState(state)
                         .setTradingMode(tradingMode);

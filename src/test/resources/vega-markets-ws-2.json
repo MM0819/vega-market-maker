@@ -4,13 +4,13 @@
       "marketsData": [
         {
           "marketId": "7738ae422f8a905a618cb5b113e1267f1d288417361741ed033762f89f64637d",
-          "marketTradingMode": "OpeningAuction",
-          "marketState": "Pending"
+          "marketTradingMode": "TRADING_MODE_OPENING_AUCTION",
+          "marketState": "STATE_PENDING"
         },
         {
           "marketId": "c6233d79a53a81b9d9d889c5beb42baaa1e3eb412d19bfd854dfa35309ce4190",
-          "marketTradingMode": "Continuous",
-          "marketState": "Active"
+          "marketTradingMode": "TRADING_MODE_CONTINUOUS",
+          "marketState": "STATE_ACTIVE"
         }
       ]
     }

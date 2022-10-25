@@ -5,31 +5,31 @@
         {
           "id": "497b838029f07cb5e3a769c267914033266a96bd9b7da2ba0abe90f39229f3dd",
           "price": "1",
-          "side": "Buy",
-          "type": "Limit",
+          "side": "SIDE_BUY",
+          "type": "TYPE_LIMIT",
           "size": "1",
           "remaining": "1",
-          "status": "Active",
+          "status": "STATUS_ACTIVE",
           "marketId": "10c4b1114d2f6fda239b73d018bca55888b6018f0ac70029972a17fea0a6a56e"
         },
         {
           "id": "e13df96d6f6a63c0a53f25994996ca88a1e17acdb6a52ee8706b57a23c3d427f",
           "price": "8499960",
-          "side": "Buy",
-          "type": "Limit",
+          "side": "SIDE_BUY",
+          "type": "TYPE_LIMIT",
           "size": "415",
           "remaining": "415",
-          "status": "Active",
+          "status": "STATUS_ACTIVE",
           "marketId": "5e6035fe6a6df78c9ec44b333c231e63d357acef0a0620d2c243f5865d1dc0d8"
         },
         {
           "id": "e13df96d6f6a63c0a53f25994996ca88a1e17acdb6a52ee8706b57a23c3d421f",
           "price": "8499960",
-          "side": "Buy",
-          "type": "Limit",
+          "side": "SIDE_BUY",
+          "type": "TYPE_LIMIT",
           "size": "415",
           "remaining": "415",
-          "status": "Active",
+          "status": "STATUS_ACTIVE",
           "marketId": "5e6035fe6a6df78c9ec44b333c231e63d357acef0a0620d2c243f5865d1dc0d8"
         }
       ]

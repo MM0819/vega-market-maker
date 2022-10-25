@@ -3,8 +3,8 @@
     "data": {
       "marketsData": {
         "marketId": "7738ae422f8a905a618cb5b113e1267f1d288417361741ed033762f89f64637d",
-        "marketTradingMode": "OpeningAuction",
-        "marketState": "Pending"
+        "marketTradingMode": "TRADING_MODE_OPENING_AUCTION",
+        "marketState": "STATE_PENDING"
       }
     }
   },

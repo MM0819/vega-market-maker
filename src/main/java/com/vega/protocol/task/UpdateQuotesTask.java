@@ -22,9 +22,9 @@ import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.Comparator;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -138,7 +138,7 @@ public class UpdateQuotesTask extends TradingTask {
                         .setTimeInForce(tif)
                         .setMarket(market)
                         .setPartyId(partyId)
-        ).collect(Collectors.toList());
+        ).toList();
         List<Order> asks = askDistribution.stream().map(d ->
                 new Order()
                         .setSize(BigDecimal.valueOf(d.getSize() * config.getAskSizeFactor()))
@@ -149,77 +149,13 @@ public class UpdateQuotesTask extends TradingTask {
                         .setTimeInForce(tif)
                         .setMarket(market)
                         .setPartyId(partyId)
-        ).collect(Collectors.toList());
+        ).toList();
+        List<Order> submissions = new ArrayList<>();
+        submissions.addAll(bids);
+        submissions.addAll(asks);
         List<Order> currentOrders = orderStore.getItems();
-        List<Order> currentBids = currentOrders.stream()
-                .filter(o -> o.getSide().equals(MarketSide.BUY) && o.getStatus().equals(OrderStatus.ACTIVE))
-                .collect(Collectors.toList());
-        List<Order> currentAsks = currentOrders.stream()
-                .filter(o -> o.getSide().equals(MarketSide.SELL) && o.getStatus().equals(OrderStatus.ACTIVE))
-                .collect(Collectors.toList());
-        bids.sort(Comparator.comparing(Order::getPrice).reversed());
-        currentBids.sort(Comparator.comparing(Order::getPrice).reversed());
-        asks.sort(Comparator.comparing(Order::getPrice));
-        currentAsks.sort(Comparator.comparing(Order::getPrice));
-        updateQuotes(bids, asks, currentBids, currentAsks);
+        List<String> cancellations = currentOrders.stream().map(Order::getId).toList();
+        vegaApiClient.submitBulkInstruction(cancellations, Collections.emptyList(), submissions);
         log.info("Quotes successfully updated!");
-    }
-
-    /**
-     * Reprice the quotes
-     *
-     * @param newBids {@link List<Order>}
-     * @param newAsks {@link List<Order>}
-     * @param currentBids {@link List<Order>}
-     * @param currentAsks {@link List<Order>}
-     */
-    private void updateQuotes(
-            List<Order> newBids,
-            List<Order> newAsks,
-            List<Order> currentBids,
-            List<Order> currentAsks
-    ) {
-        int count = Math.max(
-                Math.max(newBids.size(), newAsks.size()),
-                Math.max(currentBids.size(), currentAsks.size())
-        );
-        for(int i=0; i<count; i++) {
-            int x = i;
-            updateSideOfBook(currentAsks, newAsks, x);
-            updateSideOfBook(currentBids, newBids, x);
-        }
-    }
-
-    /**
-     * Update one side of the order book (for given step)
-     *
-     * @param currentOrders {@link List<Order>}
-     * @param newOrders {@link List<Order>}
-     * @param i the current step
-     */
-    private void updateSideOfBook(
-            final List<Order> currentOrders,
-            final List<Order> newOrders,
-            final int i
-    ) {
-        if (currentOrders.size() > i && newOrders.size() > i) {
-            Order currentOrder = currentOrders.get(i);
-            Order newOrder = newOrders.get(i);
-            BigDecimal sizeDelta = newOrder.getSize().subtract(currentOrder.getSize());
-            BigDecimal price = newOrder.getPrice();
-            Market market = newOrder.getMarket();
-            String partyId = newOrder.getPartyId();
-            log.info("AMEND {}: sizeDelta = {}; price = {}", currentOrder.getId(), sizeDelta, price);
-            vegaApiClient.amendOrder(currentOrder.getId(), sizeDelta, price, market, partyId);
-        } else if (currentOrders.size() <= i && newOrders.size() > i) {
-            Order newOrder = newOrders.get(i);
-            log.info("CREATE: side = {}; size = {}; price = {}",
-                    newOrder.getSize(), newOrder.getSize(), newOrder.getPrice());
-            vegaApiClient.submitOrder(newOrder, partyId);
-        } else if (currentOrders.size() > i) {
-            Order currentOrder = currentOrders.get(i);
-            log.info("CANCEL {}", currentOrder.getId());
-            vegaApiClient.cancelOrder(currentOrder.getId(), partyId);
-        }
     }
 }

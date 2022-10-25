@@ -261,7 +261,8 @@ public class VegaWebSocketClient extends WebSocketClient {
                         new TradingException(ErrorCode.ASSET_NOT_FOUND));
                 int decimals = asset.getDecimalPlaces();
                 JSONObject marketObject = accountObject.optJSONObject("market");
-                AccountType type = AccountType.valueOf(accountObject.getString("type").toUpperCase());
+                AccountType type = AccountType.valueOf(accountObject.getString("type")
+                        .replace("TYPE_", ""));
                 String id = String.format("%s-%s-%s", asset, partyId, type);
                 if(marketObject != null && !type.equals(AccountType.GENERAL)) {
                     String marketId = marketObject.getString("id");
@@ -328,15 +329,18 @@ public class VegaWebSocketClient extends WebSocketClient {
             try {
                 JSONObject ordersObject = ordersArray.getJSONObject(i);
                 String id = ordersObject.getString("id");
-                MarketSide side = MarketSide.valueOf(ordersObject.getString("side").toUpperCase());
+                MarketSide side = MarketSide.valueOf(ordersObject.getString("side")
+                        .replace("SIDE_", ""));
                 BigDecimal size = BigDecimal.valueOf(ordersObject.getDouble("size"));
                 BigDecimal remainingSize = BigDecimal.valueOf(ordersObject.getDouble("remaining"));
                 BigDecimal price = BigDecimal.valueOf(ordersObject.getDouble("price"));
                 String marketId = ordersObject.getString("marketId");
                 Market market = marketStore.getById(marketId)
                         .orElseThrow(() -> new TradingException(ErrorCode.MARKET_NOT_FOUND));
-                OrderType type = OrderType.valueOf(ordersObject.getString("type").toUpperCase());
-                OrderStatus status = OrderStatus.valueOf(ordersObject.getString("status").toUpperCase());
+                OrderType type = OrderType.valueOf(ordersObject.getString("type")
+                        .replace("TYPE_", ""));
+                OrderStatus status = OrderStatus.valueOf(ordersObject.getString("status")
+                        .replace("STATUS_", ""));
                 Order order = new Order()
                         .setSize(decimalUtils.convertToDecimals(market.getPositionDecimalPlaces(), size))
                         .setPrice(decimalUtils.convertToDecimals(market.getDecimalPlaces(), price))
@@ -371,7 +375,7 @@ public class VegaWebSocketClient extends WebSocketClient {
                 BigDecimal commitmentAmount = BigDecimal.valueOf(liquidityCommitmentObject.getDouble("commitmentAmount"));
                 BigDecimal fee = BigDecimal.valueOf(liquidityCommitmentObject.getDouble("fee"));
                 LiquidityCommitmentStatus status = LiquidityCommitmentStatus.valueOf(liquidityCommitmentObject
-                        .getString("status").replaceAll("([a-z])([A-Z])", "$1_$2").toUpperCase());
+                        .getString("status").replace("STATUS_", ""));
                 JSONArray buysArray = liquidityCommitmentObject.getJSONArray("buys");
                 JSONArray sellsArray = liquidityCommitmentObject.getJSONArray("sells");
                 String marketId = liquidityCommitmentObject.getString("marketID");
@@ -410,9 +414,9 @@ public class VegaWebSocketClient extends WebSocketClient {
                 JSONObject marketObject = marketsArray.getJSONObject(i);
                 String id = marketObject.getString("marketId");
                 MarketState state = MarketState.valueOf(marketObject.getString("marketState")
-                        .replaceAll("([a-z])([A-Z])", "$1_$2").toUpperCase());
+                        .replace("STATE_", ""));
                 MarketTradingMode tradingMode = MarketTradingMode.valueOf(marketObject.getString("marketTradingMode")
-                        .replaceAll("([a-z])([A-Z])", "$1_$2").toUpperCase());
+                        .replace("TRADING_MODE_", ""));
                 marketStore.getById(id).ifPresent(market ->
                         marketStore.update(market.setState(state).setTradingMode(tradingMode)));
             } catch(Exception e) {
