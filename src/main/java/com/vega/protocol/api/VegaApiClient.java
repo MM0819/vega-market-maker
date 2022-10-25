@@ -67,6 +67,10 @@ public class VegaApiClient {
             HttpResponse<JsonNode> response = Unirest.get(
                     String.format("%s/liquidity/provisions?partyId=%s", nodeUrl, partyId))
                     .asJson();
+            if(response.getStatus() != 200) {
+                log.warn("Status code = {}", response.getStatus());
+                return Collections.emptyList();
+            }
             JSONArray liquidityProvisionsArray = response.getBody().getObject()
                     .getJSONObject("liquidityProvisions").getJSONArray("edges");
             List<LiquidityCommitment> commitments = new ArrayList<>();
@@ -113,6 +117,10 @@ public class VegaApiClient {
     public List<Asset> getAssets() {
         try {
             HttpResponse<JsonNode> response = Unirest.get(String.format("%s/assets", nodeUrl)).asJson();
+            if(response.getStatus() != 200) {
+                log.warn("Status code = {}", response.getStatus());
+                return Collections.emptyList();
+            }
             JSONArray assetsArray = response.getBody().getObject().getJSONObject("assets").getJSONArray("edges");
             List<Asset> assets = new ArrayList<>();
             for(int i=0; i<assetsArray.length(); i++) {
@@ -153,6 +161,10 @@ public class VegaApiClient {
         try {
             String url = String.format("%s/accounts?filter.partyIds=%s", nodeUrl, partyId);
             HttpResponse<JsonNode> response = Unirest.get(url).asJson();
+            if(response.getStatus() != 200) {
+                log.warn("Status code = {}", response.getStatus());
+                return Collections.emptyList();
+            }
             List<Account> accounts = new ArrayList<>();
             JSONArray accountsArray = response.getBody().getObject().getJSONObject("accounts").getJSONArray("edges");
             for(int i=0; i<accountsArray.length(); i++) {
@@ -191,6 +203,10 @@ public class VegaApiClient {
     public List<Market> getMarkets() {
         try {
             HttpResponse<JsonNode> response = Unirest.get(String.format("%s/markets", nodeUrl)).asJson();
+            if(response.getStatus() != 200) {
+                log.warn("Status code = {}", response.getStatus());
+                return Collections.emptyList();
+            }
             JSONArray marketsArray = response.getBody().getObject().getJSONObject("markets").getJSONArray("edges");
             List<Market> markets = new ArrayList<>();
             for(int i=0; i<marketsArray.length(); i++) {
@@ -238,6 +254,10 @@ public class VegaApiClient {
         try {
             HttpResponse<JsonNode> response = Unirest.get(String.format("%s/positions?partyId=%s", nodeUrl, partyId))
                     .asJson();
+            if(response.getStatus() != 200) {
+                log.warn("Status code = {}", response.getStatus());
+                return Collections.emptyList();
+            }
             List<Position> positions = new ArrayList<>();
             JSONArray positionsArray = response.getBody().getObject().getJSONObject("positions").getJSONArray("edges");
             for(int i=0; i<positionsArray.length(); i++) {
@@ -283,6 +303,10 @@ public class VegaApiClient {
         try {
             String url = String.format("%s/orders?partyId=%s&liveOnly=true", nodeUrl, partyId);
             HttpResponse<JsonNode> response = Unirest.get(url).asJson();
+            if(response.getStatus() != 200) {
+                log.warn("Status code = {}", response.getStatus());
+                return Collections.emptyList();
+            }
             List<Order> orders = new ArrayList<>();
             JSONArray ordersArray = response.getBody().getObject().getJSONObject("orders").getJSONArray("edges");
             for(int i=0; i<ordersArray.length(); i++) {
@@ -613,16 +637,74 @@ public class VegaApiClient {
      * Submit a bulk instruction comprised of multiple cancellations, amendments and submissions
      *
      * @param cancellations {@link List<String>} orderIds
-     * @param amendments {@link List<Order>} updated orders
      * @param submissions {@link List<Order>} new orders
+     * @param attempt the attempt count
      *
      * @return {@link Optional<String>}
      */
     public Optional<String> submitBulkInstruction(
             final List<String> cancellations,
-            final List<Order> amendments,
-            final List<Order> submissions) {
-        // TODO - build and submit the bulk instruction
+            final List<Order> submissions,
+            final Market market,
+            final String partyId,
+            final int attempt) {
+        if(attempt >= 10) {
+            return Optional.empty();
+        }
+        try {
+            JSONArray cancellationsArr = new JSONArray();
+            JSONArray amendmentsArr = new JSONArray();
+            JSONArray submissionArr = new JSONArray();
+            for(String id : cancellations) {
+                JSONObject orderCancellation = new JSONObject()
+                        .put("marketId", market.getId())
+                        .put("orderId", id);
+                cancellationsArr.put(new JSONObject()
+                        .put("orderCancellation", orderCancellation));
+            }
+            for(Order order : submissions) {
+                String reference = String.format("%s-%s", order.getPartyId(), UUID.randomUUID());
+                String price = decimalUtils.convertFromDecimals(
+                        market.getDecimalPlaces(), order.getPrice()).toBigInteger().toString();
+                String size = decimalUtils.convertFromDecimals(
+                        market.getPositionDecimalPlaces(), order.getSize()).toBigInteger().toString();
+                JSONObject orderSubmission = new JSONObject()
+                        .put("marketId", market.getId())
+                        .put("price", price)
+                        .put("size", size)
+                        .put("side", String.format("SIDE_%s", order.getSide().name()))
+                        .put("timeInForce", String.format("TIME_IN_FORCE_%s", order.getTimeInForce().name()))
+                        .put("type", String.format("TYPE_%s", order.getType().name()))
+                        .put("reference", reference);
+                submissionArr.put(new JSONObject()
+                        .put("orderSubmission", orderSubmission));
+            }
+            JSONObject bulkInstruction = new JSONObject()
+                    .put("batchMarketInstructions", new JSONObject()
+                            .put("cancellations", cancellationsArr)
+                            .put("amendments", amendmentsArr)
+                            .put("submissions", submissionArr))
+                    .put("pubKey", partyId)
+                    .put("propagate", true);
+            String token = getToken().orElseThrow(() -> new TradingException(ErrorCode.GET_VEGA_TOKEN_FAILED));
+            Map<String, String> headers = new HashMap<>();
+            headers.put("Authorization", String.format("Bearer %s", token));
+            HttpResponse<JsonNode> response = Unirest.post(String.format("%s/api/v1/command/sync", walletUrl))
+                    .headers(headers)
+                    .body(bulkInstruction)
+                    .asJson();
+            if(response.getBody().toString().contains("couldn't get last block height")) {
+                log.info("Trying to amend order again...");
+                return submitBulkInstruction(cancellations, submissions, market, partyId, attempt+1);
+            }
+            if(response.getBody().toString().contains("error")) {
+                throw new TradingException(response.getBody().toString());
+            }
+            String txHash = response.getBody().getObject().getString("txHash");
+            return Optional.of(txHash);
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+        }
         return Optional.empty();
     }
 

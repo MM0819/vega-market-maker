@@ -155,7 +155,7 @@ public class UpdateQuotesTask extends TradingTask {
         submissions.addAll(asks);
         List<Order> currentOrders = orderStore.getItems();
         List<String> cancellations = currentOrders.stream().map(Order::getId).toList();
-        vegaApiClient.submitBulkInstruction(cancellations, Collections.emptyList(), submissions);
+        vegaApiClient.submitBulkInstruction(cancellations, submissions, market, partyId, 0);
         log.info("Quotes successfully updated!");
     }
 }

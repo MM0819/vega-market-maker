@@ -126,12 +126,9 @@ public class UpdateQuotesTaskTest {
         if(balance.doubleValue() == 0 || bidDistributionSize == 0 || askDistributionSize == 0) {
             modifier = 0;
         }
-        Mockito.verify(vegaApiClient, Mockito.times(3 * modifier))
-                .amendOrder(Mockito.anyString(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyString());
         Mockito.verify(vegaApiClient, Mockito.times(modifier))
-                .cancelOrder(Mockito.anyString(), Mockito.anyString());
-        Mockito.verify(vegaApiClient, Mockito.times(modifier))
-                .submitOrder(Mockito.any(Order.class), Mockito.anyString());
+                .submitBulkInstruction(Mockito.anyList(), Mockito.anyList(),
+                        Mockito.any(Market.class), Mockito.anyString(), Mockito.anyInt());
     }
 
     @Test
@@ -164,7 +161,7 @@ public class UpdateQuotesTaskTest {
     }
 
     @Test
-    public void testExecuteZerBalance() {
+    public void testExecuteZeroBalance() {
         execute(BigDecimal.ZERO, BigDecimal.ZERO,
                 MarketTradingMode.CONTINUOUS, 3, 1);
     }
