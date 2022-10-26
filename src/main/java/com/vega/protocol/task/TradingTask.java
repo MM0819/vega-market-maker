@@ -2,11 +2,13 @@ package com.vega.protocol.task;
 
 import com.vega.protocol.initializer.DataInitializer;
 import com.vega.protocol.initializer.WebSocketInitializer;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.scheduling.support.CronTrigger;
 
 import javax.annotation.PostConstruct;
 
+@Slf4j
 public abstract class TradingTask {
 
     private static final ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
@@ -47,6 +49,12 @@ public abstract class TradingTask {
     @PostConstruct
     public void initialize() {
         scheduler.initialize();
-        scheduler.schedule(this::execute, new CronTrigger(getCronExpression()));
+        scheduler.schedule(() -> {
+            try {
+                execute();
+            } catch(Exception e) {
+                log.error(e.getMessage(), e);
+            }
+        }, new CronTrigger(getCronExpression()));
     }
 }

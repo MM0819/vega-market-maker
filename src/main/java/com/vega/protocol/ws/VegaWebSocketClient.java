@@ -262,8 +262,8 @@ public class VegaWebSocketClient extends WebSocketClient {
                 int decimals = asset.getDecimalPlaces();
                 JSONObject marketObject = accountObject.optJSONObject("market");
                 AccountType type = AccountType.valueOf(accountObject.getString("type")
-                        .replace("TYPE_", ""));
-                String id = String.format("%s-%s-%s", asset, partyId, type);
+                        .replace("ACCOUNT_TYPE_", ""));
+                String id = String.format("%s-%s-%s", asset.getSymbol(), partyId, type);
                 if(marketObject != null && !type.equals(AccountType.GENERAL)) {
                     String marketId = marketObject.getString("id");
                     id = String.format("%s-%s", id, marketId);
@@ -306,7 +306,7 @@ public class VegaWebSocketClient extends WebSocketClient {
                         .setRealisedPnl(decimalUtils.convertToDecimals(market.getDecimalPlaces(), realisedPnl))
                         .setEntryPrice(decimalUtils.convertToDecimals(market.getDecimalPlaces(), entryPrice))
                         .setMarket(market)
-                        .setSize(decimalUtils.convertToDecimals(market.getPositionDecimalPlaces(), entryPrice))
+                        .setSize(decimalUtils.convertToDecimals(market.getPositionDecimalPlaces(), size).abs())
                         .setId(String.format("%s-%s", marketId, partyId))
                         .setSide(size.doubleValue() > 0 ? MarketSide.BUY :
                                 (size.doubleValue() < 0 ? MarketSide.SELL : null));
@@ -327,30 +327,32 @@ public class VegaWebSocketClient extends WebSocketClient {
         JSONArray ordersArray = getDataAsArray(data, "orders");
         for(int i=0; i<ordersArray.length(); i++) {
             try {
-                JSONObject ordersObject = ordersArray.getJSONObject(i);
-                String id = ordersObject.getString("id");
-                MarketSide side = MarketSide.valueOf(ordersObject.getString("side")
+                JSONObject orderObject = ordersArray.getJSONObject(i);
+                String id = orderObject.getString("id");
+                MarketSide side = MarketSide.valueOf(orderObject.getString("side")
                         .replace("SIDE_", ""));
-                BigDecimal size = BigDecimal.valueOf(ordersObject.getDouble("size"));
-                BigDecimal remainingSize = BigDecimal.valueOf(ordersObject.getDouble("remaining"));
-                BigDecimal price = BigDecimal.valueOf(ordersObject.getDouble("price"));
-                String marketId = ordersObject.getString("marketId");
+                BigDecimal size = BigDecimal.valueOf(orderObject.getDouble("size"));
+                BigDecimal remainingSize = BigDecimal.valueOf(orderObject.getDouble("remaining"));
+                BigDecimal price = BigDecimal.valueOf(orderObject.getDouble("price"));
+                String marketId = orderObject.getString("marketId");
                 Market market = marketStore.getById(marketId)
                         .orElseThrow(() -> new TradingException(ErrorCode.MARKET_NOT_FOUND));
-                OrderType type = OrderType.valueOf(ordersObject.getString("type")
+                OrderType type = OrderType.valueOf(orderObject.getString("type")
                         .replace("TYPE_", ""));
-                OrderStatus status = OrderStatus.valueOf(ordersObject.getString("status")
+                OrderStatus status = OrderStatus.valueOf(orderObject.getString("status")
                         .replace("STATUS_", ""));
                 Order order = new Order()
                         .setSize(decimalUtils.convertToDecimals(market.getPositionDecimalPlaces(), size))
                         .setPrice(decimalUtils.convertToDecimals(market.getDecimalPlaces(), price))
                         .setType(type)
                         .setStatus(status)
-                        .setRemainingSize(remainingSize)
+                        .setRemainingSize(decimalUtils.convertToDecimals(market.getPositionDecimalPlaces(), remainingSize))
                         .setId(id)
                         .setPartyId(partyId)
                         .setMarket(market)
-                        .setSide(side);
+                        .setSide(side)
+                        .setIsPeggedOrder(orderObject.has("liquidityProvisionId") &&
+                                orderObject.getString("liquidityProvisionId").length() > 0);
                 orderStore.update(order);
             } catch(Exception e) {
                 log.info(data.toString());

@@ -17,6 +17,7 @@ import com.vega.protocol.store.OrderStore;
 import com.vega.protocol.store.ReferencePriceStore;
 import com.vega.protocol.utils.PricingUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.ListUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -24,6 +25,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 @Slf4j
@@ -105,8 +107,7 @@ public class UpdateQuotesTask extends TradingTask {
                 .orElseThrow(() -> new TradingException(ErrorCode.REFERENCE_PRICE_NOT_FOUND)).getMidPrice();
         BigDecimal bidPoolSize = balance.multiply(BigDecimal.valueOf(0.5));
         BigDecimal askPoolSize = bidPoolSize.divide(referencePrice, market.getDecimalPlaces(), RoundingMode.HALF_DOWN);
-        BigDecimal openVolumeRatio = exposure.abs().divide(askPoolSize,
-                market.getDecimalPlaces(), RoundingMode.HALF_DOWN);
+        BigDecimal openVolumeRatio = exposure.abs().divide(askPoolSize, 8, RoundingMode.HALF_DOWN);
         double scalingFactor = pricingUtils.getScalingFactor(openVolumeRatio.doubleValue());
         log.info("\n\nReference price = {}\nExposure = {}\nBid pool size = {}\nAsk pool size = {}\n",
                 referencePrice, exposure, bidPoolSize, askPoolSize);
@@ -124,8 +125,6 @@ public class UpdateQuotesTask extends TradingTask {
             log.warn("Ask distribution was empty !!");
             return;
         }
-        bidDistribution.get(0).setPrice(bidDistribution.get(0).getPrice() * (1 - config.getSpread()));
-        askDistribution.get(0).setPrice(askDistribution.get(0).getPrice() * (1 + config.getSpread()));
         TimeInForce tif = market.getTradingMode().equals(MarketTradingMode.CONTINUOUS) ?
                 TimeInForce.GTC : TimeInForce.GFA;
         List<Order> bids = bidDistribution.stream().map(d ->
@@ -138,7 +137,7 @@ public class UpdateQuotesTask extends TradingTask {
                         .setTimeInForce(tif)
                         .setMarket(market)
                         .setPartyId(partyId)
-        ).toList();
+        ).sorted(Comparator.comparing(Order::getPrice).reversed()).toList();
         List<Order> asks = askDistribution.stream().map(d ->
                 new Order()
                         .setSize(BigDecimal.valueOf(d.getSize() * config.getAskSizeFactor()))
@@ -149,13 +148,27 @@ public class UpdateQuotesTask extends TradingTask {
                         .setTimeInForce(tif)
                         .setMarket(market)
                         .setPartyId(partyId)
-        ).toList();
+        ).sorted(Comparator.comparing(Order::getPrice)).toList();
+        for(Order bid : bids) {
+            bid.setPrice(bid.getPrice().subtract(BigDecimal.valueOf(bid.getPrice().doubleValue() * config.getSpread())));
+        }
+        for(Order ask : asks) {
+            ask.setPrice(ask.getPrice().add(BigDecimal.valueOf(ask.getPrice().doubleValue() * config.getSpread())));
+        }
+        log.info("Bid price = {}; Ask price = {}", bids.get(0).getPrice(), asks.get(0).getPrice());
         List<Order> submissions = new ArrayList<>();
         submissions.addAll(bids);
         submissions.addAll(asks);
-        List<Order> currentOrders = orderStore.getItems();
+        List<Order> currentOrders = orderStore.getItems().stream().filter(o -> !o.getIsPeggedOrder()).toList();
         List<String> cancellations = currentOrders.stream().map(Order::getId).toList();
-        vegaApiClient.submitBulkInstruction(cancellations, submissions, market, partyId, 0);
+        List<List<String>> cancellationBatches = ListUtils.partition(cancellations, 100); // TODO 100 comes from net param
+        List<List<Order>> submissionBatches = ListUtils.partition(submissions, 100); // TODO 100 comes from net param
+        for(List<Order> batch : submissionBatches) {
+            vegaApiClient.submitBulkInstruction(Collections.emptyList(), batch, market, partyId, 0);
+        }
+        for(List<String> batch : cancellationBatches) {
+            vegaApiClient.submitBulkInstruction(batch, Collections.emptyList(), market, partyId, 0);
+        }
         log.info("Quotes successfully updated!");
     }
 }

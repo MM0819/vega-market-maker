@@ -20,8 +20,8 @@ import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -35,8 +35,9 @@ public class UpdateLiquidityCommitmentTask extends TradingTask {
     private final LiquidityCommitmentStore liquidityCommitmentStore;
     private final VegaApiClient vegaApiClient;
     private final String marketId;
-    private final PricingUtils pricingUtils;
     private final String partyId;
+    private final String updateLiquidityCommitmentCronExpression;
+    private final PricingUtils pricingUtils;
 
     public UpdateLiquidityCommitmentTask(@Value("${vega.market.id}") String marketId,
                                          @Value("${update.liquidity.commitment.enabled}") Boolean taskEnabled,
@@ -50,7 +51,8 @@ public class UpdateLiquidityCommitmentTask extends TradingTask {
                                          LiquidityCommitmentStore liquidityCommitmentStore,
                                          PricingUtils pricingUtils,
                                          DataInitializer dataInitializer,
-                                         WebSocketInitializer webSocketInitializer) {
+                                         WebSocketInitializer webSocketInitializer,
+                                         @Value("${update.liquidity.commitment.cron.expression}") String updateLiquidityCommitmentCronExpression) {
         super(dataInitializer, webSocketInitializer, taskEnabled);
         this.marketService = marketService;
         this.accountService = accountService;
@@ -60,13 +62,14 @@ public class UpdateLiquidityCommitmentTask extends TradingTask {
         this.liquidityCommitmentStore = liquidityCommitmentStore;
         this.vegaApiClient = vegaApiClient;
         this.marketId = marketId;
-        this.pricingUtils = pricingUtils;
+        this.updateLiquidityCommitmentCronExpression = updateLiquidityCommitmentCronExpression;
         this.partyId = partyId;
+        this.pricingUtils = pricingUtils;
     }
 
     @Override
     public String getCronExpression() {
-        return "0 * * * * *";
+        return updateLiquidityCommitmentCronExpression;
     }
 
     @Override
@@ -89,39 +92,43 @@ public class UpdateLiquidityCommitmentTask extends TradingTask {
         BigDecimal exposure = positionService.getExposure(marketId);
         AppConfig config = appConfigStore.get()
                 .orElseThrow(() -> new TradingException(ErrorCode.APP_CONFIG_NOT_FOUND));
-        BigDecimal referencePrice = referencePriceStore.get()
-                .orElseThrow(() -> new TradingException(ErrorCode.REFERENCE_PRICE_NOT_FOUND)).getMidPrice();
+        ReferencePrice referencePrice = referencePriceStore.get()
+                .orElseThrow(() -> new TradingException(ErrorCode.REFERENCE_PRICE_NOT_FOUND));
+        BigDecimal midPrice = referencePrice.getMidPrice();
         BigDecimal bidPoolSize = balance.multiply(BigDecimal.valueOf(0.5));
-        BigDecimal askPoolSize = bidPoolSize.divide(referencePrice, market.getDecimalPlaces(), RoundingMode.HALF_DOWN);
-        BigDecimal openVolumeRatio = exposure.abs().divide(askPoolSize,
-                market.getDecimalPlaces(), RoundingMode.HALF_DOWN);
-        double scalingFactor = pricingUtils.getScalingFactor(openVolumeRatio.doubleValue());
+        BigDecimal askPoolSize = bidPoolSize.divide(midPrice, market.getDecimalPlaces(), RoundingMode.HALF_DOWN);
         log.info("Exposure = {}\nBid pool size = {}\nAsk pool size = {}", exposure, bidPoolSize, askPoolSize);
-        List<DistributionStep> askDistribution = pricingUtils.getAskDistribution(
-                exposure.doubleValue() < 0 ? scalingFactor : 1.0, bidPoolSize.doubleValue(), askPoolSize.doubleValue(),
-                config.getAskQuoteRange(), config.getOrderCount());
-        List<DistributionStep> bidDistribution = pricingUtils.getBidDistribution(
-                exposure.doubleValue() > 0 ? scalingFactor : 1.0, bidPoolSize.doubleValue(), askPoolSize.doubleValue(),
+        List<DistributionStep> distribution = pricingUtils.getBidDistribution(1.0,
+                bidPoolSize.doubleValue(), askPoolSize.doubleValue(),
                 config.getBidQuoteRange(), config.getOrderCount());
-        BigDecimal commitmentAmount = BigDecimal.valueOf((config.getAskQuoteRange() + config.getBidQuoteRange()) / 4)
-                .multiply(balance);
-        List<LiquidityCommitmentOffset> liquidityCommitmentBids = bidDistribution.stream()
-                .map(d -> new LiquidityCommitmentOffset()
-                        .setReference(PeggedReference.MID)
-                        .setOffset(referencePrice.subtract(BigDecimal.valueOf(d.getPrice())).abs())
-                        .setProportion(d.getSize().intValue()))
-                .collect(Collectors.toList());
-        List<LiquidityCommitmentOffset> liquidityCommitmentAsks = askDistribution.stream()
-                .map(d -> new LiquidityCommitmentOffset()
-                        .setReference(PeggedReference.MID)
-                        .setOffset(referencePrice.subtract(BigDecimal.valueOf(d.getPrice())).abs())
-                        .setProportion(d.getSize().intValue()))
-                .collect(Collectors.toList());
+        double commitment = distribution.stream().mapToDouble(d -> d.getSize() * d.getPrice()).sum();
+        BigDecimal commitmentAmount = BigDecimal.valueOf(commitment);
+        List<LiquidityCommitmentOffset> bids = new ArrayList<>();
+        List<LiquidityCommitmentOffset> asks = new ArrayList<>();
+        double scalingFactor = exposure.abs().divide(askPoolSize, 8, RoundingMode.HALF_DOWN).doubleValue();
+        int baseProportion = 100000000;
+        for(int i=0; i<config.getCommitmentOrderCount(); i++) {
+            int bidProportion = (int) (exposure.doubleValue() > 0 ?
+                    Math.max(1, baseProportion * (1 - scalingFactor)) : baseProportion);
+            int askProportion = (int) (exposure.doubleValue() < 0 ?
+                    Math.max(1, baseProportion * (1 - scalingFactor)) : baseProportion);
+            LiquidityCommitmentOffset bidOffset = new LiquidityCommitmentOffset()
+                    .setOffset(midPrice.multiply(BigDecimal.valueOf(config.getCommitmentSpread() * (i+1))))
+                    .setProportion(bidProportion)
+                    .setReference(PeggedReference.MID);
+            LiquidityCommitmentOffset askOffset = new LiquidityCommitmentOffset()
+                    .setOffset(midPrice.multiply(BigDecimal.valueOf(config.getCommitmentSpread() * (i+1))))
+                    .setProportion(askProportion)
+                    .setReference(PeggedReference.MID);
+            bids.add(bidOffset);
+            asks.add(askOffset);
+        }
         LiquidityCommitment liquidityCommitment = new LiquidityCommitment()
+                .setMarket(market)
                 .setCommitmentAmount(commitmentAmount)
                 .setFee(BigDecimal.valueOf(config.getFee()))
-                .setBids(liquidityCommitmentBids)
-                .setAsks(liquidityCommitmentAsks);
+                .setBids(bids)
+                .setAsks(asks);
         boolean hasCommitment = liquidityCommitmentStore.getItems().stream()
                 .anyMatch(c -> c.getMarket().getId().equals(marketId));
         vegaApiClient.submitLiquidityCommitment(liquidityCommitment, partyId, hasCommitment);

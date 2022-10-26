@@ -6,7 +6,6 @@ import com.vega.protocol.store.*;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 @Slf4j
@@ -27,10 +26,12 @@ public class DataInitializer {
     private final Integer orderCount;
     private final Double bidSizeFactor;
     private final Double askSizeFactor;
+    private final Double commitmentFactor;
     private final Double bidQuoteRange;
     private final Double askQuoteRange;
     private final Double pricingStepSize;
-    private final Integer threadPoolSize;
+    private final Double commitmentSpread;
+    private final Integer commitmentOrderCount;
 
     @Getter
     private boolean initialized = false;
@@ -46,13 +47,15 @@ public class DataInitializer {
                            @Value("${vega.party.id}") String partyId,
                            @Value("${fee}") Double fee,
                            @Value("${spread}") Double spread,
+                           @Value("${commitment.spread}") Double commitmentSpread,
                            @Value("${order.count}") Integer orderCount,
                            @Value("${bid.size.factor}") Double bidSizeFactor,
                            @Value("${ask.size.factor}") Double askSizeFactor,
+                           @Value("${commitment.factor}") Double commitmentFactor,
                            @Value("${bid.quote.range}") Double bidQuoteRange,
                            @Value("${ask.quote.range}") Double askQuoteRange,
                            @Value("${pricing.step.size}") Double pricingStepSize,
-                           @Value("${thread.pool.size}") Integer threadPoolSize) {
+                           @Value("${commitment.order.count}") Integer commitmentOrderCount) {
         this.orderStore = orderStore;
         this.marketStore = marketStore;
         this.positionStore = positionStore;
@@ -65,12 +68,14 @@ public class DataInitializer {
         this.fee = fee;
         this.spread = spread;
         this.orderCount = orderCount;
-        this.threadPoolSize = threadPoolSize;
+        this.commitmentFactor = commitmentFactor;
         this.bidSizeFactor = bidSizeFactor;
         this.askSizeFactor = askSizeFactor;
         this.bidQuoteRange = bidQuoteRange;
         this.askQuoteRange = askQuoteRange;
         this.pricingStepSize = pricingStepSize;
+        this.commitmentSpread = commitmentSpread;
+        this.commitmentOrderCount = commitmentOrderCount;
     }
 
     /**
@@ -80,12 +85,15 @@ public class DataInitializer {
         AppConfig config = new AppConfig()
                 .setFee(fee)
                 .setSpread(spread)
+                .setCommitmentSpread(commitmentSpread)
                 .setOrderCount(orderCount)
                 .setBidSizeFactor(bidSizeFactor)
                 .setAskSizeFactor(askSizeFactor)
+                .setCommitmentFactor(commitmentFactor)
                 .setBidQuoteRange(bidQuoteRange)
                 .setAskQuoteRange(askQuoteRange)
-                .setPricingStepSize(pricingStepSize);
+                .setPricingStepSize(pricingStepSize)
+                .setCommitmentOrderCount(commitmentOrderCount);
         appConfigStore.update(config);
         updateState();
         initialized = true;

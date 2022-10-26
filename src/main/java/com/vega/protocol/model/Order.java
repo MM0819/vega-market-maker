@@ -24,4 +24,5 @@ public class Order extends UniqueItem {
     private OrderStatus status;
     private OrderType type;
     private TimeInForce timeInForce;
+    private Boolean isPeggedOrder;
 }

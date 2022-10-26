@@ -78,6 +78,9 @@ public class VegaApiClient {
                 JSONObject liquidityProvisionObject = liquidityProvisionsArray.getJSONObject(i).getJSONObject("node");
                 Market market = marketStore.getById(marketId)
                         .orElseThrow(() -> new TradingException(ErrorCode.MARKET_NOT_FOUND));
+                Asset asset = assetStore.getItems().stream()
+                        .filter(a -> a.getSymbol().equals(market.getSettlementAsset())).findFirst()
+                        .orElseThrow(() -> new TradingException(ErrorCode.ASSET_NOT_FOUND));
                 BigDecimal commitmentAmount = BigDecimal.valueOf(
                         liquidityProvisionObject.getDouble("commitmentAmount"));
                 LiquidityCommitmentStatus status = LiquidityCommitmentStatus.valueOf(
@@ -92,7 +95,7 @@ public class VegaApiClient {
                         sellsArray, market.getDecimalPlaces(), false);
                 LiquidityCommitment liquidityCommitment = new LiquidityCommitment()
                         .setCommitmentAmount(decimalUtils.convertToDecimals(
-                                market.getDecimalPlaces(), commitmentAmount))
+                                asset.getDecimalPlaces(), commitmentAmount))
                         .setMarket(market)
                         .setStatus(status)
                         .setPartyId(partyId)
@@ -170,7 +173,7 @@ public class VegaApiClient {
             for(int i=0; i<accountsArray.length(); i++) {
                 JSONObject accountObject = accountsArray.getJSONObject(i).getJSONObject("account");
                 String assetId = accountObject.getString("asset");
-                Asset asset = assetStore.getById(assetId)
+                Asset asset = assetStore.getItems().stream().filter(a -> a.getId().equals(assetId)).findFirst()
                         .orElseThrow(() -> new TradingException(ErrorCode.ASSET_NOT_FOUND));
                 String marketId = accountObject.getString("marketId");
                 BigDecimal balance = BigDecimal.valueOf(accountObject.getDouble("balance"));
@@ -333,7 +336,9 @@ public class VegaApiClient {
                         .setRemainingSize(decimalUtils.convertToDecimals(market.getPositionDecimalPlaces(), remaining))
                         .setPrice(decimalUtils.convertToDecimals(market.getDecimalPlaces(), price))
                         .setSide(side)
-                        .setId(id);
+                        .setId(id)
+                        .setIsPeggedOrder(orderObject.has("liquidityProvisionId") &&
+                                orderObject.getString("liquidityProvisionId").length() > 0);
                 if(order.getStatus().equals(OrderStatus.ACTIVE)) {
                     orders.add(order);
                 }
@@ -597,11 +602,14 @@ public class VegaApiClient {
         }
         try {
             Market market = liquidityCommitment.getMarket();
+            Asset asset = assetStore.getItems().stream()
+                    .filter(a -> a.getSymbol().equals(market.getSettlementAsset())).findFirst()
+                    .orElseThrow(() -> new TradingException(ErrorCode.ASSET_NOT_FOUND));
             BigDecimal commitmentAmount = liquidityCommitment.getCommitmentAmount();
             JSONObject liquidityProvisionSubmission = new JSONObject()
                     .put("marketId", market.getId())
                     .put("commitmentAmount", decimalUtils.convertFromDecimals(
-                            market.getPositionDecimalPlaces(), commitmentAmount).toBigInteger().toString())
+                            asset.getDecimalPlaces(), commitmentAmount).toBigInteger().toString())
                     .put("fee", liquidityCommitment.getFee().toString())
                     .put("buys", orderService.buildLiquidityOrders(
                             market.getDecimalPlaces(), liquidityCommitment.getBids()))
@@ -623,7 +631,7 @@ public class VegaApiClient {
                 return submitLiquidityCommitment(liquidityCommitment, partyId, amendment, attempt+1);
             }
             if(response.getBody().toString().contains("error")) {
-                throw new TradingException(response.getBody().getObject().getString("error"));
+                throw new TradingException(response.getBody().toString());
             }
             String txHash = response.getBody().getObject().getString("txHash");
             return Optional.of(txHash);
@@ -656,11 +664,9 @@ public class VegaApiClient {
             JSONArray amendmentsArr = new JSONArray();
             JSONArray submissionArr = new JSONArray();
             for(String id : cancellations) {
-                JSONObject orderCancellation = new JSONObject()
-                        .put("marketId", market.getId())
-                        .put("orderId", id);
                 cancellationsArr.put(new JSONObject()
-                        .put("orderCancellation", orderCancellation));
+                        .put("marketId", market.getId())
+                        .put("orderId", id));
             }
             for(Order order : submissions) {
                 String reference = String.format("%s-%s", order.getPartyId(), UUID.randomUUID());
@@ -668,16 +674,14 @@ public class VegaApiClient {
                         market.getDecimalPlaces(), order.getPrice()).toBigInteger().toString();
                 String size = decimalUtils.convertFromDecimals(
                         market.getPositionDecimalPlaces(), order.getSize()).toBigInteger().toString();
-                JSONObject orderSubmission = new JSONObject()
+                submissionArr.put(new JSONObject()
                         .put("marketId", market.getId())
                         .put("price", price)
                         .put("size", size)
                         .put("side", String.format("SIDE_%s", order.getSide().name()))
                         .put("timeInForce", String.format("TIME_IN_FORCE_%s", order.getTimeInForce().name()))
                         .put("type", String.format("TYPE_%s", order.getType().name()))
-                        .put("reference", reference);
-                submissionArr.put(new JSONObject()
-                        .put("orderSubmission", orderSubmission));
+                        .put("reference", reference));
             }
             JSONObject bulkInstruction = new JSONObject()
                     .put("batchMarketInstructions", new JSONObject()

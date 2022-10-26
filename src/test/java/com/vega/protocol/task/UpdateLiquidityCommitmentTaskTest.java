@@ -49,7 +49,8 @@ public class UpdateLiquidityCommitmentTaskTest {
                 .setBidQuoteRange(0.05)
                 .setAskSizeFactor(1.0)
                 .setAskQuoteRange(0.05)
-                .setPricingStepSize(0.1);
+                .setPricingStepSize(0.1)
+                .setCommitmentFactor(1.0);
     }
 
     private UpdateLiquidityCommitmentTask getTask(
@@ -57,7 +58,8 @@ public class UpdateLiquidityCommitmentTaskTest {
     ) {
         return new UpdateLiquidityCommitmentTask(MARKET_ID, enabled, PARTY_ID,
                 marketService, accountService, positionService, appConfigStore, vegaApiClient, referencePriceStore,
-                liquidityCommitmentStore, pricingUtils, dataInitializer, webSocketInitializer);
+                liquidityCommitmentStore, pricingUtils, dataInitializer,
+                webSocketInitializer, "*/15 * * * * *");
     }
 
     @BeforeEach
@@ -75,7 +77,8 @@ public class UpdateLiquidityCommitmentTaskTest {
         Mockito.when(positionService.getExposure(MARKET_ID)).thenReturn(BigDecimal.ZERO);
         Mockito.when(appConfigStore.get()).thenReturn(Optional.of(getAppConfig()));
         Mockito.when(referencePriceStore.get()).thenReturn(Optional.of(
-                new ReferencePrice().setMidPrice(BigDecimal.valueOf(20000))));
+                new ReferencePrice().setBidPrice(BigDecimal.valueOf(19999))
+                        .setAskPrice(BigDecimal.valueOf(20001)).setMidPrice(BigDecimal.valueOf(20000))));
         Mockito.when(liquidityCommitmentStore.getItems()).thenReturn(Collections.emptyList());
         Mockito.when(pricingUtils.getScalingFactor(Mockito.anyDouble())).thenReturn(1d);
         Mockito.when(pricingUtils.getBidDistribution(
@@ -120,10 +123,18 @@ public class UpdateLiquidityCommitmentTaskTest {
         Mockito.when(webSocketInitializer.isBinanceWebSocketInitialized()).thenReturn(true);
         Mockito.when(marketService.getById(MARKET_ID)).thenReturn(new Market().setSettlementAsset(USDT));
         Mockito.when(accountService.getTotalBalance(USDT)).thenReturn(BigDecimal.valueOf(100000));
-        Mockito.when(positionService.getExposure(MARKET_ID)).thenReturn(BigDecimal.valueOf(2000));
+        Mockito.when(positionService.getExposure(MARKET_ID)).thenReturn(BigDecimal.valueOf(1));
+        Mockito.when(pricingUtils.getScalingFactor(Mockito.anyDouble())).thenReturn(0.5);
+        Mockito.when(pricingUtils.getAskDistribution(Mockito.anyDouble(), Mockito.anyDouble(), Mockito.anyDouble(),
+                Mockito.anyDouble(), Mockito.anyInt())).thenReturn(
+                        List.of(new DistributionStep().setPrice(1.0).setSize(1.0)));
+        Mockito.when(pricingUtils.getBidDistribution(Mockito.anyDouble(), Mockito.anyDouble(), Mockito.anyDouble(),
+                Mockito.anyDouble(), Mockito.anyInt())).thenReturn(
+                        List.of(new DistributionStep().setPrice(1.0).setSize(1.0)));
         Mockito.when(appConfigStore.get()).thenReturn(Optional.of(getAppConfig()));
         Mockito.when(referencePriceStore.get()).thenReturn(Optional.of(
-                new ReferencePrice().setMidPrice(BigDecimal.valueOf(20000))));
+                new ReferencePrice().setBidPrice(BigDecimal.valueOf(19999))
+                        .setAskPrice(BigDecimal.valueOf(20001)).setMidPrice(BigDecimal.valueOf(20000))));
         Mockito.when(liquidityCommitmentStore.getItems()).thenReturn(Collections.emptyList());
         updateLiquidityCommitmentTask.execute();
         Mockito.verify(vegaApiClient, Mockito.times(1)).submitLiquidityCommitment(
@@ -137,10 +148,18 @@ public class UpdateLiquidityCommitmentTaskTest {
         Mockito.when(webSocketInitializer.isBinanceWebSocketInitialized()).thenReturn(true);
         Mockito.when(marketService.getById(MARKET_ID)).thenReturn(new Market().setSettlementAsset(USDT));
         Mockito.when(accountService.getTotalBalance(USDT)).thenReturn(BigDecimal.valueOf(100000));
-        Mockito.when(positionService.getExposure(MARKET_ID)).thenReturn(BigDecimal.valueOf(-2000));
+        Mockito.when(positionService.getExposure(MARKET_ID)).thenReturn(BigDecimal.valueOf(-1));
+        Mockito.when(pricingUtils.getScalingFactor(Mockito.anyDouble())).thenReturn(0.5);
+        Mockito.when(pricingUtils.getAskDistribution(Mockito.anyDouble(), Mockito.anyDouble(), Mockito.anyDouble(),
+                Mockito.anyDouble(), Mockito.anyInt())).thenReturn(
+                List.of(new DistributionStep().setPrice(1.0).setSize(1.0)));
+        Mockito.when(pricingUtils.getBidDistribution(Mockito.anyDouble(), Mockito.anyDouble(), Mockito.anyDouble(),
+                Mockito.anyDouble(), Mockito.anyInt())).thenReturn(
+                List.of(new DistributionStep().setPrice(1.0).setSize(1.0)));
         Mockito.when(appConfigStore.get()).thenReturn(Optional.of(getAppConfig()));
         Mockito.when(referencePriceStore.get()).thenReturn(Optional.of(
-                new ReferencePrice().setMidPrice(BigDecimal.valueOf(20000))));
+                new ReferencePrice().setBidPrice(BigDecimal.valueOf(19999))
+                        .setAskPrice(BigDecimal.valueOf(20001)).setMidPrice(BigDecimal.valueOf(20000))));
         Mockito.when(liquidityCommitmentStore.getItems()).thenReturn(
                 List.of(new LiquidityCommitment().setMarket(new Market().setId(MARKET_ID))));
         updateLiquidityCommitmentTask.execute();
