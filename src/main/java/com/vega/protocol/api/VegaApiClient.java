@@ -76,6 +76,7 @@ public class VegaApiClient {
             List<LiquidityCommitment> commitments = new ArrayList<>();
             for(int i=0; i<liquidityProvisionsArray.length(); i++) {
                 JSONObject liquidityProvisionObject = liquidityProvisionsArray.getJSONObject(i).getJSONObject("node");
+                String marketId = liquidityProvisionObject.getString("marketId");
                 Market market = marketStore.getById(marketId)
                         .orElseThrow(() -> new TradingException(ErrorCode.MARKET_NOT_FOUND));
                 Asset asset = assetStore.getItems().stream()

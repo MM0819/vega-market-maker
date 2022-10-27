@@ -131,8 +131,6 @@ public class UpdateQuotesTask extends TradingTask {
             log.warn("Ask distribution was empty !!");
             return;
         }
-        TimeInForce tif = market.getTradingMode().equals(MarketTradingMode.CONTINUOUS) ?
-                TimeInForce.GTC : TimeInForce.GFA;
         List<Order> bids = bidDistribution.stream().map(d ->
                 new Order()
                         .setSize(BigDecimal.valueOf(d.getSize() * config.getBidSizeFactor()))
@@ -140,7 +138,7 @@ public class UpdateQuotesTask extends TradingTask {
                         .setStatus(OrderStatus.ACTIVE)
                         .setSide(MarketSide.BUY)
                         .setType(OrderType.LIMIT)
-                        .setTimeInForce(tif)
+                        .setTimeInForce(TimeInForce.GTC)
                         .setMarket(market)
                         .setPartyId(partyId)
         ).sorted(Comparator.comparing(Order::getPrice).reversed()).toList();
@@ -151,7 +149,7 @@ public class UpdateQuotesTask extends TradingTask {
                         .setStatus(OrderStatus.ACTIVE)
                         .setSide(MarketSide.SELL)
                         .setType(OrderType.LIMIT)
-                        .setTimeInForce(tif)
+                        .setTimeInForce(TimeInForce.GTC)
                         .setMarket(market)
                         .setPartyId(partyId)
         ).sorted(Comparator.comparing(Order::getPrice)).toList();
