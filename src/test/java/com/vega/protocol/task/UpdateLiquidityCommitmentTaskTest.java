@@ -52,7 +52,9 @@ public class UpdateLiquidityCommitmentTaskTest {
                 .setAskSizeFactor(1.0)
                 .setAskQuoteRange(0.05)
                 .setPricingStepSize(0.1)
-                .setCommitmentBalanceRatio(0.1);
+                .setCommitmentBalanceRatio(0.1)
+                .setCommitmentOrderCount(1)
+                .setCommitmentSpread(0.005);
     }
 
     private UpdateLiquidityCommitmentTask getTask(
@@ -205,6 +207,6 @@ public class UpdateLiquidityCommitmentTaskTest {
 
     @Test
     public void testGetCronExpression() {
-        Assertions.assertEquals("0 * * * * *", updateLiquidityCommitmentTask.getCronExpression());
+        Assertions.assertEquals("*/15 * * * * *", updateLiquidityCommitmentTask.getCronExpression());
     }
 }

@@ -53,7 +53,10 @@ public class UpdateQuotesTaskTest {
                 .setBidQuoteRange(0.05)
                 .setAskSizeFactor(1.0)
                 .setAskQuoteRange(0.05)
-                .setPricingStepSize(0.1);
+                .setPricingStepSize(0.1)
+                .setCommitmentSpread(0.005)
+                .setCommitmentOrderCount(1)
+                .setCommitmentBalanceRatio(0.1);
     }
 
     private UpdateQuotesTask getTask(
@@ -85,8 +88,10 @@ public class UpdateQuotesTaskTest {
         Mockito.when(accountService.getTotalBalance(USDT)).thenReturn(balance);
         Mockito.when(positionService.getExposure(MARKET_ID)).thenReturn(exposure);
         Mockito.when(appConfigStore.get()).thenReturn(Optional.of(getAppConfig()));
-        Mockito.when(referencePriceStore.get()).thenReturn(Optional.of(
-                new ReferencePrice().setMidPrice(BigDecimal.valueOf(20000))));
+        Mockito.when(referencePriceStore.get()).thenReturn(Optional.of(new ReferencePrice()
+                .setAskPrice(BigDecimal.valueOf(20001))
+                .setBidPrice(BigDecimal.valueOf(19999))
+                .setMidPrice(BigDecimal.valueOf(20000))));
         List<Order> currentOrders = new ArrayList<>();
         for(int i=0; i<4; i++) {
             currentOrders.add(new Order()
@@ -94,6 +99,7 @@ public class UpdateQuotesTaskTest {
                     .setId(String.valueOf(i+1))
                     .setPrice(BigDecimal.ONE)
                     .setSize(BigDecimal.TEN)
+                    .setIsPeggedOrder(false)
                     .setStatus(i % 2 == 0 ? OrderStatus.ACTIVE : OrderStatus.CANCELLED));
         }
         for(int i=0; i<4; i++) {
@@ -102,24 +108,33 @@ public class UpdateQuotesTaskTest {
                     .setId(String.valueOf(i+4))
                     .setPrice(BigDecimal.ONE)
                     .setSize(BigDecimal.TEN)
+                    .setIsPeggedOrder(false)
                     .setStatus(i % 2 == 0 ? OrderStatus.ACTIVE : OrderStatus.CANCELLED));
         }
         List<DistributionStep> bidDistribution = new ArrayList<>();
         List<DistributionStep> askDistribution = new ArrayList<>();
         for(int i=0; i<bidDistributionSize; i++) {
-            bidDistribution.add(new DistributionStep().setPrice(1d).setSize(1d));
+            bidDistribution.add(new DistributionStep().setPrice(3d).setSize(1d));
         }
         for(int i=0; i<askDistributionSize; i++) {
-            askDistribution.add(new DistributionStep().setPrice(1d).setSize(1d));
+            askDistribution.add(new DistributionStep().setPrice(4d).setSize(1d));
         }
         Mockito.when(orderStore.getItems()).thenReturn(currentOrders);
         Mockito.when(pricingUtils.getScalingFactor(Mockito.anyDouble())).thenReturn(1d);
-        Mockito.when(pricingUtils.getDistribution(Mockito.anyDouble(), Mockito.anyDouble(),
-                        Mockito.anyDouble(), Mockito.any(MarketSide.class)))
-                .thenReturn(bidDistribution);
-        Mockito.when(pricingUtils.getDistribution(Mockito.anyDouble(), Mockito.anyDouble(),
-                        Mockito.anyDouble(), Mockito.any(MarketSide.class)))
-                .thenReturn(askDistribution);
+        if(exposure.doubleValue() > 0) {
+            Mockito.when(pricingUtils.getDistribution(19999d, 0.1d, 0.075d, MarketSide.BUY))
+                    .thenReturn(bidDistribution);
+        } else {
+            Mockito.when(pricingUtils.getDistribution(19999d, 0.2d, 0.05d, MarketSide.BUY))
+                    .thenReturn(bidDistribution);
+        }
+        if(exposure.doubleValue() < 0) {
+            Mockito.when(pricingUtils.getDistribution(20001d, 0.1d, 0.075d, MarketSide.SELL))
+                    .thenReturn(askDistribution);
+        } else {
+            Mockito.when(pricingUtils.getDistribution(20001d, 0.2d, 0.05d, MarketSide.SELL))
+                    .thenReturn(askDistribution);
+        }
         updateQuotesTask.execute();
         int modifier = 1;
         if(balance.doubleValue() == 0 || bidDistributionSize == 0 || askDistributionSize == 0) {
@@ -167,13 +182,13 @@ public class UpdateQuotesTaskTest {
 
     @Test
     public void testExecuteLongPosition() {
-        execute(BigDecimal.valueOf(1000L), BigDecimal.valueOf(100000),
+        execute(BigDecimal.valueOf(1), BigDecimal.valueOf(100000),
                 MarketTradingMode.MONITORING_AUCTION, 3, 1);
     }
 
     @Test
     public void testExecuteShortPosition() {
-        execute(BigDecimal.valueOf(-1000L), BigDecimal.valueOf(100000),
+        execute(BigDecimal.valueOf(-1), BigDecimal.valueOf(100000),
                 MarketTradingMode.CONTINUOUS, 3, 1);
     }
 

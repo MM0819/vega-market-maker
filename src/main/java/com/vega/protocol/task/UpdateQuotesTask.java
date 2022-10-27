@@ -105,7 +105,7 @@ public class UpdateQuotesTask extends TradingTask {
         BigDecimal midPrice = referencePrice.getMidPrice();
         BigDecimal bidPoolSize = balance.multiply(BigDecimal.valueOf(0.5));
         BigDecimal askPoolSize = bidPoolSize.divide(midPrice, market.getDecimalPlaces(), RoundingMode.HALF_DOWN);
-        double openVolumeRatio = exposure.abs().doubleValue() / askPoolSize.doubleValue();
+        double openVolumeRatio = Math.min(0.99, exposure.abs().doubleValue() / askPoolSize.doubleValue());
         log.info("\n\nReference price = {}\nExposure = {}\nBid pool size = {}\nAsk pool size = {}\n",
                 referencePrice, exposure, bidPoolSize, askPoolSize);
         BigDecimal bidVolume = askPoolSize.multiply(BigDecimal.valueOf(config.getCommitmentBalanceRatio()));
@@ -115,9 +115,11 @@ public class UpdateQuotesTask extends TradingTask {
         if(exposure.doubleValue() > 0) {
             bidVolume = bidVolume.multiply(BigDecimal.valueOf(1 - openVolumeRatio));
             bidQuoteRange = bidQuoteRange * (1 + openVolumeRatio);
+            bidQuoteRange = Math.round(bidQuoteRange * 10000.0) / 10000.0;
         } else if(exposure.doubleValue() < 0) {
             askVolume = askVolume.multiply(BigDecimal.valueOf(1 - openVolumeRatio));
             askQuoteRange = askQuoteRange * (1 + openVolumeRatio);
+            askQuoteRange = Math.round(askQuoteRange * 10000.0) / 10000.0;
         }
         List<DistributionStep> askDistribution = pricingUtils.getDistribution(
                 referencePrice.getAskPrice().doubleValue(), askVolume.doubleValue(), askQuoteRange, MarketSide.SELL);
@@ -168,10 +170,27 @@ public class UpdateQuotesTask extends TradingTask {
         submissions.addAll(bids);
         submissions.addAll(asks);
         List<Order> currentOrders = orderStore.getItems().stream().filter(o -> !o.getIsPeggedOrder()).toList();
+        List<Order> currentBids = currentOrders.stream().filter(o -> o.getSide().equals(MarketSide.BUY))
+                .sorted(Comparator.comparing(Order::getPrice).reversed()).toList();
+        List<Order> currentAsks = currentOrders.stream().filter(o -> o.getSide().equals(MarketSide.SELL))
+                .sorted(Comparator.comparing(Order::getPrice)).toList();
+        if(currentBids.size() > 0 && currentAsks.size() > 0) {
+            Order currentBestBid = currentBids.get(0);
+            Order currentBestAsk = currentAsks.get(0);
+            BigDecimal staticMidPrice = (bestBid.getPrice().add(bestAsk.getPrice()))
+                    .multiply(BigDecimal.valueOf(0.5));
+            BigDecimal currentMidPrice = (currentBestBid.getPrice().add(currentBestAsk.getPrice()))
+                    .multiply(BigDecimal.valueOf(0.5));
+            double priceDelta = ((staticMidPrice.subtract(currentMidPrice).abs())
+                    .divide(currentMidPrice, 4, RoundingMode.HALF_DOWN)).doubleValue();
+            if(priceDelta < (config.getMinSpread() / 2.0)) {
+                log.warn("Not updating quotes because the mid-price delta is only = {}%",
+                        Math.round(priceDelta * 10000.0) / 100.0);
+                return;
+            }
+        }
         List<String> cancellations = currentOrders.stream().map(Order::getId).toList();
         int maxBatchSize = 100; // TODO this needs to come from network parameters
-        // TODO - only update the order book if the mid price has moved substantially, or if there's a significant
-        //  change to the LP's open volume
         if((cancellations.size() + submissions.size()) <= maxBatchSize) {
             vegaApiClient.submitBulkInstruction(cancellations, submissions, market, partyId, 0);
         } else {

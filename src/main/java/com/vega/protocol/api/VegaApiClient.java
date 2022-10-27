@@ -54,6 +54,15 @@ public class VegaApiClient {
     }
 
     /**
+     * Get the network parameters
+     *
+     * @return {@link Map<String, String>}
+     */
+    public Map<String, String> getNetworkParameters() {
+        return new HashMap<>(); // TODO - fetch from API
+    }
+
+    /**
      * Get LP commitment for given party and market
      *
      * @param partyId the party ID

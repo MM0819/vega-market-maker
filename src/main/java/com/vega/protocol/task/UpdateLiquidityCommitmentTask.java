@@ -127,6 +127,7 @@ public class UpdateLiquidityCommitmentTask extends TradingTask {
                 .setAsks(asks);
         boolean hasCommitment = liquidityCommitmentStore.getItems().stream()
                 .anyMatch(c -> c.getMarket().getId().equals(marketId));
+        // TODO - need to check whether an update is necessary or not (it will depend on whether the shape has changed)
         vegaApiClient.submitLiquidityCommitment(liquidityCommitment, partyId, hasCommitment);
         log.info("Liquidity commitment successfully updated!");
     }

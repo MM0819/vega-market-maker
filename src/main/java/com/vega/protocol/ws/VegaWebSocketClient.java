@@ -306,7 +306,7 @@ public class VegaWebSocketClient extends WebSocketClient {
                         .setRealisedPnl(decimalUtils.convertToDecimals(market.getDecimalPlaces(), realisedPnl))
                         .setEntryPrice(decimalUtils.convertToDecimals(market.getDecimalPlaces(), entryPrice))
                         .setMarket(market)
-                        .setSize(decimalUtils.convertToDecimals(market.getPositionDecimalPlaces(), size).abs())
+                        .setSize(decimalUtils.convertToDecimals(market.getPositionDecimalPlaces(), size.abs()))
                         .setId(String.format("%s-%s", marketId, partyId))
                         .setSide(size.doubleValue() > 0 ? MarketSide.BUY :
                                 (size.doubleValue() < 0 ? MarketSide.SELL : null));
