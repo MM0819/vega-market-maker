@@ -1,6 +1,7 @@
 package com.vega.protocol.utils;
 
 import com.vega.protocol.constant.ErrorCode;
+import com.vega.protocol.constant.MarketSide;
 import com.vega.protocol.exception.TradingException;
 import com.vega.protocol.model.AppConfig;
 import com.vega.protocol.model.DistributionStep;
@@ -93,7 +94,8 @@ public class PricingUtilsTest {
     @Test
     public void testGetBidDistributionV2() {
         double range = 0.02;
-        List<DistributionStep> distribution = pricingUtils.getBidDistributionV2(100.0, 2000.0, range);
+        List<DistributionStep> distribution = pricingUtils.getDistributionV2(
+                100.0, 2000.0, range, MarketSide.BUY);
         double totalVolume = distribution.stream().mapToDouble(DistributionStep::getSize).sum();
         double bestBid = distribution.stream().max(Comparator.comparing(DistributionStep::getPrice))
                 .orElse(new DistributionStep().setPrice(0.0)).getPrice();
@@ -102,6 +104,21 @@ public class PricingUtilsTest {
         Assertions.assertEquals(Math.round(totalVolume), 2000.0);
         Assertions.assertEquals(bestBid, Math.round((100.0 - ((range * 100.0) / 60.0)) * 100.0) / 100.0);
         Assertions.assertEquals(worstBid, 100.0 - (range * 100.0));
+    }
+
+    @Test
+    public void testGetAskDistributionV2() {
+        double range = 0.02;
+        List<DistributionStep> distribution = pricingUtils.getDistributionV2(
+                100.0, 2000.0, range, MarketSide.SELL);
+        double totalVolume = distribution.stream().mapToDouble(DistributionStep::getSize).sum();
+        double bestAsk = distribution.stream().min(Comparator.comparing(DistributionStep::getPrice))
+                .orElse(new DistributionStep().setPrice(0.0)).getPrice();
+        double worstAsk = distribution.stream().max(Comparator.comparing(DistributionStep::getPrice))
+                .orElse(new DistributionStep().setPrice(0.0)).getPrice();
+        Assertions.assertEquals(Math.round(totalVolume), 2000.0);
+        Assertions.assertEquals(bestAsk, Math.round((100.0 + ((range * 100.0) / 60.0)) * 100.0) / 100.0);
+        Assertions.assertEquals(worstAsk, 100.0 + (range * 100.0));
     }
 
     @Test

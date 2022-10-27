@@ -196,54 +196,36 @@ public class PricingUtils {
     }
 
     /**
-     * Build the bid distribution for a given mid-price and target volume
+     * Build the distribution for a given mid-price, target volume and range
      *
-     * @param midPrice this will be the best-bid
-     * @param totalVolume the total volume across all bids
+     * @param midPrice this will be the best bid or ask
+     * @param totalVolume the total volume across all quotes
      * @param range the depth for the quotes
      *
      * @return {@link List<DistributionStep>}
      */
-    public List<DistributionStep> getBidDistributionV2(
+    public List<DistributionStep> getDistributionV2(
             final double midPrice,
             final double totalVolume,
-            final double range
+            final double range,
+            final MarketSide side
     ) {
         List<DistributionStep> distribution = new ArrayList<>();
-        double offset = Math.pow(3, 1.0 / 3.0);
-        double modifier = totalVolume / 85.1;
+        double adjustment = Math.pow(3, 1.0 / 3.0);
+        double modifier = totalVolume / 2.8682928;
+        double total_size = 0;
         for(double x=-3; x<=3; x+=0.1) {
             double y = Math.pow(Math.abs(x), 1.0 / 3.0);
             if(x < 0) {
                 y = y * -1.0;
             }
-            double price = midPrice - ((((x + 0.1) + 3) / 6) * range * midPrice);
-            double size = (y + offset) * modifier;
+            double offset = ((((x + 0.1) + 3) / 6) * range * midPrice);
+            double price = side.equals(MarketSide.SELL) ? midPrice + offset : midPrice - offset;
+            double size = ((y + adjustment) * modifier) - total_size;
             distribution.add(new DistributionStep()
                     .setPrice(Math.round(price * 100.0) / 100.0)
                     .setSize(Math.round(size * 100.0) / 100.0));
-        }
-        return distribution;
-    }
-
-    /**
-     * Build the ask distribution for a given mid-price and target volume
-     *
-     * @param midPrice this will be the best-ask
-     * @param totalVolume the total volume across all asks
-     *
-     * @return {@link List<DistributionStep>}
-     */
-    public List<DistributionStep> getAskDistributionV2(
-            final double midPrice,
-            final double totalVolume
-    ) {
-        double step = 0.001 * midPrice;
-        double limit = midPrice * 1.02;
-        List<DistributionStep> distribution = new ArrayList<>();
-        for(double x=midPrice; x<=limit; x+=step) {
-            double y = (Math.pow((x - 1 - midPrice), (1.0 / 3.0)) + 1) * totalVolume;
-            distribution.add(new DistributionStep().setPrice(x).setSize(y));
+            total_size += size;
         }
         return distribution;
     }
