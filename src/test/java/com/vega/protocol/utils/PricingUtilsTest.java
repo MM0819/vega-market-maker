@@ -10,6 +10,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -87,6 +88,19 @@ public class PricingUtilsTest {
         } catch(TradingException e) {
             Assertions.assertEquals(e.getMessage(), ErrorCode.APP_CONFIG_NOT_FOUND);
         }
+    }
+
+    @Test
+    public void testGetBidDistributionV2() {
+        List<DistributionStep> distribution = pricingUtils.getBidDistributionV2(100.0, 2000.0);
+        double totalVolume = distribution.stream().mapToDouble(DistributionStep::getSize).sum();
+        double bestBid = distribution.stream().max(Comparator.comparing(DistributionStep::getPrice))
+                .orElse(new DistributionStep().setPrice(0.0)).getPrice();
+        double worstBid = distribution.stream().min(Comparator.comparing(DistributionStep::getPrice))
+                .orElse(new DistributionStep().setPrice(0.0)).getPrice();
+        Assertions.assertEquals(Math.round(totalVolume), 2000.0);
+        Assertions.assertEquals(bestBid, 99.97);
+        Assertions.assertEquals(worstBid, 98.0);
     }
 
     @Test

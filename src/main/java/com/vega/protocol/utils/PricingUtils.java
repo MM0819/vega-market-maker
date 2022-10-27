@@ -207,12 +207,19 @@ public class PricingUtils {
             final double midPrice,
             final double totalVolume
     ) {
-        double step = 0.001 * midPrice;
-        double limit = midPrice * 0.98;
         List<DistributionStep> distribution = new ArrayList<>();
-        for(double x=midPrice; x>=limit; x-=step) {
-            double y = (Math.pow((x + 1 - midPrice), (1.0 / 3.0)) - 1) * -1 * totalVolume;
-            distribution.add(new DistributionStep().setPrice(x).setSize(y));
+        double offset = Math.pow(3, 1.0 / 3.0);
+        double modifier = totalVolume / 85.1;
+        for(double x=-3; x<=3; x+=0.1) {
+            double y = Math.pow(Math.abs(x), 1.0 / 3.0);
+            if(x < 0) {
+                y = y * -1.0;
+            }
+            double price = midPrice - ((((x + 0.1) + 3) / 6) * 0.02 * midPrice);
+            double size = (y + offset) * modifier;
+            distribution.add(new DistributionStep()
+                    .setPrice(Math.round(price * 100.0) / 100.0)
+                    .setSize(Math.round(size * 100.0) / 100.0));
         }
         return distribution;
     }
