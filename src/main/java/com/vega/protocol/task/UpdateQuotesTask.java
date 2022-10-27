@@ -170,6 +170,8 @@ public class UpdateQuotesTask extends TradingTask {
         List<Order> currentOrders = orderStore.getItems().stream().filter(o -> !o.getIsPeggedOrder()).toList();
         List<String> cancellations = currentOrders.stream().map(Order::getId).toList();
         int maxBatchSize = 100; // TODO this needs to come from network parameters
+        // TODO - only update the order book if the mid price has moved substantially, or if there's a significant
+        //  change to the LP's open volume
         if((cancellations.size() + submissions.size()) <= maxBatchSize) {
             vegaApiClient.submitBulkInstruction(cancellations, submissions, market, partyId, 0);
         } else {
