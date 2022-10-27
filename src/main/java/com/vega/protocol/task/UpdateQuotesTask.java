@@ -5,10 +5,7 @@ import com.vega.protocol.constant.*;
 import com.vega.protocol.exception.TradingException;
 import com.vega.protocol.initializer.DataInitializer;
 import com.vega.protocol.initializer.WebSocketInitializer;
-import com.vega.protocol.model.AppConfig;
-import com.vega.protocol.model.DistributionStep;
-import com.vega.protocol.model.Market;
-import com.vega.protocol.model.Order;
+import com.vega.protocol.model.*;
 import com.vega.protocol.service.AccountService;
 import com.vega.protocol.service.MarketService;
 import com.vega.protocol.service.PositionService;
@@ -103,20 +100,21 @@ public class UpdateQuotesTask extends TradingTask {
         BigDecimal exposure = positionService.getExposure(marketId);
         AppConfig config = appConfigStore.get()
                 .orElseThrow(() -> new TradingException(ErrorCode.APP_CONFIG_NOT_FOUND));
-        BigDecimal referencePrice = referencePriceStore.get()
-                .orElseThrow(() -> new TradingException(ErrorCode.REFERENCE_PRICE_NOT_FOUND)).getMidPrice();
+        ReferencePrice referencePrice = referencePriceStore.get()
+                .orElseThrow(() -> new TradingException(ErrorCode.REFERENCE_PRICE_NOT_FOUND));
+        BigDecimal midPrice = referencePrice.getMidPrice();
         BigDecimal bidPoolSize = balance.multiply(BigDecimal.valueOf(0.5));
-        BigDecimal askPoolSize = bidPoolSize.divide(referencePrice, market.getDecimalPlaces(), RoundingMode.HALF_DOWN);
-        BigDecimal openVolumeRatio = exposure.abs().divide(askPoolSize, 8, RoundingMode.HALF_DOWN);
-        double scalingFactor = pricingUtils.getScalingFactor(openVolumeRatio.doubleValue());
+        BigDecimal askPoolSize = bidPoolSize.divide(midPrice, market.getDecimalPlaces(), RoundingMode.HALF_DOWN);
         log.info("\n\nReference price = {}\nExposure = {}\nBid pool size = {}\nAsk pool size = {}\n",
                 referencePrice, exposure, bidPoolSize, askPoolSize);
-        List<DistributionStep> askDistribution = pricingUtils.getAskDistribution(
-                exposure.doubleValue() < 0 ? scalingFactor : 1.0, bidPoolSize.doubleValue(), askPoolSize.doubleValue(),
-                config.getAskQuoteRange(), config.getOrderCount());
-        List<DistributionStep> bidDistribution = pricingUtils.getBidDistribution(
-                exposure.doubleValue() > 0 ? scalingFactor : 1.0, bidPoolSize.doubleValue(), askPoolSize.doubleValue(),
-                config.getBidQuoteRange(), config.getOrderCount());
+        BigDecimal bidVolume = askPoolSize.multiply(BigDecimal.valueOf(0.1)); // TODO - apply scaling factor
+        BigDecimal askVolume = askPoolSize.multiply(BigDecimal.valueOf(0.1)); // TODO - apply scaling factor
+        List<DistributionStep> askDistribution = pricingUtils.getDistribution(
+                referencePrice.getAskPrice().doubleValue(), askVolume.doubleValue(),
+                config.getAskQuoteRange(), MarketSide.SELL);
+        List<DistributionStep> bidDistribution = pricingUtils.getDistribution(
+                referencePrice.getBidPrice().doubleValue(), bidVolume.doubleValue(),
+                config.getBidQuoteRange(), MarketSide.BUY);
         if(bidDistribution.size() == 0) {
             log.warn("Bid distribution was empty !!");
             return;

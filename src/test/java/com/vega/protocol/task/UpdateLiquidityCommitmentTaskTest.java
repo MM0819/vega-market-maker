@@ -2,6 +2,7 @@ package com.vega.protocol.task;
 
 import com.vega.protocol.api.VegaApiClient;
 import com.vega.protocol.constant.ErrorCode;
+import com.vega.protocol.constant.MarketSide;
 import com.vega.protocol.initializer.DataInitializer;
 import com.vega.protocol.initializer.WebSocketInitializer;
 import com.vega.protocol.model.*;
@@ -81,11 +82,8 @@ public class UpdateLiquidityCommitmentTaskTest {
                         .setAskPrice(BigDecimal.valueOf(20001)).setMidPrice(BigDecimal.valueOf(20000))));
         Mockito.when(liquidityCommitmentStore.getItems()).thenReturn(Collections.emptyList());
         Mockito.when(pricingUtils.getScalingFactor(Mockito.anyDouble())).thenReturn(1d);
-        Mockito.when(pricingUtils.getBidDistribution(
-                Mockito.anyDouble(), Mockito.anyDouble(), Mockito.anyDouble(), Mockito.anyDouble(), Mockito.anyInt()))
-                .thenReturn(List.of(new DistributionStep().setPrice(1d).setSize(1d)));
-        Mockito.when(pricingUtils.getAskDistribution(
-                Mockito.anyDouble(), Mockito.anyDouble(), Mockito.anyDouble(), Mockito.anyDouble(), Mockito.anyInt()))
+        Mockito.when(pricingUtils.getDistribution(
+                Mockito.anyDouble(), Mockito.anyDouble(), Mockito.anyDouble(), Mockito.any(MarketSide.class)))
                 .thenReturn(List.of(new DistributionStep().setPrice(1d).setSize(1d)));
         updateLiquidityCommitmentTask.execute();
         Mockito.verify(vegaApiClient, Mockito.times(1)).submitLiquidityCommitment(
@@ -125,12 +123,9 @@ public class UpdateLiquidityCommitmentTaskTest {
         Mockito.when(accountService.getTotalBalance(USDT)).thenReturn(BigDecimal.valueOf(100000));
         Mockito.when(positionService.getExposure(MARKET_ID)).thenReturn(BigDecimal.valueOf(1));
         Mockito.when(pricingUtils.getScalingFactor(Mockito.anyDouble())).thenReturn(0.5);
-        Mockito.when(pricingUtils.getAskDistribution(Mockito.anyDouble(), Mockito.anyDouble(), Mockito.anyDouble(),
-                Mockito.anyDouble(), Mockito.anyInt())).thenReturn(
-                        List.of(new DistributionStep().setPrice(1.0).setSize(1.0)));
-        Mockito.when(pricingUtils.getBidDistribution(Mockito.anyDouble(), Mockito.anyDouble(), Mockito.anyDouble(),
-                Mockito.anyDouble(), Mockito.anyInt())).thenReturn(
-                        List.of(new DistributionStep().setPrice(1.0).setSize(1.0)));
+        Mockito.when(pricingUtils.getDistribution(
+                        Mockito.anyDouble(), Mockito.anyDouble(), Mockito.anyDouble(), Mockito.any(MarketSide.class)))
+                .thenReturn(List.of(new DistributionStep().setPrice(1d).setSize(1d)));
         Mockito.when(appConfigStore.get()).thenReturn(Optional.of(getAppConfig()));
         Mockito.when(referencePriceStore.get()).thenReturn(Optional.of(
                 new ReferencePrice().setBidPrice(BigDecimal.valueOf(19999))
@@ -150,12 +145,9 @@ public class UpdateLiquidityCommitmentTaskTest {
         Mockito.when(accountService.getTotalBalance(USDT)).thenReturn(BigDecimal.valueOf(100000));
         Mockito.when(positionService.getExposure(MARKET_ID)).thenReturn(BigDecimal.valueOf(-1));
         Mockito.when(pricingUtils.getScalingFactor(Mockito.anyDouble())).thenReturn(0.5);
-        Mockito.when(pricingUtils.getAskDistribution(Mockito.anyDouble(), Mockito.anyDouble(), Mockito.anyDouble(),
-                Mockito.anyDouble(), Mockito.anyInt())).thenReturn(
-                List.of(new DistributionStep().setPrice(1.0).setSize(1.0)));
-        Mockito.when(pricingUtils.getBidDistribution(Mockito.anyDouble(), Mockito.anyDouble(), Mockito.anyDouble(),
-                Mockito.anyDouble(), Mockito.anyInt())).thenReturn(
-                List.of(new DistributionStep().setPrice(1.0).setSize(1.0)));
+        Mockito.when(pricingUtils.getDistribution(
+                        Mockito.anyDouble(), Mockito.anyDouble(), Mockito.anyDouble(), Mockito.any(MarketSide.class)))
+                .thenReturn(List.of(new DistributionStep().setPrice(1d).setSize(1d)));
         Mockito.when(appConfigStore.get()).thenReturn(Optional.of(getAppConfig()));
         Mockito.when(referencePriceStore.get()).thenReturn(Optional.of(
                 new ReferencePrice().setBidPrice(BigDecimal.valueOf(19999))

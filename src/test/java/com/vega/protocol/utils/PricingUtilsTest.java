@@ -1,18 +1,12 @@
 package com.vega.protocol.utils;
 
-import com.vega.protocol.constant.ErrorCode;
-import com.vega.protocol.constant.MarketSide;
-import com.vega.protocol.exception.TradingException;
 import com.vega.protocol.model.AppConfig;
-import com.vega.protocol.model.DistributionStep;
 import com.vega.protocol.store.AppConfigStore;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
-import java.util.Comparator;
-import java.util.List;
 import java.util.Optional;
 
 public class PricingUtilsTest {
@@ -37,107 +31,5 @@ public class PricingUtilsTest {
     public void testGetScalingFactorWithOpenVolume() {
         double scalingFactor = pricingUtils.getScalingFactor(0.5);
         Assertions.assertEquals(scalingFactor, 0.5);
-    }
-
-    private void getBidDistribution(int expectedSize, double expectedVolume,
-                                    int maxSize, double scalingFactor, double quoteRange) {
-        double bidPoolSize = 50000d;
-        List<DistributionStep> distribution = pricingUtils.getBidDistribution(
-                scalingFactor, bidPoolSize, 2.5d, quoteRange, maxSize);
-        Assertions.assertEquals(distribution.size(), expectedSize);
-        double volume = distribution.stream().map(d -> d.getPrice() * d.getSize()).mapToDouble(d -> d).sum();
-        Assertions.assertEquals(volume, expectedVolume, 10d);
-    }
-
-    private void getAskDistribution(int expectedSize, double expectedVolume,
-                                    int maxSize, double scalingFactor, double quoteRange) {
-        double askPoolSize = 2.5d;
-        List<DistributionStep> distribution = pricingUtils.getAskDistribution(
-                scalingFactor, 50000d, askPoolSize, quoteRange, maxSize);
-        Assertions.assertEquals(distribution.size(), expectedSize);
-        double volume = distribution.stream().map(DistributionStep::getSize).mapToDouble(d -> d).sum();
-        Assertions.assertEquals(volume, expectedVolume, 0.01d);
-    }
-
-    @Test
-    public void testGetBidDistribution() {
-        getBidDistribution(10, 1250, 10, 1.0, 0.05);
-    }
-
-    @Test
-    public void testGetAskDistribution() {
-        getAskDistribution(10, 0.059, 10, 1.0, 0.05);
-    }
-
-    @Test
-    public void testGetBidDistributionMissingConfig() {
-        Mockito.when(appConfigStore.get()).thenReturn(Optional.empty());
-        try {
-            getBidDistribution(10, 1.0, 10, 1.0, 0.999);
-            Assertions.fail();
-        } catch(TradingException e) {
-            Assertions.assertEquals(e.getMessage(), ErrorCode.APP_CONFIG_NOT_FOUND);
-        }
-    }
-
-    @Test
-    public void testGetAskDistributionMissingConfig() {
-        Mockito.when(appConfigStore.get()).thenReturn(Optional.empty());
-        try {
-            getAskDistribution(10, 1.0, 10, 1.0, 2.0);
-            Assertions.fail();
-        } catch(TradingException e) {
-            Assertions.assertEquals(e.getMessage(), ErrorCode.APP_CONFIG_NOT_FOUND);
-        }
-    }
-
-    @Test
-    public void testGetBidDistributionV2() {
-        double range = 0.02;
-        List<DistributionStep> distribution = pricingUtils.getDistributionV2(
-                100.0, 2000.0, range, MarketSide.BUY);
-        double totalVolume = distribution.stream().mapToDouble(DistributionStep::getSize).sum();
-        double bestBid = distribution.stream().max(Comparator.comparing(DistributionStep::getPrice))
-                .orElse(new DistributionStep().setPrice(0.0)).getPrice();
-        double worstBid = distribution.stream().min(Comparator.comparing(DistributionStep::getPrice))
-                .orElse(new DistributionStep().setPrice(0.0)).getPrice();
-        Assertions.assertEquals(Math.round(totalVolume), 2000.0);
-        Assertions.assertEquals(bestBid, Math.round((100.0 - ((range * 100.0) / 60.0)) * 100.0) / 100.0);
-        Assertions.assertEquals(worstBid, 100.0 - (range * 100.0));
-    }
-
-    @Test
-    public void testGetAskDistributionV2() {
-        double range = 0.02;
-        List<DistributionStep> distribution = pricingUtils.getDistributionV2(
-                100.0, 2000.0, range, MarketSide.SELL);
-        double totalVolume = distribution.stream().mapToDouble(DistributionStep::getSize).sum();
-        double bestAsk = distribution.stream().min(Comparator.comparing(DistributionStep::getPrice))
-                .orElse(new DistributionStep().setPrice(0.0)).getPrice();
-        double worstAsk = distribution.stream().max(Comparator.comparing(DistributionStep::getPrice))
-                .orElse(new DistributionStep().setPrice(0.0)).getPrice();
-        Assertions.assertEquals(Math.round(totalVolume), 2000.0);
-        Assertions.assertEquals(bestAsk, Math.round((100.0 + ((range * 100.0) / 60.0)) * 100.0) / 100.0);
-        Assertions.assertEquals(worstAsk, 100.0 + (range * 100.0));
-    }
-
-    @Test
-    public void testGetBidDistributionWithScalingApplied() {
-        getBidDistribution(10, 24740, 10, 0.5, 0.999);
-    }
-
-    @Test
-    public void testGetAskDistributionWithScalingApplied() {
-        getAskDistribution(10, 0.76, 10, 0.5, 2.0);
-    }
-
-    @Test
-    public void testGetBidDistributionWithoutAggregation() {
-        getBidDistribution(5521, 48420, 10000, 1.0, 0.999);
-    }
-
-    @Test
-    public void testGetAskDistributionWithoutAggregation() {
-        getAskDistribution(846, 1.05, 10000, 1.0, 2.0);
     }
 }

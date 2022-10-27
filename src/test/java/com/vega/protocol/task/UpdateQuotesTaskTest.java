@@ -113,13 +113,11 @@ public class UpdateQuotesTaskTest {
         }
         Mockito.when(orderStore.getItems()).thenReturn(currentOrders);
         Mockito.when(pricingUtils.getScalingFactor(Mockito.anyDouble())).thenReturn(1d);
-        Mockito.when(pricingUtils.getBidDistribution(
-                        Mockito.anyDouble(), Mockito.anyDouble(), Mockito.anyDouble(),
-                        Mockito.anyDouble(), Mockito.anyInt()))
+        Mockito.when(pricingUtils.getDistribution(Mockito.anyDouble(), Mockito.anyDouble(),
+                        Mockito.anyDouble(), Mockito.any(MarketSide.class)))
                 .thenReturn(bidDistribution);
-        Mockito.when(pricingUtils.getAskDistribution(
-                        Mockito.anyDouble(), Mockito.anyDouble(), Mockito.anyDouble(),
-                        Mockito.anyDouble(), Mockito.anyInt()))
+        Mockito.when(pricingUtils.getDistribution(Mockito.anyDouble(), Mockito.anyDouble(),
+                        Mockito.anyDouble(), Mockito.any(MarketSide.class)))
                 .thenReturn(askDistribution);
         updateQuotesTask.execute();
         int modifier = 1;
