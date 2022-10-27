@@ -11,7 +11,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.DoubleStream;
 
 @Component
@@ -194,6 +193,50 @@ public class PricingUtils {
         }
         aggregateDistribution.remove(0);
         return aggregateDistribution;
+    }
+
+    /**
+     * Build the bid distribution for a given mid-price and target volume
+     *
+     * @param midPrice this will be the best-bid
+     * @param totalVolume the total volume across all bids
+     *
+     * @return {@link List<DistributionStep>}
+     */
+    public List<DistributionStep> getBidDistributionV2(
+            final double midPrice,
+            final double totalVolume
+    ) {
+        double step = 0.001 * midPrice;
+        double limit = midPrice * 0.98;
+        List<DistributionStep> distribution = new ArrayList<>();
+        for(double x=midPrice; x>=limit; x-=step) {
+            double y = (Math.pow((x + 1 - midPrice), (1.0 / 3.0)) - 1) * -1 * totalVolume;
+            distribution.add(new DistributionStep().setPrice(x).setSize(y));
+        }
+        return distribution;
+    }
+
+    /**
+     * Build the ask distribution for a given mid-price and target volume
+     *
+     * @param midPrice this will be the best-ask
+     * @param totalVolume the total volume across all asks
+     *
+     * @return {@link List<DistributionStep>}
+     */
+    public List<DistributionStep> getAskDistributionV2(
+            final double midPrice,
+            final double totalVolume
+    ) {
+        double step = 0.001 * midPrice;
+        double limit = midPrice * 1.02;
+        List<DistributionStep> distribution = new ArrayList<>();
+        for(double x=midPrice; x<=limit; x+=step) {
+            double y = (Math.pow((x - 1 - midPrice), (1.0 / 3.0)) + 1) * totalVolume;
+            distribution.add(new DistributionStep().setPrice(x).setSize(y));
+        }
+        return distribution;
     }
 
     /**
