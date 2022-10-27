@@ -92,15 +92,16 @@ public class PricingUtilsTest {
 
     @Test
     public void testGetBidDistributionV2() {
-        List<DistributionStep> distribution = pricingUtils.getBidDistributionV2(100.0, 2000.0);
+        double range = 0.02;
+        List<DistributionStep> distribution = pricingUtils.getBidDistributionV2(100.0, 2000.0, range);
         double totalVolume = distribution.stream().mapToDouble(DistributionStep::getSize).sum();
         double bestBid = distribution.stream().max(Comparator.comparing(DistributionStep::getPrice))
                 .orElse(new DistributionStep().setPrice(0.0)).getPrice();
         double worstBid = distribution.stream().min(Comparator.comparing(DistributionStep::getPrice))
                 .orElse(new DistributionStep().setPrice(0.0)).getPrice();
         Assertions.assertEquals(Math.round(totalVolume), 2000.0);
-        Assertions.assertEquals(bestBid, 99.97);
-        Assertions.assertEquals(worstBid, 98.0);
+        Assertions.assertEquals(bestBid, Math.round((100.0 - ((range * 100.0) / 60.0)) * 100.0) / 100.0);
+        Assertions.assertEquals(worstBid, 100.0 - (range * 100.0));
     }
 
     @Test

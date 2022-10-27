@@ -200,12 +200,14 @@ public class PricingUtils {
      *
      * @param midPrice this will be the best-bid
      * @param totalVolume the total volume across all bids
+     * @param range the depth for the quotes
      *
      * @return {@link List<DistributionStep>}
      */
     public List<DistributionStep> getBidDistributionV2(
             final double midPrice,
-            final double totalVolume
+            final double totalVolume,
+            final double range
     ) {
         List<DistributionStep> distribution = new ArrayList<>();
         double offset = Math.pow(3, 1.0 / 3.0);
@@ -215,7 +217,7 @@ public class PricingUtils {
             if(x < 0) {
                 y = y * -1.0;
             }
-            double price = midPrice - ((((x + 0.1) + 3) / 6) * 0.02 * midPrice);
+            double price = midPrice - ((((x + 0.1) + 3) / 6) * range * midPrice);
             double size = (y + offset) * modifier;
             distribution.add(new DistributionStep()
                     .setPrice(Math.round(price * 100.0) / 100.0)
