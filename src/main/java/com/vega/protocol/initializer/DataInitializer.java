@@ -22,7 +22,8 @@ public class DataInitializer {
     private final VegaApiClient vegaApiClient;
     private final String partyId;
     private final Double fee;
-    private final Double spread;
+    private final Double minSpread;
+    private final Double maxSpread;
     private final Integer orderCount;
     private final Double bidSizeFactor;
     private final Double askSizeFactor;
@@ -46,7 +47,8 @@ public class DataInitializer {
                            VegaApiClient vegaApiClient,
                            @Value("${vega.party.id}") String partyId,
                            @Value("${fee}") Double fee,
-                           @Value("${spread}") Double spread,
+                           @Value("${min.spread}") Double minSpread,
+                           @Value("${max.spread}") Double maxSpread,
                            @Value("${commitment.spread}") Double commitmentSpread,
                            @Value("${order.count}") Integer orderCount,
                            @Value("${bid.size.factor}") Double bidSizeFactor,
@@ -66,7 +68,8 @@ public class DataInitializer {
         this.vegaApiClient = vegaApiClient;
         this.partyId = partyId;
         this.fee = fee;
-        this.spread = spread;
+        this.minSpread = minSpread;
+        this.maxSpread = maxSpread;
         this.orderCount = orderCount;
         this.commitmentBalanceRatio = commitmentBalanceRatio;
         this.bidSizeFactor = bidSizeFactor;
@@ -84,7 +87,8 @@ public class DataInitializer {
     public void initialize() {
         AppConfig config = new AppConfig()
                 .setFee(fee)
-                .setSpread(spread)
+                .setMinSpread(minSpread)
+                .setMaxSpread(maxSpread)
                 .setCommitmentSpread(commitmentSpread)
                 .setOrderCount(orderCount)
                 .setBidSizeFactor(bidSizeFactor)

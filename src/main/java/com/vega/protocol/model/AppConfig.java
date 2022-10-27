@@ -12,7 +12,8 @@ public class AppConfig {
     private Double askSizeFactor;
     private Double commitmentBalanceRatio;
     private Integer orderCount;
-    private Double spread;
+    private Double minSpread;
+    private Double maxSpread;
     private Double commitmentSpread;
     private Integer commitmentOrderCount;
     private Double fee;

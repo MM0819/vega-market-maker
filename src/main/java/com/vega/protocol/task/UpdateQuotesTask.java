@@ -105,16 +105,24 @@ public class UpdateQuotesTask extends TradingTask {
         BigDecimal midPrice = referencePrice.getMidPrice();
         BigDecimal bidPoolSize = balance.multiply(BigDecimal.valueOf(0.5));
         BigDecimal askPoolSize = bidPoolSize.divide(midPrice, market.getDecimalPlaces(), RoundingMode.HALF_DOWN);
+        double openVolumeRatio = exposure.abs().doubleValue() / askPoolSize.doubleValue();
         log.info("\n\nReference price = {}\nExposure = {}\nBid pool size = {}\nAsk pool size = {}\n",
                 referencePrice, exposure, bidPoolSize, askPoolSize);
-        BigDecimal bidVolume = askPoolSize.multiply(BigDecimal.valueOf(0.1)); // TODO - apply scaling factor
-        BigDecimal askVolume = askPoolSize.multiply(BigDecimal.valueOf(0.1)); // TODO - apply scaling factor
+        BigDecimal bidVolume = askPoolSize.multiply(BigDecimal.valueOf(config.getCommitmentBalanceRatio()));
+        BigDecimal askVolume = askPoolSize.multiply(BigDecimal.valueOf(config.getCommitmentBalanceRatio()));
+        double bidQuoteRange = config.getBidQuoteRange();
+        double askQuoteRange = config.getAskQuoteRange();
+        if(exposure.doubleValue() > 0) {
+            bidVolume = bidVolume.multiply(BigDecimal.valueOf(1 - openVolumeRatio));
+            bidQuoteRange = bidQuoteRange * (1 + openVolumeRatio);
+        } else if(exposure.doubleValue() < 0) {
+            askVolume = askVolume.multiply(BigDecimal.valueOf(1 - openVolumeRatio));
+            askQuoteRange = askQuoteRange * (1 + openVolumeRatio);
+        }
         List<DistributionStep> askDistribution = pricingUtils.getDistribution(
-                referencePrice.getAskPrice().doubleValue(), askVolume.doubleValue(),
-                config.getAskQuoteRange(), MarketSide.SELL);
+                referencePrice.getAskPrice().doubleValue(), askVolume.doubleValue(), askQuoteRange, MarketSide.SELL);
         List<DistributionStep> bidDistribution = pricingUtils.getDistribution(
-                referencePrice.getBidPrice().doubleValue(), bidVolume.doubleValue(),
-                config.getBidQuoteRange(), MarketSide.BUY);
+                referencePrice.getBidPrice().doubleValue(), bidVolume.doubleValue(), bidQuoteRange, MarketSide.BUY);
         if(bidDistribution.size() == 0) {
             log.warn("Bid distribution was empty !!");
             return;
@@ -147,25 +155,34 @@ public class UpdateQuotesTask extends TradingTask {
                         .setMarket(market)
                         .setPartyId(partyId)
         ).sorted(Comparator.comparing(Order::getPrice)).toList();
-        for(Order bid : bids) {
-            bid.setPrice(bid.getPrice().subtract(BigDecimal.valueOf(bid.getPrice().doubleValue() * config.getSpread())));
+        Order bestBid = bids.get(0);
+        Order bestAsk = asks.get(0);
+        double targetSpread = config.getMinSpread() +
+                (openVolumeRatio * (config.getMaxSpread() - config.getMinSpread()));
+        double currentSpread = bestAsk.getPrice().doubleValue() - bestBid.getPrice().doubleValue();
+        if(currentSpread < targetSpread) {
+            double spreadDiff = (targetSpread - currentSpread) / 2.0;
+            bids.forEach(b -> b.setPrice(b.getPrice().subtract(BigDecimal.valueOf(spreadDiff))));
+            asks.forEach(a -> a.setPrice(a.getPrice().add(BigDecimal.valueOf(spreadDiff))));
         }
-        for(Order ask : asks) {
-            ask.setPrice(ask.getPrice().add(BigDecimal.valueOf(ask.getPrice().doubleValue() * config.getSpread())));
-        }
-        log.info("Bid price = {}; Ask price = {}", bids.get(0).getPrice(), asks.get(0).getPrice());
+        log.info("Bid price = {}; Ask price = {}", bestBid.getPrice(), bestAsk.getPrice());
         List<Order> submissions = new ArrayList<>();
         submissions.addAll(bids);
         submissions.addAll(asks);
         List<Order> currentOrders = orderStore.getItems().stream().filter(o -> !o.getIsPeggedOrder()).toList();
         List<String> cancellations = currentOrders.stream().map(Order::getId).toList();
-        List<List<String>> cancellationBatches = ListUtils.partition(cancellations, 100); // TODO 100 comes from net param
-        List<List<Order>> submissionBatches = ListUtils.partition(submissions, 100); // TODO 100 comes from net param
-        for(List<Order> batch : submissionBatches) {
-            vegaApiClient.submitBulkInstruction(Collections.emptyList(), batch, market, partyId, 0);
-        }
-        for(List<String> batch : cancellationBatches) {
-            vegaApiClient.submitBulkInstruction(batch, Collections.emptyList(), market, partyId, 0);
+        int maxBatchSize = 100; // TODO this needs to come from network parameters
+        if((cancellations.size() + submissions.size()) <= maxBatchSize) {
+            vegaApiClient.submitBulkInstruction(cancellations, submissions, market, partyId, 0);
+        } else {
+            List<List<String>> cancellationBatches = ListUtils.partition(cancellations, maxBatchSize);
+            List<List<Order>> submissionBatches = ListUtils.partition(submissions, maxBatchSize);
+            for (List<Order> batch : submissionBatches) {
+                vegaApiClient.submitBulkInstruction(Collections.emptyList(), batch, market, partyId, 0);
+            }
+            for (List<String> batch : cancellationBatches) {
+                vegaApiClient.submitBulkInstruction(batch, Collections.emptyList(), market, partyId, 0);
+            }
         }
         log.info("Quotes successfully updated!");
     }

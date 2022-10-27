@@ -50,8 +50,11 @@ public class AppConfigService {
         if(ObjectUtils.isEmpty(config.getFee())) {
             throw new TradingException(ErrorCode.FEE_MANDATORY);
         }
-        if(ObjectUtils.isEmpty(config.getSpread())) {
-            throw new TradingException(ErrorCode.SPREAD_MANDATORY);
+        if(ObjectUtils.isEmpty(config.getMinSpread())) {
+            throw new TradingException(ErrorCode.MIN_SPREAD_MANDATORY);
+        }
+        if(ObjectUtils.isEmpty(config.getMaxSpread())) {
+            throw new TradingException(ErrorCode.MAX_SPREAD_MANDATORY);
         }
         if(ObjectUtils.isEmpty(config.getOrderCount())) {
             throw new TradingException(ErrorCode.ORDER_COUNT_MANDATORY);

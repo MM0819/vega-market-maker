@@ -9,10 +9,7 @@ import com.vega.protocol.store.AppConfigStore;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
-import java.util.stream.DoubleStream;
 
 @Component
 public class PricingUtils {
@@ -42,7 +39,6 @@ public class PricingUtils {
         List<DistributionStep> distribution = new ArrayList<>();
         int count = config.getOrderCount();
         double iter = 6.0 / count;
-        // TODO - limit the order count using the config
         double adjustment = Math.pow(3, 1.0 / 3.0);
         double total_size = 0;
         for(double x=-3; x<=3; x+=iter) {

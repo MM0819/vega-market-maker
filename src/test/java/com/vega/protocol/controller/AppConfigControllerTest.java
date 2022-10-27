@@ -38,7 +38,8 @@ public class AppConfigControllerTest {
     private AppConfig getAppConfig() {
         return new AppConfig()
                 .setFee(0.001)
-                .setSpread(0.005)
+                .setMinSpread(0.003)
+                .setMaxSpread(0.01)
                 .setOrderCount(10)
                 .setBidSizeFactor(1.0)
                 .setBidQuoteRange(0.05)
@@ -120,9 +121,9 @@ public class AppConfigControllerTest {
     }
 
     @Test
-    public void testUpdateAppConfigMissingSpread() throws Exception {
+    public void testUpdateAppConfigMissingMinSpread() throws Exception {
         AppConfig config = getAppConfig()
-                .setSpread(null);
+                .setMinSpread(null);
         MvcResult result = mvc.perform(MockMvcRequestBuilders.put("/app-config")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(config)))
@@ -130,7 +131,21 @@ public class AppConfigControllerTest {
                 .andReturn();
         String body = result.getResponse().getContentAsString();
         Assertions.assertEquals(body, mapper.writeValueAsString(new ErrorResponse()
-                .setError(ErrorCode.SPREAD_MANDATORY)));
+                .setError(ErrorCode.MIN_SPREAD_MANDATORY)));
+    }
+
+    @Test
+    public void testUpdateAppConfigMissingMaxSpread() throws Exception {
+        AppConfig config = getAppConfig()
+                .setMaxSpread(null);
+        MvcResult result = mvc.perform(MockMvcRequestBuilders.put("/app-config")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(config)))
+                .andExpect(status().isInternalServerError())
+                .andReturn();
+        String body = result.getResponse().getContentAsString();
+        Assertions.assertEquals(body, mapper.writeValueAsString(new ErrorResponse()
+                .setError(ErrorCode.MAX_SPREAD_MANDATORY)));
     }
 
     @Test

@@ -44,7 +44,8 @@ public class UpdateLiquidityCommitmentTaskTest {
     private AppConfig getAppConfig() {
         return new AppConfig()
                 .setFee(0.001)
-                .setSpread(0.005)
+                .setMinSpread(0.003)
+                .setMaxSpread(0.01)
                 .setOrderCount(10)
                 .setBidSizeFactor(1.0)
                 .setBidQuoteRange(0.05)
