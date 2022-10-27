@@ -98,7 +98,7 @@ public class UpdateLiquidityCommitmentTask extends TradingTask {
         BigDecimal bidPoolSize = balance.multiply(BigDecimal.valueOf(0.5));
         BigDecimal askPoolSize = bidPoolSize.divide(midPrice, market.getDecimalPlaces(), RoundingMode.HALF_DOWN);
         log.info("Exposure = {}\nBid pool size = {}\nAsk pool size = {}", exposure, bidPoolSize, askPoolSize);
-        BigDecimal commitmentAmount = bidPoolSize.multiply(BigDecimal.valueOf(0.1)); // TODO - this should be calculated in a smarter way??
+        BigDecimal commitmentAmount = bidPoolSize.multiply(BigDecimal.valueOf(config.getCommitmentBalanceRatio()));
         List<LiquidityCommitmentOffset> bids = new ArrayList<>();
         List<LiquidityCommitmentOffset> asks = new ArrayList<>();
         double scalingFactor = exposure.abs().divide(askPoolSize, 8, RoundingMode.HALF_DOWN).doubleValue();

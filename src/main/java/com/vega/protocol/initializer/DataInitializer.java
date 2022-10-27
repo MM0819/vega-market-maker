@@ -26,7 +26,7 @@ public class DataInitializer {
     private final Integer orderCount;
     private final Double bidSizeFactor;
     private final Double askSizeFactor;
-    private final Double commitmentFactor;
+    private final Double commitmentBalanceRatio;
     private final Double bidQuoteRange;
     private final Double askQuoteRange;
     private final Double pricingStepSize;
@@ -51,7 +51,7 @@ public class DataInitializer {
                            @Value("${order.count}") Integer orderCount,
                            @Value("${bid.size.factor}") Double bidSizeFactor,
                            @Value("${ask.size.factor}") Double askSizeFactor,
-                           @Value("${commitment.factor}") Double commitmentFactor,
+                           @Value("${commitment.balance.ratio}") Double commitmentBalanceRatio,
                            @Value("${bid.quote.range}") Double bidQuoteRange,
                            @Value("${ask.quote.range}") Double askQuoteRange,
                            @Value("${pricing.step.size}") Double pricingStepSize,
@@ -68,7 +68,7 @@ public class DataInitializer {
         this.fee = fee;
         this.spread = spread;
         this.orderCount = orderCount;
-        this.commitmentFactor = commitmentFactor;
+        this.commitmentBalanceRatio = commitmentBalanceRatio;
         this.bidSizeFactor = bidSizeFactor;
         this.askSizeFactor = askSizeFactor;
         this.bidQuoteRange = bidQuoteRange;
@@ -89,7 +89,7 @@ public class DataInitializer {
                 .setOrderCount(orderCount)
                 .setBidSizeFactor(bidSizeFactor)
                 .setAskSizeFactor(askSizeFactor)
-                .setCommitmentFactor(commitmentFactor)
+                .setCommitmentBalanceRatio(commitmentBalanceRatio)
                 .setBidQuoteRange(bidQuoteRange)
                 .setAskQuoteRange(askQuoteRange)
                 .setPricingStepSize(pricingStepSize)

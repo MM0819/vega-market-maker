@@ -10,7 +10,7 @@ public class AppConfig {
     private Double askQuoteRange;
     private Double bidSizeFactor;
     private Double askSizeFactor;
-    private Double commitmentFactor;
+    private Double commitmentBalanceRatio;
     private Integer orderCount;
     private Double spread;
     private Double commitmentSpread;

@@ -51,7 +51,7 @@ public class UpdateLiquidityCommitmentTaskTest {
                 .setAskSizeFactor(1.0)
                 .setAskQuoteRange(0.05)
                 .setPricingStepSize(0.1)
-                .setCommitmentFactor(1.0);
+                .setCommitmentBalanceRatio(0.1);
     }
 
     private UpdateLiquidityCommitmentTask getTask(
