@@ -98,7 +98,8 @@ public class UpdateLiquidityCommitmentTask extends TradingTask {
         BigDecimal bidPoolSize = balance.multiply(BigDecimal.valueOf(0.5));
         BigDecimal askPoolSize = bidPoolSize.divide(midPrice, market.getDecimalPlaces(), RoundingMode.HALF_DOWN);
         log.info("Exposure = {}\nBid pool size = {}\nAsk pool size = {}", exposure, bidPoolSize, askPoolSize);
-        BigDecimal commitmentAmount = bidPoolSize.multiply(BigDecimal.valueOf(config.getCommitmentBalanceRatio())).multiply(BigDecimal.valueOf(0.1));
+        BigDecimal commitmentAmount = bidPoolSize.multiply(BigDecimal.valueOf(config.getCommitmentBalanceRatio()))
+                .multiply(BigDecimal.valueOf(0.1));
         List<LiquidityCommitmentOffset> bids = new ArrayList<>();
         List<LiquidityCommitmentOffset> asks = new ArrayList<>();
         double scalingFactor = exposure.abs().divide(askPoolSize, 8, RoundingMode.HALF_DOWN).doubleValue();
@@ -127,7 +128,6 @@ public class UpdateLiquidityCommitmentTask extends TradingTask {
                 .setAsks(asks);
         boolean hasCommitment = liquidityCommitmentStore.getItems().stream()
                 .anyMatch(c -> c.getMarket().getId().equals(marketId));
-        // TODO - need to check whether an update is necessary or not (it will depend on whether the shape has changed)
         vegaApiClient.submitLiquidityCommitment(liquidityCommitment, partyId, hasCommitment);
         log.info("Liquidity commitment successfully updated!");
     }

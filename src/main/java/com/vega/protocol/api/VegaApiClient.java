@@ -715,6 +715,8 @@ public class VegaApiClient {
                 throw new TradingException(response.getBody().toString());
             }
             String txHash = response.getBody().getObject().getString("txHash");
+            // TODO - if there is an error we can find it in the Tendermint API using the tx hash...
+            //  https://tm.n01.testnet.vega.xyz/tx?hash=0x5E8C1...
             return Optional.of(txHash);
         } catch (Exception e) {
             log.error(e.getMessage(), e);
