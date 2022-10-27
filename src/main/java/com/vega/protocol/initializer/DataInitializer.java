@@ -3,6 +3,7 @@ package com.vega.protocol.initializer;
 import com.vega.protocol.api.VegaApiClient;
 import com.vega.protocol.model.AppConfig;
 import com.vega.protocol.store.*;
+import com.vega.protocol.store.vega.*;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;

@@ -1,7 +1,7 @@
 package com.vega.protocol.controller;
 
 import com.vega.protocol.model.Account;
-import com.vega.protocol.store.AccountStore;
+import com.vega.protocol.store.vega.AccountStore;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;

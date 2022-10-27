@@ -2,7 +2,7 @@ package com.vega.protocol.controller;
 
 import com.vega.protocol.constant.OrderStatus;
 import com.vega.protocol.model.Order;
-import com.vega.protocol.store.OrderStore;
+import com.vega.protocol.store.vega.OrderStore;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;

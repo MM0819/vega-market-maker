@@ -2,7 +2,7 @@ package com.vega.protocol.ws;
 
 import com.vega.protocol.model.*;
 import com.vega.protocol.service.OrderService;
-import com.vega.protocol.store.*;
+import com.vega.protocol.store.vega.*;
 import com.vega.protocol.utils.DecimalUtils;
 import org.apache.commons.io.IOUtils;
 import org.java_websocket.handshake.HandshakeImpl1Server;

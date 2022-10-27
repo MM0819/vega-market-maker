@@ -2,7 +2,7 @@ package com.vega.protocol.service;
 
 import com.vega.protocol.constant.MarketSide;
 import com.vega.protocol.model.Position;
-import com.vega.protocol.store.PositionStore;
+import com.vega.protocol.store.vega.PositionStore;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;

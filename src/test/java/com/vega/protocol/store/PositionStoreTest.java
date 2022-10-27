@@ -1,6 +1,7 @@
 package com.vega.protocol.store;
 
 import com.vega.protocol.model.Position;
+import com.vega.protocol.store.vega.PositionStore;
 
 public class PositionStoreTest extends MultipleItemStoreTest<Position, PositionStore> {
 

@@ -1,7 +1,7 @@
 package com.vega.protocol.controller;
 
 import com.vega.protocol.model.Market;
-import com.vega.protocol.store.MarketStore;
+import com.vega.protocol.store.vega.MarketStore;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;

@@ -3,6 +3,7 @@ package com.vega.protocol.initializer;
 import com.vega.protocol.constant.ReferencePriceSource;
 import com.vega.protocol.service.OrderService;
 import com.vega.protocol.store.*;
+import com.vega.protocol.store.vega.*;
 import com.vega.protocol.utils.DecimalUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;

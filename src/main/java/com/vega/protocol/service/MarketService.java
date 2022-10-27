@@ -3,7 +3,7 @@ package com.vega.protocol.service;
 import com.vega.protocol.constant.ErrorCode;
 import com.vega.protocol.exception.TradingException;
 import com.vega.protocol.model.Market;
-import com.vega.protocol.store.MarketStore;
+import com.vega.protocol.store.vega.MarketStore;
 import org.springframework.stereotype.Service;
 
 @Service

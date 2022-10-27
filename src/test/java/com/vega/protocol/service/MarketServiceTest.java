@@ -2,7 +2,7 @@ package com.vega.protocol.service;
 
 import com.vega.protocol.constant.ErrorCode;
 import com.vega.protocol.model.Market;
-import com.vega.protocol.store.MarketStore;
+import com.vega.protocol.store.vega.MarketStore;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vega.protocol.constant.OrderStatus;
 import com.vega.protocol.model.Order;
-import com.vega.protocol.store.OrderStore;
+import com.vega.protocol.store.vega.OrderStore;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

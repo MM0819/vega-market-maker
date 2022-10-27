@@ -11,7 +11,7 @@ import com.vega.protocol.service.AccountService;
 import com.vega.protocol.service.MarketService;
 import com.vega.protocol.service.PositionService;
 import com.vega.protocol.store.AppConfigStore;
-import com.vega.protocol.store.LiquidityCommitmentStore;
+import com.vega.protocol.store.vega.LiquidityCommitmentStore;
 import com.vega.protocol.store.ReferencePriceStore;
 import com.vega.protocol.utils.PricingUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -98,8 +98,8 @@ public class UpdateLiquidityCommitmentTask extends TradingTask {
         BigDecimal bidPoolSize = balance.multiply(BigDecimal.valueOf(0.5));
         BigDecimal askPoolSize = bidPoolSize.divide(midPrice, market.getDecimalPlaces(), RoundingMode.HALF_DOWN);
         log.info("Exposure = {}\nBid pool size = {}\nAsk pool size = {}", exposure, bidPoolSize, askPoolSize);
-        BigDecimal commitmentAmount = bidPoolSize.multiply(BigDecimal.valueOf(config.getCommitmentBalanceRatio()))
-                .multiply(BigDecimal.valueOf(0.1));
+        BigDecimal commitmentAmount = bidPoolSize.multiply(BigDecimal.valueOf(config.getCommitmentBalanceRatio()));
+                //.multiply(BigDecimal.valueOf(0.1));
         List<LiquidityCommitmentOffset> bids = new ArrayList<>();
         List<LiquidityCommitmentOffset> asks = new ArrayList<>();
         double scalingFactor = exposure.abs().divide(askPoolSize, 8, RoundingMode.HALF_DOWN).doubleValue();
@@ -129,6 +129,6 @@ public class UpdateLiquidityCommitmentTask extends TradingTask {
         boolean hasCommitment = liquidityCommitmentStore.getItems().stream()
                 .anyMatch(c -> c.getMarket().getId().equals(marketId));
         vegaApiClient.submitLiquidityCommitment(liquidityCommitment, partyId, hasCommitment);
-        log.info("Liquidity commitment successfully updated!");
+        log.info("Liquidity commitment updated -> {}", commitmentAmount);
     }
 }

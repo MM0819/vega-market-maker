@@ -1,6 +1,7 @@
 package com.vega.protocol.store;
 
 import com.vega.protocol.model.Account;
+import com.vega.protocol.store.vega.AccountStore;
 
 public class AccountStoreTest extends MultipleItemStoreTest<Account, AccountStore> {
 

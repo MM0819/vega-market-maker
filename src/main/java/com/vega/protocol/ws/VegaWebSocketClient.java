@@ -4,7 +4,7 @@ import com.vega.protocol.constant.*;
 import com.vega.protocol.exception.TradingException;
 import com.vega.protocol.model.*;
 import com.vega.protocol.service.OrderService;
-import com.vega.protocol.store.*;
+import com.vega.protocol.store.vega.*;
 import com.vega.protocol.utils.DecimalUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.java_websocket.client.WebSocketClient;
@@ -293,13 +293,13 @@ public class VegaWebSocketClient extends WebSocketClient {
         for(int i=0; i<positionsArray.length(); i++) {
             try {
                 JSONObject positionObject = positionsArray.getJSONObject(i);
+                String marketId = positionObject.getString("marketId");
                 Market market = marketStore.getById(marketId)
                         .orElseThrow(() -> new TradingException(ErrorCode.MARKET_NOT_FOUND));
                 BigDecimal size = BigDecimal.valueOf(positionObject.getDouble("openVolume"));
                 BigDecimal unrealisedPnl = BigDecimal.valueOf(positionObject.getDouble("unrealisedPNL"));
                 BigDecimal realisedPnl = BigDecimal.valueOf(positionObject.getDouble("realisedPNL"));
                 BigDecimal entryPrice = BigDecimal.valueOf(positionObject.getDouble("averageEntryPrice"));
-                String marketId = positionObject.getString("marketId");
                 Position position = new Position()
                         .setPartyId(partyId)
                         .setUnrealisedPnl(decimalUtils.convertToDecimals(market.getDecimalPlaces(), unrealisedPnl))

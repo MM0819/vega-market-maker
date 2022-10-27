@@ -1,6 +1,7 @@
 package com.vega.protocol.store;
 
 import com.vega.protocol.model.Market;
+import com.vega.protocol.store.vega.MarketStore;
 
 public class MarketStoreTest extends MultipleItemStoreTest<Market, MarketStore> {
 

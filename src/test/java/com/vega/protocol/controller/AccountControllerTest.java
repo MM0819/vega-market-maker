@@ -3,7 +3,7 @@ package com.vega.protocol.controller;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vega.protocol.model.Account;
-import com.vega.protocol.store.AccountStore;
+import com.vega.protocol.store.vega.AccountStore;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
