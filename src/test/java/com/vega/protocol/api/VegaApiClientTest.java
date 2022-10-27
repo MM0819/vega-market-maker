@@ -27,10 +27,7 @@ import org.mockito.Mockito;
 import java.io.InputStream;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 public class VegaApiClientTest {
 
@@ -53,6 +50,7 @@ public class VegaApiClientTest {
     private Order newOrder() {
         Market market = new Market()
                 .setId("12345")
+                .setSettlementAsset("USDT")
                 .setDecimalPlaces(5)
                 .setPositionDecimalPlaces(3);
         return new Order()
@@ -66,6 +64,7 @@ public class VegaApiClientTest {
 
     private LiquidityCommitment newLiquidityCommitment() {
         Market market = new Market()
+                .setSettlementAsset("USDT")
                 .setId("12345")
                 .setDecimalPlaces(5)
                 .setPositionDecimalPlaces(3);
@@ -140,6 +139,10 @@ public class VegaApiClientTest {
     ) {
         Mockito.when(decimalUtils.convertFromDecimals(Mockito.anyInt(), Mockito.any(BigDecimal.class)))
                 .thenReturn(BigDecimal.ONE);
+        if(asset.isPresent()) {
+            Mockito.when(assetStore.getItems()).thenReturn(Collections.singletonList(new Asset().setSymbol("USDT")
+                    .setDecimalPlaces(1).setId("72f051ea66686ae004086f1ad086866f720f25896319abf3427cae101a58d985")));
+        }
         Mockito.when(assetStore.getById(Mockito.anyString())).thenReturn(asset);
         try(MockedStatic<Unirest> mockStatic = Mockito.mockStatic(Unirest.class)) {
             try(InputStream is = getClass().getClassLoader().getResourceAsStream("vega-accounts-rest.json")) {
@@ -222,6 +225,8 @@ public class VegaApiClientTest {
             final int idx
     ) {
         Mockito.when(marketStore.getById(Mockito.any())).thenReturn(market);
+        Mockito.when(assetStore.getItems()).thenReturn(Collections.singletonList(new Asset().setSymbol("USDT")
+                .setDecimalPlaces(1).setId("72f051ea66686ae004086f1ad086866f720f25896319abf3427cae101a58d985")));
         try(MockedStatic<Unirest> mockStatic = Mockito.mockStatic(Unirest.class)) {
             try(InputStream is = getClass().getClassLoader()
                     .getResourceAsStream(String.format("vega-liquidity-provisions-rest-%s.json", idx))) {
@@ -288,6 +293,8 @@ public class VegaApiClientTest {
             final JSONObject jsonResponse,
             final boolean amendment
     ) throws JSONException {
+        Mockito.when(assetStore.getItems()).thenReturn(Collections.singletonList(
+                new Asset().setSymbol("USDT").setDecimalPlaces(1)));
         Mockito.when(decimalUtils.convertFromDecimals(Mockito.anyInt(), Mockito.any(BigDecimal.class)))
                 .thenReturn(BigDecimal.ONE);
         Mockito.when(orderService.buildLiquidityOrders(Mockito.anyInt(), Mockito.anyList())).thenReturn(new JSONArray());
@@ -429,7 +436,7 @@ public class VegaApiClientTest {
 
     @Test
     public void testGetLiquidityCommitment() {
-        getLiquidityCommitment(Optional.of(new Market()), true, 1);
+        getLiquidityCommitment(Optional.of(new Market().setSettlementAsset("USDT")), true, 1);
     }
 
     @Test
