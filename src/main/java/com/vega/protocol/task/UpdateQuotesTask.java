@@ -281,7 +281,7 @@ public class UpdateQuotesTask extends TradingTask {
         BigDecimal targetVolume = (commitmentAmount.multiply(BigDecimal.valueOf(1 + config.getStakeBuffer())))
                 .multiply(BigDecimal.valueOf(Double.parseDouble(stakeToSiskasParam.getValue())));
         BigDecimal volumeRatio = effectiveVolume.divide(targetVolume, 8, RoundingMode.HALF_DOWN);
-        if(volumeRatio.doubleValue() < 0) {
+        if(volumeRatio.doubleValue() < 1) {
             BigDecimal modifier = BigDecimal.ONE.divide(volumeRatio, 8, RoundingMode.HALF_DOWN);
             orders.forEach(o -> o.setSize(o.getSize().multiply(modifier)));
         }
