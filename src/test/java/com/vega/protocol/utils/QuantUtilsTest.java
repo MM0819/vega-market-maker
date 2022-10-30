@@ -23,7 +23,7 @@ public class QuantUtilsTest {
         double lowerBound = 95.0;
         double upperBound = 100.0;
         MarketSide side = MarketSide.BUY;
-        double price = 99.9;
+        double price = 99.999;
         double result = quantUtils.getProbabilityOfTrading(mu, sigma, s, tau, lowerBound, upperBound, price, side);
         Assertions.assertEquals(result, 0.0);
     }
