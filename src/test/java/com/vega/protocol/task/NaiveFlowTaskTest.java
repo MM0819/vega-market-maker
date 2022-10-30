@@ -25,7 +25,6 @@ public class NaiveFlowTaskTest {
     private NaiveFlowTask naiveFlowTask;
     private final VegaApiClient vegaApiClient = Mockito.mock(VegaApiClient.class);
     private final MarketService marketService = Mockito.mock(MarketService.class);
-    private final AccountService accountService = Mockito.mock(AccountService.class);
     private final OrderService orderService = Mockito.mock(OrderService.class);
     private final DataInitializer dataInitializer = Mockito.mock(DataInitializer .class);
     private final WebSocketInitializer webSocketInitializer = Mockito.mock(WebSocketInitializer.class);
@@ -33,7 +32,7 @@ public class NaiveFlowTaskTest {
     private NaiveFlowTask getNaiveFlowTask(
             boolean enabled
     ) {
-        return new NaiveFlowTask(MARKET_ID, enabled, PARTY_ID, vegaApiClient, marketService, accountService,
+        return new NaiveFlowTask(MARKET_ID, enabled, PARTY_ID, vegaApiClient, marketService,
                 orderService, dataInitializer, webSocketInitializer);
     }
 
@@ -48,7 +47,6 @@ public class NaiveFlowTaskTest {
         Mockito.when(webSocketInitializer.isVegaWebSocketsInitialized()).thenReturn(true);
         Mockito.when(webSocketInitializer.isPolygonWebSocketInitialized()).thenReturn(true);
         Mockito.when(marketService.getById(MARKET_ID)).thenReturn(new Market().setSettlementAsset(USDT));
-        Mockito.when(accountService.getTotalBalance(USDT)).thenReturn(BigDecimal.valueOf(100000));
         int count = 20;
         for(int i=0; i<count; i++) {
             Mockito.when(orderService.getOtherSide(Mockito.any()))

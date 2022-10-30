@@ -8,7 +8,6 @@ import com.vega.protocol.initializer.DataInitializer;
 import com.vega.protocol.initializer.WebSocketInitializer;
 import com.vega.protocol.model.Market;
 import com.vega.protocol.model.Order;
-import com.vega.protocol.service.AccountService;
 import com.vega.protocol.service.MarketService;
 import com.vega.protocol.service.OrderService;
 import lombok.extern.slf4j.Slf4j;
@@ -22,16 +21,11 @@ import java.util.Random;
 @Slf4j
 @Component
 public class NaiveFlowTask extends TradingTask {
-
-    private static final double DEFAULT_SIZE = 0.000001;
-
     private final VegaApiClient vegaApiClient;
     private final MarketService marketService;
-    private final AccountService accountService;
     private final OrderService orderService;
     private final String marketId;
     private final String partyId;
-
     private MarketSide bias = MarketSide.BUY;
     private LocalDateTime nextBiasUpdate = LocalDateTime.now().minusHours(1);
 
@@ -40,7 +34,6 @@ public class NaiveFlowTask extends TradingTask {
                          @Value("${naive.flow.party.id}") String partyId,
                          VegaApiClient vegaApiClient,
                          MarketService marketService,
-                         AccountService accountService,
                          OrderService orderService,
                          DataInitializer dataInitializer,
                          WebSocketInitializer webSocketInitializer) {
@@ -49,7 +42,6 @@ public class NaiveFlowTask extends TradingTask {
         this.marketService = marketService;
         this.marketId = marketId;
         this.partyId = partyId;
-        this.accountService = accountService;
         this.orderService = orderService;
     }
 
@@ -75,9 +67,7 @@ public class NaiveFlowTask extends TradingTask {
             side = orderService.getOtherSide(bias);
         }
         Market market = marketService.getById(marketId);
-        BigDecimal balance = accountService.getTotalBalance(market.getSettlementAsset());
-        BigDecimal size = BigDecimal.valueOf(DEFAULT_SIZE) // TODO - this depends on the decimals of the market?
-                .multiply(BigDecimal.valueOf(new Random().nextDouble())).multiply(balance);
+        BigDecimal size = BigDecimal.valueOf(1 / Math.pow(10, market.getPositionDecimalPlaces()));
         Order order = new Order()
                 .setType(OrderType.MARKET)
                 .setStatus(OrderStatus.ACTIVE)
