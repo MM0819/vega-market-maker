@@ -1,12 +1,14 @@
 package com.vega.protocol.task;
 
+import com.vega.protocol.api.BinanceApiClient;
+import com.vega.protocol.api.IGApiClient;
+import com.vega.protocol.constant.ReferencePriceSource;
 import com.vega.protocol.initializer.DataInitializer;
 import com.vega.protocol.initializer.WebSocketInitializer;
-import com.vega.protocol.model.LiquidityCommitment;
+import com.vega.protocol.service.PositionService;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
 import org.mockito.Mockito;
 
 public class HedgeExposureTaskTest {
@@ -14,12 +16,29 @@ public class HedgeExposureTaskTest {
     private HedgeExposureTask hedgeExposureTask;
     private DataInitializer dataInitializer;
     private WebSocketInitializer webSocketInitializer;
+    private PositionService positionService;
+    private IGApiClient igApiClient;
+    private BinanceApiClient binanceApiClient;
+
+    private static final String MARKET_ID = "1";
+    private static final String PARTY_ID = "1";
+
+    private HedgeExposureTask getHedgeExposureTask(
+            final boolean enabled
+    ) {
+        return new HedgeExposureTask(dataInitializer, webSocketInitializer, MARKET_ID, enabled,
+                PARTY_ID, ReferencePriceSource.BINANCE, "AAPL.CASH", "BTCUSDT",
+                positionService, igApiClient, binanceApiClient);
+    }
 
     @BeforeEach
     public void setup() {
         dataInitializer = Mockito.mock(DataInitializer.class);
         webSocketInitializer = Mockito.mock(WebSocketInitializer.class);
-        hedgeExposureTask = new HedgeExposureTask(dataInitializer, webSocketInitializer, true);
+        positionService = Mockito.mock(PositionService.class);
+        igApiClient = Mockito.mock(IGApiClient.class);
+        binanceApiClient = Mockito.mock(BinanceApiClient.class);
+        hedgeExposureTask = getHedgeExposureTask(true);
     }
 
     @Test
@@ -38,7 +57,7 @@ public class HedgeExposureTaskTest {
 
     @Test
     public void testExecuteDisabled() {
-        hedgeExposureTask = new HedgeExposureTask(dataInitializer, webSocketInitializer, false);
+        hedgeExposureTask = getHedgeExposureTask(false);
         Mockito.when(dataInitializer.isInitialized()).thenReturn(true);
         Mockito.when(webSocketInitializer.isVegaWebSocketsInitialized()).thenReturn(true);
         Mockito.when(webSocketInitializer.isBinanceWebSocketInitialized()).thenReturn(true);
