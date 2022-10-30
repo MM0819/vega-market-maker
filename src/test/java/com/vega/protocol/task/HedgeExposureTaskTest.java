@@ -11,6 +11,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
+import java.math.BigDecimal;
+
 public class HedgeExposureTaskTest {
 
     private HedgeExposureTask hedgeExposureTask;
@@ -46,6 +48,7 @@ public class HedgeExposureTaskTest {
         Mockito.when(dataInitializer.isInitialized()).thenReturn(true);
         Mockito.when(webSocketInitializer.isVegaWebSocketsInitialized()).thenReturn(true);
         Mockito.when(webSocketInitializer.isBinanceWebSocketInitialized()).thenReturn(true);
+        Mockito.when(positionService.getExposure(MARKET_ID)).thenReturn(BigDecimal.ZERO);
         hedgeExposureTask.execute();
     }
 
@@ -67,6 +70,6 @@ public class HedgeExposureTaskTest {
     @Test
     public void testGetCronExpression() {
         String cron = hedgeExposureTask.getCronExpression();
-        Assertions.assertEquals(cron, "0 */10 * * * *");
+        Assertions.assertEquals(cron, "0 * * * * *");
     }
 }

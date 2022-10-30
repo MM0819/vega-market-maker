@@ -4,7 +4,21 @@
       "marketsData": {
         "marketId": "7738ae422f8a905a618cb5b113e1267f1d288417361741ed033762f89f64637d",
         "marketTradingMode": "TRADING_MODE_OPENING_AUCTION",
-        "marketState": "STATE_PENDING"
+        "marketState": "STATE_PENDING",
+        "markPrice": "1000000",
+        "bestBidPrice": "1000000",
+        "bestOfferPrice": "1000000",
+        "bestBidVolume": "1000000",
+        "bestOfferVolume": "1000000",
+        "openInterest": "1000000",
+        "targetStake": "1000000",
+        "suppliedStake": "1000000",
+        "priceMonitoringBounds": [
+          {
+            "minValidPrice": "1000000",
+            "maxValidPrice": "1000000"
+          }
+        ]
       }
     }
   },

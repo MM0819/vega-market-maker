@@ -442,7 +442,7 @@ public class VegaWebSocketClient extends WebSocketClient {
                 JSONArray priceMonitoringBounds = marketObject.getJSONArray("priceMonitoringBounds");
                 BigDecimal minValidPrice = BigDecimal.ZERO;
                 BigDecimal maxValidPrice = BigDecimal.valueOf(Double.MAX_VALUE);
-                for(int j=0; i<priceMonitoringBounds.length(); j++) {
+                for(int j=0; j<priceMonitoringBounds.length(); j++) {
                     JSONObject bound = priceMonitoringBounds.getJSONObject(j);
                     BigDecimal min = BigDecimal.valueOf(bound.getLong("minValidPrice"));
                     BigDecimal max = BigDecimal.valueOf(bound.getLong("maxValidPrice"));

@@ -54,7 +54,8 @@ public class UpdateLiquidityCommitmentTaskTest {
                 .setPricingStepSize(0.1)
                 .setCommitmentBalanceRatio(0.1)
                 .setCommitmentOrderCount(1)
-                .setCommitmentSpread(0.005);
+                .setCommitmentSpread(0.005)
+                .setStakeBuffer(0.2);
     }
 
     private UpdateLiquidityCommitmentTask getTask(
@@ -76,7 +77,8 @@ public class UpdateLiquidityCommitmentTaskTest {
         Mockito.when(dataInitializer.isInitialized()).thenReturn(true);
         Mockito.when(webSocketInitializer.isVegaWebSocketsInitialized()).thenReturn(true);
         Mockito.when(webSocketInitializer.isBinanceWebSocketInitialized()).thenReturn(true);
-        Mockito.when(marketService.getById(MARKET_ID)).thenReturn(new Market().setSettlementAsset(USDT));
+        Mockito.when(marketService.getById(MARKET_ID)).thenReturn(new Market().setSettlementAsset(USDT)
+                .setTargetStake(BigDecimal.ONE).setSuppliedStake(BigDecimal.ONE));
         Mockito.when(accountService.getTotalBalance(USDT)).thenReturn(BigDecimal.valueOf(100000));
         Mockito.when(positionService.getExposure(MARKET_ID)).thenReturn(BigDecimal.ZERO);
         Mockito.when(appConfigStore.get()).thenReturn(Optional.of(getAppConfig()));
@@ -122,7 +124,8 @@ public class UpdateLiquidityCommitmentTaskTest {
         Mockito.when(dataInitializer.isInitialized()).thenReturn(true);
         Mockito.when(webSocketInitializer.isVegaWebSocketsInitialized()).thenReturn(true);
         Mockito.when(webSocketInitializer.isBinanceWebSocketInitialized()).thenReturn(true);
-        Mockito.when(marketService.getById(MARKET_ID)).thenReturn(new Market().setSettlementAsset(USDT));
+        Mockito.when(marketService.getById(MARKET_ID)).thenReturn(new Market().setSettlementAsset(USDT)
+                .setTargetStake(BigDecimal.ONE).setSuppliedStake(BigDecimal.ONE));
         Mockito.when(accountService.getTotalBalance(USDT)).thenReturn(BigDecimal.valueOf(100000));
         Mockito.when(positionService.getExposure(MARKET_ID)).thenReturn(BigDecimal.valueOf(1));
         Mockito.when(pricingUtils.getScalingFactor(Mockito.anyDouble())).thenReturn(0.5);
@@ -144,7 +147,8 @@ public class UpdateLiquidityCommitmentTaskTest {
         Mockito.when(dataInitializer.isInitialized()).thenReturn(true);
         Mockito.when(webSocketInitializer.isVegaWebSocketsInitialized()).thenReturn(true);
         Mockito.when(webSocketInitializer.isBinanceWebSocketInitialized()).thenReturn(true);
-        Mockito.when(marketService.getById(MARKET_ID)).thenReturn(new Market().setSettlementAsset(USDT));
+        Mockito.when(marketService.getById(MARKET_ID)).thenReturn(new Market().setSettlementAsset(USDT)
+                .setTargetStake(BigDecimal.ONE).setSuppliedStake(BigDecimal.ONE));
         Mockito.when(accountService.getTotalBalance(USDT)).thenReturn(BigDecimal.valueOf(100000));
         Mockito.when(positionService.getExposure(MARKET_ID)).thenReturn(BigDecimal.valueOf(-1));
         Mockito.when(pricingUtils.getScalingFactor(Mockito.anyDouble())).thenReturn(0.5);

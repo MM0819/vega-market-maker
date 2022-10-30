@@ -16,6 +16,8 @@ import org.mockito.Mockito;
 import java.io.InputStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -53,9 +55,10 @@ public class VegaWebSocketClientTest {
             final int count
     ) {
         if(count > 0) {
-            Mockito.when(marketStore.getById(Mockito.any())).thenReturn(Optional.of(new Market()));
+            Mockito.when(marketStore.getById(Mockito.any())).thenReturn(Optional.of(new Market().setSettlementAsset("USDT")));
         }
         Mockito.when(assetStore.getById(Mockito.any())).thenReturn(asset);
+        asset.ifPresent(value -> Mockito.when(assetStore.getItems()).thenReturn(List.of(value)));
         try(InputStream is = getClass().getClassLoader()
                 .getResourceAsStream(String.format("vega-markets-ws-%s.json", count == 0 ? count + 1 : count))) {
             String marketsJson = IOUtils.toString(Objects.requireNonNull(is), StandardCharsets.UTF_8);
@@ -92,7 +95,7 @@ public class VegaWebSocketClientTest {
 
     @Test
     public void testHandleMarkets() {
-        handleMarkets(Optional.of(new Asset()), 1);
+        handleMarkets(Optional.of(new Asset().setSymbol("USDT").setDecimalPlaces(1)), 1);
     }
 
     @Test
@@ -102,7 +105,7 @@ public class VegaWebSocketClientTest {
 
     @Test
     public void testHandleMaketsMany() {
-        handleMarkets(Optional.of(new Asset()), 2);
+        handleMarkets(Optional.of(new Asset().setSymbol("USDT").setDecimalPlaces(1)), 2);
     }
 
     @Test

@@ -30,6 +30,10 @@ import java.util.Optional;
 
 public class UpdateQuotesTaskTest {
 
+    private static final String TAU_SCALING_PARAM = "market.liquidity.probabilityOfTrading.tau.scaling";
+    private static final String MAX_BATCH_SIZE_PARAM = "spam.protection.max.batchSize";
+    private static final String STAKE_TO_SISKAS_PARAM = "market.liquidity.stakeToCcySiskas";
+
     private static final String MARKET_ID = "1";
     private static final String PARTY_ID = "1";
     private static final String USDT = "USDT";
@@ -99,6 +103,8 @@ public class UpdateQuotesTaskTest {
                 .setAskPrice(BigDecimal.valueOf(20001))
                 .setBidPrice(BigDecimal.valueOf(19999))
                 .setMidPrice(BigDecimal.valueOf(20000))));
+        Mockito.when(networkParameterStore.getById(MAX_BATCH_SIZE_PARAM))
+                .thenReturn(Optional.of(new NetworkParameter().setValue("100").setId(MAX_BATCH_SIZE_PARAM)));
         List<Order> currentOrders = new ArrayList<>();
         for(int i=0; i<4; i++) {
             currentOrders.add(new Order()
