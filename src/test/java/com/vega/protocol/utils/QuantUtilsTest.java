@@ -1,10 +1,12 @@
 package com.vega.protocol.utils;
 
 import com.vega.protocol.constant.MarketSide;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+@Slf4j
 public class QuantUtilsTest {
 
     private QuantUtils quantUtils;
@@ -26,5 +28,10 @@ public class QuantUtilsTest {
         double price = 99.999;
         double result = quantUtils.getProbabilityOfTrading(mu, sigma, s, tau, lowerBound, upperBound, price, side);
         Assertions.assertEquals(result, 0.9993806063122513);
+        for(double i=0; i<=50; i++) {
+            price = upperBound * (1 - (i * 0.001));
+            result = quantUtils.getProbabilityOfTrading(mu, sigma, s, tau, lowerBound, upperBound, price, side);
+            log.info("{} = {}", Math.round(price * 1000.0) / 1000.0, Math.round(result * 1000.0) / 1000.0);
+        }
     }
 }

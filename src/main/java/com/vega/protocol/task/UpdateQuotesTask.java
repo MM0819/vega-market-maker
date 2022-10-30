@@ -11,6 +11,7 @@ import com.vega.protocol.service.MarketService;
 import com.vega.protocol.service.PositionService;
 import com.vega.protocol.store.AppConfigStore;
 import com.vega.protocol.store.ReferencePriceStore;
+import com.vega.protocol.store.vega.LiquidityCommitmentStore;
 import com.vega.protocol.store.vega.OrderStore;
 import com.vega.protocol.utils.PricingUtils;
 import com.vega.protocol.utils.QuantUtils;
@@ -21,10 +22,7 @@ import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 @Slf4j
 @Component
@@ -33,6 +31,7 @@ public class UpdateQuotesTask extends TradingTask {
     private final AppConfigStore appConfigStore;
     private final ReferencePriceStore referencePriceStore;
     private final OrderStore orderStore;
+    private final LiquidityCommitmentStore liquidityCommitmentStore;
     private final VegaApiClient vegaApiClient;
     private final String marketId;
     private final MarketService marketService;
@@ -49,6 +48,7 @@ public class UpdateQuotesTask extends TradingTask {
                             ReferencePriceStore referencePriceStore,
                             AppConfigStore appConfigStore,
                             OrderStore orderStore,
+                            LiquidityCommitmentStore liquidityCommitmentStore,
                             VegaApiClient vegaApiClient,
                             MarketService marketService,
                             AccountService accountService,
@@ -63,6 +63,7 @@ public class UpdateQuotesTask extends TradingTask {
         this.marketId = marketId;
         this.referencePriceStore = referencePriceStore;
         this.orderStore = orderStore;
+        this.liquidityCommitmentStore = liquidityCommitmentStore;
         this.vegaApiClient = vegaApiClient;
         this.marketService = marketService;
         this.accountService = accountService;
@@ -102,6 +103,7 @@ public class UpdateQuotesTask extends TradingTask {
             return;
         }
         BigDecimal exposure = positionService.getExposure(marketId);
+        // TODO - we should use the net exposure here after considering our hedge on Binance / IG
         AppConfig config = appConfigStore.get()
                 .orElseThrow(() -> new TradingException(ErrorCode.APP_CONFIG_NOT_FOUND));
         ReferencePrice referencePrice = referencePriceStore.get()
@@ -118,12 +120,8 @@ public class UpdateQuotesTask extends TradingTask {
         double askQuoteRange = config.getAskQuoteRange();
         if(exposure.doubleValue() > 0) {
             bidVolume = bidVolume.multiply(BigDecimal.valueOf(1 - openVolumeRatio));
-            bidQuoteRange = bidQuoteRange * (1 + openVolumeRatio);
-            bidQuoteRange = Math.round(bidQuoteRange * 10000.0) / 10000.0;
         } else if(exposure.doubleValue() < 0) {
             askVolume = askVolume.multiply(BigDecimal.valueOf(1 - openVolumeRatio));
-            askQuoteRange = askQuoteRange * (1 + openVolumeRatio);
-            askQuoteRange = Math.round(askQuoteRange * 10000.0) / 10000.0;
         }
         List<DistributionStep> askDistribution = pricingUtils.getDistribution(
                 referencePrice.getAskPrice().doubleValue(), askVolume.doubleValue(), askQuoteRange, MarketSide.SELL);
@@ -161,20 +159,15 @@ public class UpdateQuotesTask extends TradingTask {
         ).sorted(Comparator.comparing(Order::getPrice)).toList();
         Order bestBid = bids.get(0);
         Order bestAsk = asks.get(0);
-        double targetSpread = config.getMinSpread() +
-                (openVolumeRatio * (config.getMaxSpread() - config.getMinSpread()));
-        double currentSpread = (bestAsk.getPrice().doubleValue() - bestBid.getPrice().doubleValue()) / 2.0;
-        if(currentSpread < targetSpread) {
-            double spreadDiff = targetSpread - currentSpread;
-            if(exposure.doubleValue() > 0) {
-                bids.forEach(b -> b.setPrice(b.getPrice().subtract(BigDecimal.valueOf(spreadDiff))));
-            } else {
-                asks.forEach(a -> a.setPrice(a.getPrice().add(BigDecimal.valueOf(spreadDiff))));
-            }
-        }
+        updateSpread(bids, asks, config, exposure, openVolumeRatio);
         log.info("Bid price = {}; Ask price = {}", bestBid.getPrice(), bestAsk.getPrice());
-        adjustOrders(bids); // TODO - only adjust orders if this trader has an LP commitment
-        adjustOrders(asks); // TODO - only adjust orders if this trader has an LP commitment
+        Optional<LiquidityCommitment> liquidityCommitmentOptional = liquidityCommitmentStore.getItems().stream()
+                .filter(lc -> lc.getMarket().getId().equals(marketId)).findFirst();
+        if(liquidityCommitmentOptional.isPresent()) {
+            BigDecimal commitmentAmount = liquidityCommitmentOptional.get().getCommitmentAmount();
+            adjustOrders(bids, commitmentAmount, config);
+            adjustOrders(asks, commitmentAmount, config);
+        }
         List<Order> submissions = new ArrayList<>();
         submissions.addAll(bids);
         submissions.addAll(asks);
@@ -202,30 +195,81 @@ public class UpdateQuotesTask extends TradingTask {
         }
     }
 
+    /**
+     * Updates the spread if we have acquired some exposure
+     *
+     * @param bids {@link List<Order>}
+     * @param asks {@link List<Order>}
+     * @param config {@link AppConfig}
+     * @param exposure current exposure
+     * @param openVolumeRatio the open volume as a ratio of account balance
+     */
+    private void updateSpread(
+            final List<Order> bids,
+            final List<Order> asks,
+            final AppConfig config,
+            final BigDecimal exposure,
+            final double openVolumeRatio
+    ) {
+        Order bestBid = bids.get(0);
+        Order bestAsk = asks.get(0);
+        double targetSpread = config.getMinSpread() +
+                (openVolumeRatio * (config.getMaxSpread() - config.getMinSpread()));
+        double currentSpread = (bestAsk.getPrice().doubleValue() - bestBid.getPrice().doubleValue()) / 2.0;
+        if(currentSpread < targetSpread) {
+            double spreadDiff = targetSpread - currentSpread;
+            if(exposure.doubleValue() > 0) {
+                bids.forEach(b -> b.setPrice(b.getPrice().subtract(BigDecimal.valueOf(spreadDiff))));
+            } else {
+                asks.forEach(a -> a.setPrice(a.getPrice().add(BigDecimal.valueOf(spreadDiff))));
+            }
+        }
+    }
+
+    /**
+     * Calculate the effective volume implied by orders after considering probability of a price-level trading
+     *
+     * @param orders {@link List<Order>}
+     *
+     * @return effective total volume
+     */
     private BigDecimal getEffectiveVolume(
             final List<Order> orders
     ) {
-        return orders.stream().map(b -> {
-            double mu = b.getMarket().getMu();
-            double tau = b.getMarket().getTau();
-            double sigma = b.getMarket().getSigma();
+        return orders.stream().map(o -> {
+            double mu = o.getMarket().getMu();
+            double tau = o.getMarket().getTau();
+            double sigma = o.getMarket().getSigma();
             double s = 100.0; // TODO - what is this value??
-            double minValidPrice = b.getMarket().getMinValidPrice().doubleValue();
-            double maxValidPrice = b.getMarket().getMaxValidPrice().doubleValue();
-            double price = b.getPrice().doubleValue();
-            MarketSide side = b.getSide();
+            double minValidPrice = o.getMarket().getMinValidPrice().doubleValue();
+            double maxValidPrice = o.getMarket().getMaxValidPrice().doubleValue();
+            double price = o.getPrice().doubleValue();
+            MarketSide side = o.getSide();
             double probability = quantUtils.getProbabilityOfTrading(mu, sigma, s, tau,
                     minValidPrice, maxValidPrice, price, side);
-            return b.getSize().multiply(BigDecimal.valueOf(probability));
+            return o.getSize().multiply(o.getPrice()).multiply(BigDecimal.valueOf(probability));
         }).reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
+    /**
+     * Scale up order sizes so that the quotes satisfy the LP commitment amount and pegs are not auto-deployed
+     *
+     * @param orders {@link List<Order>}
+     * @param commitmentAmount the LP commitment amount
+     * @param config {@link AppConfig}
+     */
     private void adjustOrders(
-            final List<Order> orders
+            final List<Order> orders,
+            final BigDecimal commitmentAmount,
+            final AppConfig config
     ) {
         BigDecimal effectiveVolume = getEffectiveVolume(orders);
-        // TODO - compare this volume to the commitment size, and adjust order sizes proportionally if the
-        //  commitment is not met
+        BigDecimal targetVolume = commitmentAmount.multiply(BigDecimal.valueOf(1 + config.getStakeBuffer()));
+        BigDecimal volumeRatio = effectiveVolume.divide(targetVolume, 8, RoundingMode.HALF_DOWN);
+        if(volumeRatio.doubleValue() < 0) {
+            BigDecimal modifier = BigDecimal.ONE.divide(volumeRatio, 8, RoundingMode.HALF_DOWN);
+            orders.forEach(o -> o.setSize(o.getSize().multiply(modifier)));
+        }
     }
 
     /**

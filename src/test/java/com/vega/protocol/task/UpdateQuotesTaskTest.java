@@ -13,6 +13,7 @@ import com.vega.protocol.service.MarketService;
 import com.vega.protocol.service.PositionService;
 import com.vega.protocol.store.AppConfigStore;
 import com.vega.protocol.store.ReferencePriceStore;
+import com.vega.protocol.store.vega.LiquidityCommitmentStore;
 import com.vega.protocol.store.vega.OrderStore;
 import com.vega.protocol.utils.PricingUtils;
 import com.vega.protocol.utils.QuantUtils;
@@ -44,6 +45,7 @@ public class UpdateQuotesTaskTest {
     private final QuantUtils quantUtils = Mockito.mock(QuantUtils.class);
     private final DataInitializer dataInitializer = Mockito.mock(DataInitializer.class);
     private final WebSocketInitializer webSocketInitializer = Mockito.mock(WebSocketInitializer.class);
+    private final LiquidityCommitmentStore liquidityCommitmentStore = Mockito.mock(LiquidityCommitmentStore.class);
 
     private AppConfig getAppConfig() {
         return new AppConfig()
@@ -65,8 +67,9 @@ public class UpdateQuotesTaskTest {
             final boolean enabled
     ) {
         return new UpdateQuotesTask(MARKET_ID, enabled, PARTY_ID, referencePriceStore,
-                appConfigStore, orderStore, vegaApiClient, marketService, accountService, positionService,
-                pricingUtils, quantUtils, dataInitializer, webSocketInitializer, "*/15 * * * * *");
+                appConfigStore, orderStore, liquidityCommitmentStore, vegaApiClient, marketService, accountService,
+                positionService, pricingUtils, quantUtils, dataInitializer, webSocketInitializer,
+                "*/15 * * * * *");
     }
 
     @BeforeEach
