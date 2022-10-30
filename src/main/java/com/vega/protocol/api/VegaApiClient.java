@@ -237,6 +237,10 @@ public class VegaApiClient {
                         .replace("STATE_", ""));
                 MarketTradingMode tradingMode = MarketTradingMode.valueOf(marketObject.getString("tradingMode")
                         .replace("TRADING_MODE_", ""));
+                JSONObject logNormalRiskModel = tradableInstrument.getJSONObject("logNormalRiskModel");
+                double tau = logNormalRiskModel.getDouble("tau");
+                double mu = logNormalRiskModel.getJSONObject("params").getDouble("mu");
+                double sigma = logNormalRiskModel.getJSONObject("params").getDouble("sigma");
                 Market market = new Market()
                         .setName(name)
                         .setSettlementAsset(settlementAsset.getSymbol())
@@ -244,7 +248,10 @@ public class VegaApiClient {
                         .setPositionDecimalPlaces(positionDecimalPlaces)
                         .setId(id)
                         .setState(state)
-                        .setTradingMode(tradingMode);
+                        .setTradingMode(tradingMode)
+                        .setTau(tau)
+                        .setSigma(sigma)
+                        .setMu(mu);
                 markets.add(market);
             }
             return markets;

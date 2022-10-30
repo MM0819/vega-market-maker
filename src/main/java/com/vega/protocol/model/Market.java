@@ -27,4 +27,9 @@ public class Market extends UniqueItem {
     private BigDecimal bestBidSize;
     private BigDecimal bestAskSize;
     private BigDecimal openInterest;
+    private double tau;
+    private double mu;
+    private double sigma;
+    private BigDecimal minValidPrice;
+    private BigDecimal maxValidPrice;
 }

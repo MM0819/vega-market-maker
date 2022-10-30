@@ -80,6 +80,10 @@ public class VegaWebSocketClient extends WebSocketClient {
             	targetStake
             	suppliedStake
             	openInterest
+            	priceMonitoringBounds {
+            	    minValidPrice
+            	    maxValidPrice
+            	}
             }
         }
     """;
@@ -435,6 +439,22 @@ public class VegaWebSocketClient extends WebSocketClient {
                 BigDecimal targetStake = BigDecimal.valueOf(marketObject.getLong("targetStake"));
                 BigDecimal suppliedStake = BigDecimal.valueOf(marketObject.getLong("suppliedStake"));
                 BigDecimal openInterest = BigDecimal.valueOf(marketObject.getLong("openInterest"));
+                JSONArray priceMonitoringBounds = marketObject.getJSONArray("priceMonitoringBounds");
+                BigDecimal minValidPrice = BigDecimal.ZERO;
+                BigDecimal maxValidPrice = BigDecimal.valueOf(Double.MAX_VALUE);
+                for(int j=0; i<priceMonitoringBounds.length(); j++) {
+                    JSONObject bound = priceMonitoringBounds.getJSONObject(j);
+                    BigDecimal min = BigDecimal.valueOf(bound.getLong("minValidPrice"));
+                    BigDecimal max = BigDecimal.valueOf(bound.getLong("maxValidPrice"));
+                    if(min.doubleValue() > minValidPrice.doubleValue()) {
+                        minValidPrice = min;
+                    }
+                    if(max.doubleValue() < maxValidPrice.doubleValue()) {
+                        maxValidPrice = max;
+                    }
+                }
+                BigDecimal finalMinValidPrice = minValidPrice;
+                BigDecimal finalMaxValidPrice = maxValidPrice;
                 marketStore.getById(id).ifPresent(market -> {
                     Asset asset = assetStore.getItems().stream()
                             .filter(a -> a.getSymbol().equals(market.getSettlementAsset())).findFirst()
@@ -445,6 +465,8 @@ public class VegaWebSocketClient extends WebSocketClient {
                     marketStore.update(market
                             .setState(state)
                             .setTradingMode(tradingMode)
+                            .setMinValidPrice(decimalUtils.convertToDecimals(marketDecimals, finalMinValidPrice))
+                            .setMaxValidPrice(decimalUtils.convertToDecimals(marketDecimals, finalMaxValidPrice))
                             .setTargetStake(decimalUtils.convertToDecimals(assetDecimals, targetStake))
                             .setSuppliedStake(decimalUtils.convertToDecimals(assetDecimals, suppliedStake))
                             .setMarkPrice(decimalUtils.convertToDecimals(marketDecimals, markPrice))

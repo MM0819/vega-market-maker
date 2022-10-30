@@ -25,6 +25,6 @@ public class QuantUtilsTest {
         MarketSide side = MarketSide.BUY;
         double price = 99.999;
         double result = quantUtils.getProbabilityOfTrading(mu, sigma, s, tau, lowerBound, upperBound, price, side);
-        Assertions.assertEquals(result, 0.0);
+        Assertions.assertEquals(result, 0.9993806063122513);
     }
 }

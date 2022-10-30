@@ -13,6 +13,7 @@ import com.vega.protocol.store.AppConfigStore;
 import com.vega.protocol.store.ReferencePriceStore;
 import com.vega.protocol.store.vega.OrderStore;
 import com.vega.protocol.utils.PricingUtils;
+import com.vega.protocol.utils.QuantUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.ListUtils;
 import org.springframework.beans.factory.annotation.Value;
@@ -38,6 +39,7 @@ public class UpdateQuotesTask extends TradingTask {
     private final AccountService accountService;
     private final PositionService positionService;
     private final PricingUtils pricingUtils;
+    private final QuantUtils quantUtils;
     private final String partyId;
     private final String updateQuotesCronExpression;
 
@@ -52,6 +54,7 @@ public class UpdateQuotesTask extends TradingTask {
                             AccountService accountService,
                             PositionService positionService,
                             PricingUtils pricingUtils,
+                            QuantUtils quantUtils,
                             DataInitializer dataInitializer,
                             WebSocketInitializer webSocketInitializer,
                             @Value("${update.quotes.cron.expression}") String updateQuotesCronExpression) {
@@ -65,6 +68,7 @@ public class UpdateQuotesTask extends TradingTask {
         this.accountService = accountService;
         this.positionService = positionService;
         this.pricingUtils = pricingUtils;
+        this.quantUtils = quantUtils;
         this.partyId = partyId;
         this.updateQuotesCronExpression = updateQuotesCronExpression;
     }
@@ -169,8 +173,8 @@ public class UpdateQuotesTask extends TradingTask {
             }
         }
         log.info("Bid price = {}; Ask price = {}", bestBid.getPrice(), bestAsk.getPrice());
-        // TODO - we need to check if our quotes will satisfy our liquidity commitment, and if not, scale up their
-        //  sizes proportionally such that the commitment is never deployed
+        adjustOrders(bids); // TODO - only adjust orders if this trader has an LP commitment
+        adjustOrders(asks); // TODO - only adjust orders if this trader has an LP commitment
         List<Order> submissions = new ArrayList<>();
         submissions.addAll(bids);
         submissions.addAll(asks);
@@ -196,6 +200,32 @@ public class UpdateQuotesTask extends TradingTask {
             }
             log.info("Quotes successfully updated!");
         }
+    }
+
+    private BigDecimal getEffectiveVolume(
+            final List<Order> orders
+    ) {
+        return orders.stream().map(b -> {
+            double mu = b.getMarket().getMu();
+            double tau = b.getMarket().getTau();
+            double sigma = b.getMarket().getSigma();
+            double s = 100.0; // TODO - what is this value??
+            double minValidPrice = b.getMarket().getMinValidPrice().doubleValue();
+            double maxValidPrice = b.getMarket().getMaxValidPrice().doubleValue();
+            double price = b.getPrice().doubleValue();
+            MarketSide side = b.getSide();
+            double probability = quantUtils.getProbabilityOfTrading(mu, sigma, s, tau,
+                    minValidPrice, maxValidPrice, price, side);
+            return b.getSize().multiply(BigDecimal.valueOf(probability));
+        }).reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    private void adjustOrders(
+            final List<Order> orders
+    ) {
+        BigDecimal effectiveVolume = getEffectiveVolume(orders);
+        // TODO - compare this volume to the commitment size, and adjust order sizes proportionally if the
+        //  commitment is not met
     }
 
     /**

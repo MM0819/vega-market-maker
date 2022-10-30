@@ -12,9 +12,10 @@ import com.vega.protocol.service.AccountService;
 import com.vega.protocol.service.MarketService;
 import com.vega.protocol.service.PositionService;
 import com.vega.protocol.store.AppConfigStore;
-import com.vega.protocol.store.vega.OrderStore;
 import com.vega.protocol.store.ReferencePriceStore;
+import com.vega.protocol.store.vega.OrderStore;
 import com.vega.protocol.utils.PricingUtils;
+import com.vega.protocol.utils.QuantUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -40,6 +41,7 @@ public class UpdateQuotesTaskTest {
     private final AccountService accountService = Mockito.mock(AccountService.class);
     private final PositionService positionService = Mockito.mock(PositionService.class);
     private final PricingUtils pricingUtils = Mockito.mock(PricingUtils.class);
+    private final QuantUtils quantUtils = Mockito.mock(QuantUtils.class);
     private final DataInitializer dataInitializer = Mockito.mock(DataInitializer.class);
     private final WebSocketInitializer webSocketInitializer = Mockito.mock(WebSocketInitializer.class);
 
@@ -64,7 +66,7 @@ public class UpdateQuotesTaskTest {
     ) {
         return new UpdateQuotesTask(MARKET_ID, enabled, PARTY_ID, referencePriceStore,
                 appConfigStore, orderStore, vegaApiClient, marketService, accountService, positionService,
-                pricingUtils, dataInitializer, webSocketInitializer, "*/15 * * * * *");
+                pricingUtils, quantUtils, dataInitializer, webSocketInitializer, "*/15 * * * * *");
     }
 
     @BeforeEach
