@@ -47,7 +47,7 @@ public class VegaWebSocketClientTest {
         liquidityCommitmentStore = Mockito.mock(LiquidityCommitmentStore.class);
         vegaWebSocketClient = new VegaWebSocketClient(PARTY_ID, MARKET_ID, marketStore, orderStore, positionStore,
                 accountStore, assetStore, liquidityCommitmentStore, decimalUtils, orderService,
-                URI.create("wss://api.n12.testnet.vega.xyz/graphql"));
+                URI.create("wss://api.n11.testnet.vega.xyz/graphql"));
     }
 
     private void handleMarkets(

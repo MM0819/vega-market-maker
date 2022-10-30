@@ -27,7 +27,7 @@ public class WebSocketInitializerTest {
 
     private WebSocketInitializer getWebSocketInitializer(boolean enabled, ReferencePriceSource source) {
         return new WebSocketInitializer(
-                "wss://api.n12.testnet.vega.xyz/graphql",
+                "wss://api.n11.testnet.vega.xyz/graphql",
                 "wss://stream.binance.com:9443/stream",
                 "wss://socket.polygon.io/stocks",
                 enabled, enabled, enabled, "BTCUSDT", source, PARTY_ID, MARKET_ID,
@@ -44,7 +44,7 @@ public class WebSocketInitializerTest {
     @Test
     public void testInitializeBinance() throws InterruptedException {
         webSocketInitializer.initialize();
-        Thread.sleep(2000L);
+        Thread.sleep(3000L);
         Assertions.assertNull(webSocketInitializer.getPolygonWebSocketClient());
         Assertions.assertTrue(webSocketInitializer.getVegaWebSocketClient().isOpen());
         Assertions.assertTrue(webSocketInitializer.getBinanceWebSocketClient().isOpen());
@@ -55,7 +55,7 @@ public class WebSocketInitializerTest {
     public void testInitializePolygon() throws InterruptedException {
         webSocketInitializer = getWebSocketInitializer(true, ReferencePriceSource.POLYGON);
         webSocketInitializer.initialize();
-        Thread.sleep(1000L);
+        Thread.sleep(2000L);
         Assertions.assertNull(webSocketInitializer.getBinanceWebSocketClient());
         Assertions.assertTrue(webSocketInitializer.getVegaWebSocketClient().isOpen());
         Assertions.assertTrue(webSocketInitializer.getPolygonWebSocketClient().isOpen());

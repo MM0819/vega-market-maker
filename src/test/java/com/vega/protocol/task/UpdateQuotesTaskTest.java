@@ -135,14 +135,14 @@ public class UpdateQuotesTaskTest {
         Mockito.when(orderStore.getItems()).thenReturn(currentOrders);
         Mockito.when(pricingUtils.getScalingFactor(Mockito.anyDouble())).thenReturn(1d);
         if(exposure.doubleValue() > 0) {
-            Mockito.when(pricingUtils.getDistribution(19999d, 0.1d, 0.075d, MarketSide.BUY))
+            Mockito.when(pricingUtils.getDistribution(19999d, 0.1d, 0.05d, MarketSide.BUY))
                     .thenReturn(bidDistribution);
         } else {
             Mockito.when(pricingUtils.getDistribution(19999d, 0.2d, 0.05d, MarketSide.BUY))
                     .thenReturn(bidDistribution);
         }
         if(exposure.doubleValue() < 0) {
-            Mockito.when(pricingUtils.getDistribution(20001d, 0.1d, 0.075d, MarketSide.SELL))
+            Mockito.when(pricingUtils.getDistribution(20001d, 0.1d, 0.05d, MarketSide.SELL))
                     .thenReturn(askDistribution);
         } else {
             Mockito.when(pricingUtils.getDistribution(20001d, 0.2d, 0.05d, MarketSide.SELL))
