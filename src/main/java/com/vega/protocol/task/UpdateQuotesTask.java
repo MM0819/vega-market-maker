@@ -10,8 +10,8 @@ import com.vega.protocol.service.AccountService;
 import com.vega.protocol.service.MarketService;
 import com.vega.protocol.service.PositionService;
 import com.vega.protocol.store.AppConfigStore;
-import com.vega.protocol.store.vega.OrderStore;
 import com.vega.protocol.store.ReferencePriceStore;
+import com.vega.protocol.store.vega.OrderStore;
 import com.vega.protocol.utils.PricingUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.ListUtils;
@@ -159,13 +159,18 @@ public class UpdateQuotesTask extends TradingTask {
         Order bestAsk = asks.get(0);
         double targetSpread = config.getMinSpread() +
                 (openVolumeRatio * (config.getMaxSpread() - config.getMinSpread()));
-        double currentSpread = bestAsk.getPrice().doubleValue() - bestBid.getPrice().doubleValue();
+        double currentSpread = (bestAsk.getPrice().doubleValue() - bestBid.getPrice().doubleValue()) / 2.0;
         if(currentSpread < targetSpread) {
-            double spreadDiff = (targetSpread - currentSpread) / 2.0;
-            bids.forEach(b -> b.setPrice(b.getPrice().subtract(BigDecimal.valueOf(spreadDiff))));
-            asks.forEach(a -> a.setPrice(a.getPrice().add(BigDecimal.valueOf(spreadDiff))));
+            double spreadDiff = targetSpread - currentSpread;
+            if(exposure.doubleValue() > 0) {
+                bids.forEach(b -> b.setPrice(b.getPrice().subtract(BigDecimal.valueOf(spreadDiff))));
+            } else {
+                asks.forEach(a -> a.setPrice(a.getPrice().add(BigDecimal.valueOf(spreadDiff))));
+            }
         }
         log.info("Bid price = {}; Ask price = {}", bestBid.getPrice(), bestAsk.getPrice());
+        // TODO - we need to check if our quotes will satisfy our liquidity commitment, and if not, scale up their
+        //  sizes proportionally such that the commitment is never deployed
         List<Order> submissions = new ArrayList<>();
         submissions.addAll(bids);
         submissions.addAll(asks);
@@ -174,6 +179,43 @@ public class UpdateQuotesTask extends TradingTask {
                 .sorted(Comparator.comparing(Order::getPrice).reversed()).toList();
         List<Order> currentAsks = currentOrders.stream().filter(o -> o.getSide().equals(MarketSide.SELL))
                 .sorted(Comparator.comparing(Order::getPrice)).toList();
+        if(shouldUpdateQuotes(currentBids, currentAsks, bestBid, bestAsk, config)) {
+            List<String> cancellations = currentOrders.stream().map(Order::getId).toList();
+            int maxBatchSize = 100; // TODO this should come from network parameters
+            if ((cancellations.size() + submissions.size()) <= maxBatchSize) {
+                vegaApiClient.submitBulkInstruction(cancellations, submissions, market, partyId, 0);
+            } else {
+                List<List<String>> cancellationBatches = ListUtils.partition(cancellations, maxBatchSize);
+                List<List<Order>> submissionBatches = ListUtils.partition(submissions, maxBatchSize);
+                for (List<Order> batch : submissionBatches) {
+                    vegaApiClient.submitBulkInstruction(Collections.emptyList(), batch, market, partyId, 0);
+                }
+                for (List<String> batch : cancellationBatches) {
+                    vegaApiClient.submitBulkInstruction(batch, Collections.emptyList(), market, partyId, 0);
+                }
+            }
+            log.info("Quotes successfully updated!");
+        }
+    }
+
+    /**
+     * Check whether the price has changed sufficiently to justify updating our quotes
+     *
+     * @param currentBids the current bids
+     * @param currentAsks the current asks
+     * @param bestBid the new best bid
+     * @param bestAsk the new best ask
+     * @param config {@link AppConfig}
+     *
+     * @return true / false
+     */
+    private boolean shouldUpdateQuotes(
+            final List<Order> currentBids,
+            final List<Order> currentAsks,
+            final Order bestBid,
+            final Order bestAsk,
+            final AppConfig config
+    ) {
         if(currentBids.size() > 0 && currentAsks.size() > 0) {
             Order currentBestBid = currentBids.get(0);
             Order currentBestAsk = currentAsks.get(0);
@@ -186,23 +228,9 @@ public class UpdateQuotesTask extends TradingTask {
             if(priceDelta < (config.getMinSpread() / 2.0)) {
                 log.warn("Not updating quotes because the mid-price delta is only = {}%",
                         Math.round(priceDelta * 10000.0) / 100.0);
-                return;
+                return false;
             }
         }
-        List<String> cancellations = currentOrders.stream().map(Order::getId).toList();
-        int maxBatchSize = 100; // TODO this needs to come from network parameters
-        if((cancellations.size() + submissions.size()) <= maxBatchSize) {
-            vegaApiClient.submitBulkInstruction(cancellations, submissions, market, partyId, 0);
-        } else {
-            List<List<String>> cancellationBatches = ListUtils.partition(cancellations, maxBatchSize);
-            List<List<Order>> submissionBatches = ListUtils.partition(submissions, maxBatchSize);
-            for (List<Order> batch : submissionBatches) {
-                vegaApiClient.submitBulkInstruction(Collections.emptyList(), batch, market, partyId, 0);
-            }
-            for (List<String> batch : cancellationBatches) {
-                vegaApiClient.submitBulkInstruction(batch, Collections.emptyList(), market, partyId, 0);
-            }
-        }
-        log.info("Quotes successfully updated!");
+        return true;
     }
 }
