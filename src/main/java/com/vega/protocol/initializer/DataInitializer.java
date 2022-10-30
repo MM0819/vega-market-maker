@@ -2,7 +2,7 @@ package com.vega.protocol.initializer;
 
 import com.vega.protocol.api.VegaApiClient;
 import com.vega.protocol.model.AppConfig;
-import com.vega.protocol.store.*;
+import com.vega.protocol.store.AppConfigStore;
 import com.vega.protocol.store.vega.*;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -34,6 +34,7 @@ public class DataInitializer {
     private final Double pricingStepSize;
     private final Double commitmentSpread;
     private final Integer commitmentOrderCount;
+    private final Double stakeBuffer;
 
     @Getter
     private boolean initialized = false;
@@ -58,7 +59,8 @@ public class DataInitializer {
                            @Value("${bid.quote.range}") Double bidQuoteRange,
                            @Value("${ask.quote.range}") Double askQuoteRange,
                            @Value("${pricing.step.size}") Double pricingStepSize,
-                           @Value("${commitment.order.count}") Integer commitmentOrderCount) {
+                           @Value("${commitment.order.count}") Integer commitmentOrderCount,
+                           @Value("${stake.buffer}") Double stakeBuffer) {
         this.orderStore = orderStore;
         this.marketStore = marketStore;
         this.positionStore = positionStore;
@@ -80,6 +82,7 @@ public class DataInitializer {
         this.pricingStepSize = pricingStepSize;
         this.commitmentSpread = commitmentSpread;
         this.commitmentOrderCount = commitmentOrderCount;
+        this.stakeBuffer = stakeBuffer;
     }
 
     /**
@@ -98,7 +101,8 @@ public class DataInitializer {
                 .setBidQuoteRange(bidQuoteRange)
                 .setAskQuoteRange(askQuoteRange)
                 .setPricingStepSize(pricingStepSize)
-                .setCommitmentOrderCount(commitmentOrderCount);
+                .setCommitmentOrderCount(commitmentOrderCount)
+                .setStakeBuffer(stakeBuffer);
         appConfigStore.update(config);
         updateState();
         initialized = true;

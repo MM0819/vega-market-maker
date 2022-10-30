@@ -11,8 +11,8 @@ import com.vega.protocol.service.AccountService;
 import com.vega.protocol.service.MarketService;
 import com.vega.protocol.service.PositionService;
 import com.vega.protocol.store.AppConfigStore;
-import com.vega.protocol.store.vega.LiquidityCommitmentStore;
 import com.vega.protocol.store.ReferencePriceStore;
+import com.vega.protocol.store.vega.LiquidityCommitmentStore;
 import com.vega.protocol.utils.PricingUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -97,11 +97,15 @@ public class UpdateLiquidityCommitmentTask extends TradingTask {
         BigDecimal midPrice = referencePrice.getMidPrice();
         BigDecimal bidPoolSize = balance.multiply(BigDecimal.valueOf(0.5));
         BigDecimal askPoolSize = bidPoolSize.divide(midPrice, market.getDecimalPlaces(), RoundingMode.HALF_DOWN);
-        log.info("Exposure = {}\nBid pool size = {}\nAsk pool size = {}", exposure, bidPoolSize, askPoolSize);
-        // TODO - commitment amount should be calculated such that it brings the market out of liquidity
-        //  monitoring auctions, where it is both safe and possible to do so
         BigDecimal commitmentAmount = bidPoolSize.multiply(BigDecimal.valueOf(config.getCommitmentBalanceRatio()));
-                //.multiply(BigDecimal.valueOf(0.1));
+        BigDecimal requiredStake = (market.getTargetStake().multiply(BigDecimal.valueOf(1 + config.getStakeBuffer())))
+                .subtract(market.getSuppliedStake());
+        log.info("Exposure = {}\nBid pool size = {}\nAsk pool size = {}; Required stake = {}",
+                exposure, bidPoolSize, askPoolSize, requiredStake);
+        if(requiredStake.doubleValue() > commitmentAmount.doubleValue() &&
+                requiredStake.doubleValue() < bidPoolSize.doubleValue()) {
+            commitmentAmount = requiredStake;
+        }
         List<LiquidityCommitmentOffset> bids = new ArrayList<>();
         List<LiquidityCommitmentOffset> asks = new ArrayList<>();
         double scalingFactor = exposure.abs().divide(askPoolSize, 8, RoundingMode.HALF_DOWN).doubleValue();
