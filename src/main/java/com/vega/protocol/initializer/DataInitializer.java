@@ -20,6 +20,7 @@ public class DataInitializer {
     private final AccountStore accountStore;
     private final LiquidityCommitmentStore liquidityCommitmentStore;
     private final AssetStore assetStore;
+    private final NetworkParameterStore networkParameterStore;
     private final VegaApiClient vegaApiClient;
     private final String partyId;
     private final Double fee;
@@ -46,6 +47,7 @@ public class DataInitializer {
                            AccountStore accountStore,
                            LiquidityCommitmentStore liquidityCommitmentStore,
                            AssetStore assetStore,
+                           NetworkParameterStore networkParameterStore,
                            VegaApiClient vegaApiClient,
                            @Value("${vega.party.id}") String partyId,
                            @Value("${fee}") Double fee,
@@ -68,6 +70,7 @@ public class DataInitializer {
         this.accountStore = accountStore;
         this.liquidityCommitmentStore = liquidityCommitmentStore;
         this.assetStore = assetStore;
+        this.networkParameterStore = networkParameterStore;
         this.vegaApiClient = vegaApiClient;
         this.partyId = partyId;
         this.fee = fee;
@@ -109,6 +112,7 @@ public class DataInitializer {
     }
 
     private void updateState() {
+        vegaApiClient.getNetworkParameters().forEach(networkParameterStore::update);
         vegaApiClient.getAssets().forEach(assetStore::update);
         vegaApiClient.getMarkets().forEach(marketStore::update);
         vegaApiClient.getAccounts(partyId).forEach(accountStore::update);
@@ -116,5 +120,4 @@ public class DataInitializer {
         vegaApiClient.getOpenOrders(partyId).forEach(orderStore::update);
         vegaApiClient.getLiquidityCommitments(partyId).forEach(liquidityCommitmentStore::update);
     }
-
 }

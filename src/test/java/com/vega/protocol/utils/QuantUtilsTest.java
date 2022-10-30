@@ -19,7 +19,7 @@ public class QuantUtilsTest {
     @Test
     public void testGetProbabilityOfTrading() {
         double mu = 0;
-        double tau = 1.0 / 365.25 / 24.0;
+        double tau = 1.0 / 365.25;
         double s = 100;
         double sigma = 1.2;
         double lowerBound = 95.0;
@@ -27,7 +27,7 @@ public class QuantUtilsTest {
         MarketSide side = MarketSide.BUY;
         double price = 99.999;
         double result = quantUtils.getProbabilityOfTrading(mu, sigma, s, tau, lowerBound, upperBound, price, side);
-        Assertions.assertEquals(result, 0.9993806063122513);
+        Assertions.assertEquals(result, 0.9997857769969329);
         for(double i=0; i<=50; i++) {
             price = upperBound * (1 - (i * 0.001));
             result = quantUtils.getProbabilityOfTrading(mu, sigma, s, tau, lowerBound, upperBound, price, side);

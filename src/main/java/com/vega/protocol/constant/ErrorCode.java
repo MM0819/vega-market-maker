@@ -15,4 +15,5 @@ public class ErrorCode {
     public static final String GET_VEGA_TOKEN_FAILED = "Could not get Vega token.";
     public static final String PRICING_STEP_SIZE_MANDATORY = "Mandatory field: 'pricingStepSize'";
     public static final String ASSET_NOT_FOUND = "Asset not found.";
+    public static final String NETWORK_PARAMETER_NOT_FOUND = "Network parameter not found.";
 }

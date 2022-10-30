@@ -11,6 +11,8 @@ import com.vega.protocol.store.vega.AssetStore;
 import com.vega.protocol.store.vega.MarketStore;
 import com.vega.protocol.utils.DecimalUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.BooleanUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
@@ -56,10 +58,41 @@ public class VegaApiClient {
     /**
      * Get the network parameters
      *
-     * @return {@link Map<String, String>}
+     * @return {@link List<NetworkParameter>}
      */
-    public Map<String, String> getNetworkParameters() {
-        return new HashMap<>(); // TODO - fetch from API
+    public List<NetworkParameter> getNetworkParameters() {
+        try {
+            HttpResponse<JsonNode> response = Unirest.get(
+                            String.format("%s/network/parameters", nodeUrl))
+                    .asJson();
+            if(response.getStatus() != 200) {
+                log.warn("Status code = {}", response.getStatus());
+                return Collections.emptyList();
+            }
+            JSONArray networkParametersArray = response.getBody().getObject()
+                    .getJSONObject("networkParameters").getJSONArray("edges");
+            List<NetworkParameter> networkParameters = new ArrayList<>();
+            for(int i=0; i<networkParametersArray.length(); i++) {
+                JSONObject networkParameterObject = networkParametersArray.getJSONObject(i).getJSONObject("node");
+                String key = networkParameterObject.getString("key");
+                String value = networkParameterObject.getString("value");
+                DataType dataType = DataType.TEXT;
+                if(StringUtils.isNumeric(value)) {
+                    dataType = DataType.NUMBER;
+                } else if(BooleanUtils.toBooleanObject(value) != null) {
+                    dataType = DataType.BOOLEAN;
+                }
+                NetworkParameter parameter = new NetworkParameter()
+                        .setId(key)
+                        .setValue(value)
+                        .setType(dataType);
+                networkParameters.add(parameter);
+            }
+            return networkParameters;
+        } catch(Exception e) {
+            log.error(e.getMessage(), e);
+        }
+        return Collections.emptyList();
     }
 
     /**

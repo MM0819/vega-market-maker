@@ -3,7 +3,7 @@ package com.vega.protocol.initializer;
 import com.vega.protocol.api.VegaApiClient;
 import com.vega.protocol.model.Market;
 import com.vega.protocol.model.Order;
-import com.vega.protocol.store.*;
+import com.vega.protocol.store.AppConfigStore;
 import com.vega.protocol.store.vega.*;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -22,6 +22,7 @@ public class DataInitializerTest {
     private AccountStore accountStore;
     private LiquidityCommitmentStore liquidityCommitmentStore;
     private AssetStore assetStore;
+    private NetworkParameterStore networkParameterStore;
     private VegaApiClient vegaApiClient;
     private final String PARTY_ID = "1";
     private final Double FEE = 0.001;
@@ -48,10 +49,11 @@ public class DataInitializerTest {
         vegaApiClient = Mockito.mock(VegaApiClient.class);
         liquidityCommitmentStore = Mockito.mock(LiquidityCommitmentStore.class);
         assetStore = Mockito.mock(AssetStore.class);
+        networkParameterStore = Mockito.mock(NetworkParameterStore.class);
         dataInitializer = new DataInitializer(orderStore, marketStore, positionStore, appConfigStore, accountStore,
-                liquidityCommitmentStore, assetStore, vegaApiClient, PARTY_ID, FEE, MIN_SPREAD, MAX_SPREAD,
-                COMMITMENT_SPREAD, ORDER_COUNT, BID_SIZE_FACTOR, ASK_SIZE_FACTOR, COMMITMENT_FACTOR, BID_QUOTE_RANGE,
-                ASK_QUOTE_RANGE, PRICING_SIZE_STEP, COMMITMENT_ORDER_COUNT, STAKE_BUFFER);
+                liquidityCommitmentStore, assetStore, networkParameterStore, vegaApiClient, PARTY_ID, FEE, MIN_SPREAD,
+                MAX_SPREAD, COMMITMENT_SPREAD, ORDER_COUNT, BID_SIZE_FACTOR, ASK_SIZE_FACTOR, COMMITMENT_FACTOR,
+                BID_QUOTE_RANGE, ASK_QUOTE_RANGE, PRICING_SIZE_STEP, COMMITMENT_ORDER_COUNT, STAKE_BUFFER);
     }
 
     @Test

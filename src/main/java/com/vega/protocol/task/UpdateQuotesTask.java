@@ -12,6 +12,7 @@ import com.vega.protocol.service.PositionService;
 import com.vega.protocol.store.AppConfigStore;
 import com.vega.protocol.store.ReferencePriceStore;
 import com.vega.protocol.store.vega.LiquidityCommitmentStore;
+import com.vega.protocol.store.vega.NetworkParameterStore;
 import com.vega.protocol.store.vega.OrderStore;
 import com.vega.protocol.utils.PricingUtils;
 import com.vega.protocol.utils.QuantUtils;
@@ -28,10 +29,15 @@ import java.util.*;
 @Component
 public class UpdateQuotesTask extends TradingTask {
 
+    private static final String TAU_SCALING_PARAM = "market.liquidity.probabilityOfTrading.tau.scaling";
+    private static final String MAX_BATCH_SIZE_PARAM = "spam.protection.max.batchSize";
+    private static final String STAKE_TO_SISKAS_PARAM = "market.liquidity.stakeToCcySiskas";
+
     private final AppConfigStore appConfigStore;
     private final ReferencePriceStore referencePriceStore;
     private final OrderStore orderStore;
     private final LiquidityCommitmentStore liquidityCommitmentStore;
+    private final NetworkParameterStore networkParameterStore;
     private final VegaApiClient vegaApiClient;
     private final String marketId;
     private final MarketService marketService;
@@ -49,6 +55,7 @@ public class UpdateQuotesTask extends TradingTask {
                             AppConfigStore appConfigStore,
                             OrderStore orderStore,
                             LiquidityCommitmentStore liquidityCommitmentStore,
+                            NetworkParameterStore networkParameterStore,
                             VegaApiClient vegaApiClient,
                             MarketService marketService,
                             AccountService accountService,
@@ -64,6 +71,7 @@ public class UpdateQuotesTask extends TradingTask {
         this.referencePriceStore = referencePriceStore;
         this.orderStore = orderStore;
         this.liquidityCommitmentStore = liquidityCommitmentStore;
+        this.networkParameterStore = networkParameterStore;
         this.vegaApiClient = vegaApiClient;
         this.marketService = marketService;
         this.accountService = accountService;
@@ -178,7 +186,9 @@ public class UpdateQuotesTask extends TradingTask {
                 .sorted(Comparator.comparing(Order::getPrice)).toList();
         if(shouldUpdateQuotes(currentBids, currentAsks, bestBid, bestAsk, config)) {
             List<String> cancellations = currentOrders.stream().map(Order::getId).toList();
-            int maxBatchSize = 100; // TODO this should come from network parameters
+            NetworkParameter maxBatchSizeParam = networkParameterStore.getById(MAX_BATCH_SIZE_PARAM)
+                    .orElseThrow(() -> new TradingException(ErrorCode.NETWORK_PARAMETER_NOT_FOUND));
+            int maxBatchSize = Integer.parseInt(maxBatchSizeParam.getValue());
             if ((cancellations.size() + submissions.size()) <= maxBatchSize) {
                 vegaApiClient.submitBulkInstruction(cancellations, submissions, market, partyId, 0);
             } else {
@@ -236,9 +246,11 @@ public class UpdateQuotesTask extends TradingTask {
     private BigDecimal getEffectiveVolume(
             final List<Order> orders
     ) {
+        NetworkParameter tauScalingParam = networkParameterStore.getById(TAU_SCALING_PARAM)
+                .orElseThrow(() -> new TradingException(ErrorCode.NETWORK_PARAMETER_NOT_FOUND));
         return orders.stream().map(o -> {
             double mu = o.getMarket().getMu();
-            double tau = o.getMarket().getTau();
+            double tau = o.getMarket().getTau() * Double.parseDouble(tauScalingParam.getValue());
             double sigma = o.getMarket().getSigma();
             double s = 100.0; // TODO - what is this value??
             double minValidPrice = o.getMarket().getMinValidPrice().doubleValue();
@@ -263,8 +275,11 @@ public class UpdateQuotesTask extends TradingTask {
             final BigDecimal commitmentAmount,
             final AppConfig config
     ) {
+        NetworkParameter stakeToSiskasParam = networkParameterStore.getById(STAKE_TO_SISKAS_PARAM)
+                .orElseThrow(() -> new TradingException(ErrorCode.NETWORK_PARAMETER_NOT_FOUND));
         BigDecimal effectiveVolume = getEffectiveVolume(orders);
-        BigDecimal targetVolume = commitmentAmount.multiply(BigDecimal.valueOf(1 + config.getStakeBuffer()));
+        BigDecimal targetVolume = (commitmentAmount.multiply(BigDecimal.valueOf(1 + config.getStakeBuffer())))
+                .multiply(BigDecimal.valueOf(Double.parseDouble(stakeToSiskasParam.getValue())));
         BigDecimal volumeRatio = effectiveVolume.divide(targetVolume, 8, RoundingMode.HALF_DOWN);
         if(volumeRatio.doubleValue() < 0) {
             BigDecimal modifier = BigDecimal.ONE.divide(volumeRatio, 8, RoundingMode.HALF_DOWN);

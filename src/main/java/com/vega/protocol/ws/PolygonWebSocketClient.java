@@ -26,7 +26,7 @@ public class PolygonWebSocketClient extends WebSocketClient {
      */
     @Override
     public void onOpen(ServerHandshake handshake) {
-
+        // TODO - implement streaming here
     }
 
     /**
