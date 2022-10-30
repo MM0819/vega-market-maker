@@ -17,7 +17,7 @@ public class QuantUtils {
             final MarketSide side
     ) {
         double stdev = sigma * Math.sqrt(tau);
-        double m = Math.log(s) + (mu-0.5*sigma*sigma)*tau;
+        double m = Math.log(s) + (mu - 0.5 * sigma * sigma) * tau;
         double min = 0.0;
         double max = 1.0;
         double z = 1.0;
@@ -36,6 +36,6 @@ public class QuantUtils {
     }
 
     private double cdf(double m, double stdev, double x) {
-        return 0.5 * Erf.erfc(-(Math.log(x)-m)/(Math.sqrt(2.0)*stdev));
+        return 0.5 * Erf.erfc(-(Math.log(x) - m) / (Math.sqrt(2.0) * stdev));
     }
 }
