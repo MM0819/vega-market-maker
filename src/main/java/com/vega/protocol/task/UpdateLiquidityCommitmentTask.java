@@ -98,6 +98,8 @@ public class UpdateLiquidityCommitmentTask extends TradingTask {
         BigDecimal bidPoolSize = balance.multiply(BigDecimal.valueOf(0.5));
         BigDecimal askPoolSize = bidPoolSize.divide(midPrice, market.getDecimalPlaces(), RoundingMode.HALF_DOWN);
         log.info("Exposure = {}\nBid pool size = {}\nAsk pool size = {}", exposure, bidPoolSize, askPoolSize);
+        // TODO - commitment amount should be calculated such that it brings the market out of liquidity
+        //  monitoring auctions, where it is both safe and possible to do so
         BigDecimal commitmentAmount = bidPoolSize.multiply(BigDecimal.valueOf(config.getCommitmentBalanceRatio()));
                 //.multiply(BigDecimal.valueOf(0.1));
         List<LiquidityCommitmentOffset> bids = new ArrayList<>();

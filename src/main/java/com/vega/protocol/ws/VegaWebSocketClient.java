@@ -72,6 +72,14 @@ public class VegaWebSocketClient extends WebSocketClient {
             	marketId
             	marketState
             	marketTradingMode
+            	bestBidPrice
+            	bestOfferPrice
+            	bestBidVolume
+            	bestOfferVolume
+            	markPrice
+            	targetStake
+            	suppliedStake
+            	openInterest
             }
         }
     """;
@@ -419,8 +427,33 @@ public class VegaWebSocketClient extends WebSocketClient {
                         .replace("STATE_", ""));
                 MarketTradingMode tradingMode = MarketTradingMode.valueOf(marketObject.getString("marketTradingMode")
                         .replace("TRADING_MODE_", ""));
-                marketStore.getById(id).ifPresent(market ->
-                        marketStore.update(market.setState(state).setTradingMode(tradingMode)));
+                BigDecimal markPrice = BigDecimal.valueOf(marketObject.getLong("markPrice"));
+                BigDecimal bestBidPrice = BigDecimal.valueOf(marketObject.getLong("bestBidPrice"));
+                BigDecimal bestAskPrice = BigDecimal.valueOf(marketObject.getLong("bestOfferPrice"));
+                BigDecimal bestBidSize = BigDecimal.valueOf(marketObject.getLong("bestBidVolume"));
+                BigDecimal bestAskSize = BigDecimal.valueOf(marketObject.getLong("bestOfferVolume"));
+                BigDecimal targetStake = BigDecimal.valueOf(marketObject.getLong("targetStake"));
+                BigDecimal suppliedStake = BigDecimal.valueOf(marketObject.getLong("suppliedStake"));
+                BigDecimal openInterest = BigDecimal.valueOf(marketObject.getLong("openInterest"));
+                marketStore.getById(id).ifPresent(market -> {
+                    Asset asset = assetStore.getItems().stream()
+                            .filter(a -> a.getSymbol().equals(market.getSettlementAsset())).findFirst()
+                            .orElseThrow(() -> new TradingException(ErrorCode.ASSET_NOT_FOUND));
+                    int positionDecimals = market.getPositionDecimalPlaces();
+                    int marketDecimals = market.getDecimalPlaces();
+                    int assetDecimals = asset.getDecimalPlaces();
+                    marketStore.update(market
+                            .setState(state)
+                            .setTradingMode(tradingMode)
+                            .setTargetStake(decimalUtils.convertToDecimals(assetDecimals, targetStake))
+                            .setSuppliedStake(decimalUtils.convertToDecimals(assetDecimals, suppliedStake))
+                            .setMarkPrice(decimalUtils.convertToDecimals(marketDecimals, markPrice))
+                            .setBestAskPrice(decimalUtils.convertToDecimals(marketDecimals, bestAskPrice))
+                            .setBestBidPrice(decimalUtils.convertToDecimals(marketDecimals, bestBidPrice))
+                            .setBestAskSize(decimalUtils.convertToDecimals(positionDecimals, bestAskSize))
+                            .setBestBidSize(decimalUtils.convertToDecimals(positionDecimals, bestBidSize))
+                            .setOpenInterest(decimalUtils.convertToDecimals(positionDecimals, openInterest)));
+                });
             } catch(Exception e) {
                 log.info(data.toString());
                 log.error(e.getMessage(), e);
