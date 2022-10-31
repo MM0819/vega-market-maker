@@ -9,7 +9,7 @@ public class QuantUtils {
     public double getProbabilityOfTrading(
             final double mu,
             final double sigma,
-            final double s,
+            final double bestPrice,
             final double tau,
             final double lowerBound,
             final double upperBound,
@@ -17,7 +17,7 @@ public class QuantUtils {
             final MarketSide side
     ) {
         double stdev = sigma * Math.sqrt(tau);
-        double m = Math.log(s) + (mu - 0.5 * sigma * sigma) * tau;
+        double m = Math.log(bestPrice) + (mu - 0.5 * sigma * sigma) * tau;
         double min = 0.0;
         double max = 1.0;
         double z = 1.0;

@@ -9,11 +9,7 @@ import com.vega.protocol.model.*;
 import com.vega.protocol.service.AccountService;
 import com.vega.protocol.service.MarketService;
 import com.vega.protocol.service.PositionService;
-import com.vega.protocol.store.AppConfigStore;
-import com.vega.protocol.store.ReferencePriceStore;
-import com.vega.protocol.store.LiquidityCommitmentStore;
-import com.vega.protocol.store.NetworkParameterStore;
-import com.vega.protocol.store.OrderStore;
+import com.vega.protocol.store.*;
 import com.vega.protocol.utils.PricingUtils;
 import com.vega.protocol.utils.QuantUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -32,6 +28,7 @@ public class UpdateQuotesTask extends TradingTask {
     private static final String TAU_SCALING_PARAM = "market.liquidity.probabilityOfTrading.tau.scaling";
     private static final String MAX_BATCH_SIZE_PARAM = "spam.protection.max.batchSize";
     private static final String STAKE_TO_SISKAS_PARAM = "market.liquidity.stakeToCcySiskas";
+    private static final String MIN_PROB_OF_TRADING_PARAM = "market.liquidity.minimum.probabilityOfTrading.lpOrders";
 
     private final AppConfigStore appConfigStore;
     private final ReferencePriceStore referencePriceStore;
@@ -252,13 +249,17 @@ public class UpdateQuotesTask extends TradingTask {
             double mu = o.getMarket().getMu();
             double tau = o.getMarket().getTau() * Double.parseDouble(tauScalingParam.getValue());
             double sigma = o.getMarket().getSigma();
-            double s = 100.0; // TODO - what is this value??
+            double bestPrice = o.getSide().equals(MarketSide.BUY) ? o.getMarket().getBestBidPrice().doubleValue() :
+                    o.getMarket().getBestAskPrice().doubleValue();
             double minValidPrice = o.getMarket().getMinValidPrice().doubleValue();
             double maxValidPrice = o.getMarket().getMaxValidPrice().doubleValue();
             double price = o.getPrice().doubleValue();
             MarketSide side = o.getSide();
-            double probability = quantUtils.getProbabilityOfTrading(mu, sigma, s, tau,
+            double probability = quantUtils.getProbabilityOfTrading(mu, sigma, bestPrice, tau,
                     minValidPrice, maxValidPrice, price, side);
+            NetworkParameter minProbabilityOfTradingParam = networkParameterStore.getById(MIN_PROB_OF_TRADING_PARAM)
+                    .orElseThrow(() -> new TradingException(ErrorCode.NETWORK_PARAMETER_NOT_FOUND));
+            probability = Math.max(new BigDecimal(minProbabilityOfTradingParam.getValue()).doubleValue(), probability);
             return o.getSize().multiply(o.getPrice()).multiply(BigDecimal.valueOf(probability));
         }).reduce(BigDecimal.ZERO, BigDecimal::add);
     }
