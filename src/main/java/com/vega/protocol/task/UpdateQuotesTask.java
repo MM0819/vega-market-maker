@@ -247,7 +247,7 @@ public class UpdateQuotesTask extends TradingTask {
                 .orElseThrow(() -> new TradingException(ErrorCode.NETWORK_PARAMETER_NOT_FOUND));
         return orders.stream().map(o -> {
             double mu = o.getMarket().getMu();
-            double tau = o.getMarket().getTau() * Double.parseDouble(tauScalingParam.getValue());
+            double tau = o.getMarket().getTau() * new BigDecimal(tauScalingParam.getValue()).doubleValue();
             double sigma = o.getMarket().getSigma();
             double bestPrice = o.getSide().equals(MarketSide.BUY) ? o.getMarket().getBestBidPrice().doubleValue() :
                     o.getMarket().getBestAskPrice().doubleValue();
@@ -280,7 +280,7 @@ public class UpdateQuotesTask extends TradingTask {
                 .orElseThrow(() -> new TradingException(ErrorCode.NETWORK_PARAMETER_NOT_FOUND));
         BigDecimal effectiveVolume = getEffectiveVolume(orders);
         BigDecimal targetVolume = (commitmentAmount.multiply(BigDecimal.valueOf(1 + config.getStakeBuffer())))
-                .multiply(BigDecimal.valueOf(Double.parseDouble(stakeToSiskasParam.getValue())));
+                .multiply(new BigDecimal(stakeToSiskasParam.getValue()));
         BigDecimal volumeRatio = effectiveVolume.divide(targetVolume, 8, RoundingMode.HALF_DOWN);
         if(volumeRatio.doubleValue() < 1) {
             BigDecimal modifier = BigDecimal.ONE.divide(volumeRatio, 8, RoundingMode.HALF_DOWN);
