@@ -5,6 +5,30 @@
         "node": {
           "marketId": "8cc9497287ace959700e4168a025385d6bd9bc7ae028c337cc7db70f5e792dc2",
           "partyId": "f1d3e4338b83e632ac8beb075c9d8d0e2b0a76b2fdd07871c0c90efc82ac9d1f",
+          "openVolume": "1",
+          "realisedPnl": "40299863193278565415469407",
+          "unrealisedPnl": "0",
+          "averageEntryPrice": "8187",
+          "updatedAt": "1666360800059412000"
+        },
+        "cursor": "eyJ2ZWdhX3RpbWUiOiIyMDIyLTEwLTIxVDE0OjAwOjAwLjA1OTQxMloiLCJwYXJ0eV9pZCI6ImYxZDNlNDMzOGI4M2U2MzJhYzhiZWIwNzVjOWQ4ZDBlMmIwYTc2YjJmZGQwNzg3MWMwYzkwZWZjODJhYzlkMWYiLCJtYXJrZXRfaWQiOiI4Y2M5NDk3Mjg3YWNlOTU5NzAwZTQxNjhhMDI1Mzg1ZDZiZDliYzdhZTAyOGMzMzdjYzdkYjcwZjVlNzkyZGMyIn0="
+      },
+      {
+        "node": {
+          "marketId": "8cc9497287ace959700e4168a025385d6bd9bc7ae028c337cc7db70f5e792dc2",
+          "partyId": "f1d3e4338b83e632ac8beb075c9d8d0e2b0a76b2fdd07871c0c90efc82ac9d1f",
+          "openVolume": "-1",
+          "realisedPnl": "40299863193278565415469407",
+          "unrealisedPnl": "0",
+          "averageEntryPrice": "8187",
+          "updatedAt": "1666360800059412000"
+        },
+        "cursor": "eyJ2ZWdhX3RpbWUiOiIyMDIyLTEwLTIxVDE0OjAwOjAwLjA1OTQxMloiLCJwYXJ0eV9pZCI6ImYxZDNlNDMzOGI4M2U2MzJhYzhiZWIwNzVjOWQ4ZDBlMmIwYTc2YjJmZGQwNzg3MWMwYzkwZWZjODJhYzlkMWYiLCJtYXJrZXRfaWQiOiI4Y2M5NDk3Mjg3YWNlOTU5NzAwZTQxNjhhMDI1Mzg1ZDZiZDliYzdhZTAyOGMzMzdjYzdkYjcwZjVlNzkyZGMyIn0="
+      },
+      {
+        "node": {
+          "marketId": "8cc9497287ace959700e4168a025385d6bd9bc7ae028c337cc7db70f5e792dc2",
+          "partyId": "f1d3e4338b83e632ac8beb075c9d8d0e2b0a76b2fdd07871c0c90efc82ac9d1f",
           "openVolume": "0",
           "realisedPnl": "40299863193278565415469407",
           "unrealisedPnl": "0",

@@ -42,8 +42,7 @@
           "updatedAt": "1666204736739002000",
           "version": "1",
           "batchId": "13",
-          "peggedOrder": null,
-          "liquidityProvisionId": ""
+          "peggedOrder": null
         },
         "cursor": "eyJ2ZWdhVGltZSI6IjIwMjItMTAtMTlUMTg6Mzg6NTYuNzM5MDAyWiIsInNlcU51bSI6OTQzfQ=="
       },
@@ -66,7 +65,7 @@
           "version": "1",
           "batchId": "13",
           "peggedOrder": null,
-          "liquidityProvisionId": ""
+          "liquidityProvisionId": "1"
         },
         "cursor": "eyJ2ZWdhVGltZSI6IjIwMjItMTAtMTlUMTg6MjQ6MjEuOTExMTQ5WiIsInNlcU51bSI6MzA4M30="
       }

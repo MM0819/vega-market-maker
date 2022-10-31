@@ -123,19 +123,21 @@ public class VegaApiClientTest {
     private void mockGetRequest(
             final String path,
             final MockedStatic<Unirest> mockStatic,
-            final JSONObject jsonResponse
+            final JSONObject jsonResponse,
+            final int statusCode
     ) throws Exception {
         GetRequest request = Mockito.mock(GetRequest.class);
         HttpResponse<JsonNode> response = Mockito.mock(HttpResponse.class);
         Mockito.when(request.asJson()).thenReturn(response);
         Mockito.when(response.getBody()).thenReturn(new JsonNode(jsonResponse.toString()));
-        Mockito.when(response.getStatus()).thenReturn(200);
+        Mockito.when(response.getStatus()).thenReturn(statusCode);
         mockStatic.when(() -> Unirest.get(String.format("%s%s", NODE_URL, path))).thenReturn(request);
     }
 
     private void getAccounts(
             final Optional<Asset> asset,
-            final int expectedAccounts
+            final int expectedAccounts,
+            final int statusCode
     ) {
         Mockito.when(decimalUtils.convertFromDecimals(Mockito.anyInt(), Mockito.any(BigDecimal.class)))
                 .thenReturn(BigDecimal.ONE);
@@ -148,7 +150,7 @@ public class VegaApiClientTest {
             try(InputStream is = getClass().getClassLoader().getResourceAsStream("vega-accounts-rest.json")) {
                 String accountsJson = IOUtils.toString(Objects.requireNonNull(is), StandardCharsets.UTF_8);
                 mockGetToken(mockStatic, tokenJson());
-                mockGetRequest(String.format("/accounts?filter.partyIds=%s", PARTY_ID), mockStatic, new JSONObject(accountsJson));
+                mockGetRequest(String.format("/accounts?filter.partyIds=%s", PARTY_ID), mockStatic, new JSONObject(accountsJson), statusCode);
                 List<Account> accounts = vegaApiClient.getAccounts(PARTY_ID);
                 Assertions.assertEquals(expectedAccounts, accounts.size());
             } catch (Exception e) {
@@ -161,14 +163,15 @@ public class VegaApiClientTest {
 
     private void getPositions(
             final Optional<Market> market,
-            final int expectedPositions
+            final int expectedPositions,
+            final int statusCode
     ) {
         Mockito.when(marketStore.getById(Mockito.any())).thenReturn(market);
         try(MockedStatic<Unirest> mockStatic = Mockito.mockStatic(Unirest.class)) {
             try(InputStream is = getClass().getClassLoader().getResourceAsStream("vega-positions-rest.json")) {
                 String marketsJson = IOUtils.toString(Objects.requireNonNull(is), StandardCharsets.UTF_8);
                 mockGetToken(mockStatic, tokenJson());
-                mockGetRequest(String.format("/positions?partyId=%s", PARTY_ID), mockStatic, new JSONObject(marketsJson));
+                mockGetRequest(String.format("/positions?partyId=%s", PARTY_ID), mockStatic, new JSONObject(marketsJson), statusCode);
                 List<Position> positions = vegaApiClient.getPositions(PARTY_ID);
                 Assertions.assertEquals(expectedPositions, positions.size());
             } catch (Exception e) {
@@ -181,14 +184,15 @@ public class VegaApiClientTest {
 
     private void getOpenOrders(
             final Optional<Market> market,
-            final int expectedOrders
+            final int expectedOrders,
+            final int statusCode
     ) {
         Mockito.when(marketStore.getById(Mockito.any())).thenReturn(market);
         try(MockedStatic<Unirest> mockStatic = Mockito.mockStatic(Unirest.class)) {
             try(InputStream is = getClass().getClassLoader().getResourceAsStream("vega-orders-rest.json")) {
                 String marketsJson = IOUtils.toString(Objects.requireNonNull(is), StandardCharsets.UTF_8);
                 mockGetToken(mockStatic, tokenJson());
-                mockGetRequest(String.format("/orders?partyId=%s&liveOnly=true", PARTY_ID), mockStatic, new JSONObject(marketsJson));
+                mockGetRequest(String.format("/orders?partyId=%s&liveOnly=true", PARTY_ID), mockStatic, new JSONObject(marketsJson), statusCode);
                 List<Order> orders = vegaApiClient.getOpenOrders(PARTY_ID);
                 Assertions.assertEquals(expectedOrders, orders.size());
             } catch (Exception e) {
@@ -201,14 +205,15 @@ public class VegaApiClientTest {
 
     private void getMarkets(
             final Optional<Asset> asset,
-            final int count
+            final int count,
+            final int statusCode
     ) {
         Mockito.when(assetStore.getById(Mockito.any())).thenReturn(asset);
         try(MockedStatic<Unirest> mockStatic = Mockito.mockStatic(Unirest.class)) {
             try(InputStream is = getClass().getClassLoader().getResourceAsStream("vega-markets-rest.json")) {
                 String marketsJson = IOUtils.toString(Objects.requireNonNull(is), StandardCharsets.UTF_8);
                 mockGetToken(mockStatic, tokenJson());
-                mockGetRequest("/markets", mockStatic, new JSONObject(marketsJson));
+                mockGetRequest("/markets", mockStatic, new JSONObject(marketsJson), statusCode);
                 List<Market> markets = vegaApiClient.getMarkets();
                 Assertions.assertEquals(count, markets.size());
             } catch (Exception e) {
@@ -221,19 +226,20 @@ public class VegaApiClientTest {
 
     private void getLiquidityCommitment(
             final Optional<Market> market,
+            final Asset asset,
             final boolean isPresent,
-            final int idx
+            final int idx,
+            final int statusCode
     ) {
         Mockito.when(marketStore.getById(Mockito.any())).thenReturn(market);
-        Mockito.when(assetStore.getItems()).thenReturn(Collections.singletonList(new Asset().setSymbol("USDT")
-                .setDecimalPlaces(1).setId("72f051ea66686ae004086f1ad086866f720f25896319abf3427cae101a58d985")));
+        Mockito.when(assetStore.getItems()).thenReturn(Collections.singletonList(asset));
         try(MockedStatic<Unirest> mockStatic = Mockito.mockStatic(Unirest.class)) {
             try(InputStream is = getClass().getClassLoader()
                     .getResourceAsStream(String.format("vega-liquidity-provisions-rest-%s.json", idx))) {
                 String marketsJson = IOUtils.toString(Objects.requireNonNull(is), StandardCharsets.UTF_8);
                 mockGetToken(mockStatic, tokenJson());
                 mockGetRequest(String.format("/liquidity/provisions?partyId=%s", PARTY_ID),
-                        mockStatic, new JSONObject(marketsJson));
+                        mockStatic, new JSONObject(marketsJson), statusCode);
                 List<LiquidityCommitment> commitments = vegaApiClient.getLiquidityCommitments(PARTY_ID);
                 Assertions.assertEquals(commitments.size(), isPresent ? 1 : 0);
             } catch (Exception e) {
@@ -307,6 +313,11 @@ public class VegaApiClientTest {
             Assertions.fail();
         }
         return Optional.empty();
+    }
+
+    private Asset getAsset() {
+        return new Asset().setSymbol("USDT").setDecimalPlaces(1)
+                .setId("72f051ea66686ae004086f1ad086866f720f25896319abf3427cae101a58d985");
     }
 
     @Test
@@ -393,7 +404,7 @@ public class VegaApiClientTest {
             try(InputStream is = getClass().getClassLoader().getResourceAsStream("vega-assets-rest.json")) {
                 String accountsJson = IOUtils.toString(Objects.requireNonNull(is), StandardCharsets.UTF_8);
                 mockGetToken(mockStatic, tokenJson());
-                mockGetRequest("/assets", mockStatic, new JSONObject(accountsJson));
+                mockGetRequest("/assets", mockStatic, new JSONObject(accountsJson), 200);
                 List<Asset> assets = vegaApiClient.getAssets();
                 Assertions.assertEquals(20, assets.size());
             } catch (Exception e) {
@@ -406,58 +417,88 @@ public class VegaApiClientTest {
 
     @Test
     public void testGetAccounts() {
-        getAccounts(Optional.of(new Asset().setDecimalPlaces(1)), 1);
+        getAccounts(Optional.of(new Asset().setDecimalPlaces(1)), 2, 200);
     }
 
     @Test
     public void testGetAccountsWhenAssetNotfound() {
-        getAccounts(Optional.empty(), 0);
+        getAccounts(Optional.empty(), 0, 200);
+    }
+
+    @Test
+    public void testGetAccountsWithApiError() {
+        getAccounts(Optional.empty(), 0, 500);
     }
 
     @Test
     public void testGetMarkets() {
-        getMarkets(Optional.of(new Asset()), 14);
+        getMarkets(Optional.of(new Asset()), 14, 200);
     }
 
     @Test
     public void testGetMarketsMissingAsset() {
-        getMarkets(Optional.empty(), 0);
+        getMarkets(Optional.empty(), 0, 200);
+    }
+
+    @Test
+    public void testGetMarketsWithApiError() {
+        getMarkets(Optional.empty(), 0, 500);
     }
 
     @Test
     public void testGetPositions() {
-        getPositions(Optional.of(new Market()), 1);
+        getPositions(Optional.of(new Market()), 3, 200);
     }
 
     @Test
     public void testGetPositionsMissingMarket() {
-        getPositions(Optional.empty(), 0);
+        getPositions(Optional.empty(), 0, 200);
+    }
+
+    @Test
+    public void testGetPositionsWithApiError() {
+        getPositions(Optional.empty(), 0, 500);
     }
 
     @Test
     public void testGetLiquidityCommitment() {
-        getLiquidityCommitment(Optional.of(new Market().setSettlementAsset("USDT")), true, 1);
+        getLiquidityCommitment(Optional.of(new Market().setSettlementAsset("USDT")), getAsset(), true, 1, 200);
     }
 
     @Test
     public void testGetLiquidityCommitmentMissingMarket() {
-        getLiquidityCommitment(Optional.empty(), false, 1);
+        getLiquidityCommitment(Optional.empty(), getAsset(), false, 1, 200);
+    }
+
+    @Test
+    public void testGetLiquidityCommitmentMissingAsset() {
+        getLiquidityCommitment(Optional.of(new Market().setSettlementAsset("USDT")),
+                getAsset().setSymbol("BTC"), false, 1, 200);
     }
 
     @Test
     public void testGetLiquidityCommitmentEmptyResponse() {
-        getLiquidityCommitment(Optional.empty(), false, 0);
+        getLiquidityCommitment(Optional.empty(), getAsset(), false, 0, 200);
     }
 
+    @Test
+    public void testGetLiquidityCommitmentWithApiError() {
+        getLiquidityCommitment(Optional.empty(), getAsset(), false, 0, 500);
+    }
 
     @Test
     public void testGetOpenOrders() {
-        getOpenOrders(Optional.of(new Market()), 1);
+        getOpenOrders(Optional.of(new Market()), 1, 200);
     }
 
     @Test
     public void testGetOpenOrdersMissingMarket() {
-        getOpenOrders(Optional.empty(), 0);
+        getOpenOrders(Optional.empty(), 0, 200);
+    }
+
+    @Test
+    public void testGetOpenOrdersWithApiError() {
+        getOpenOrders(Optional.empty(), 0, 500);
     }
 
     @Test
@@ -546,6 +587,7 @@ public class VegaApiClientTest {
     public void testSubmitLiquidityCommitmentWithMissingToken() {
         Mockito.when(decimalUtils.convertFromDecimals(Mockito.anyInt(), Mockito.any(BigDecimal.class)))
                 .thenReturn(BigDecimal.ONE);
+        Mockito.when(assetStore.getItems()).thenReturn(List.of(new Asset().setSymbol("USDT").setDecimalPlaces(1)));
         try(MockedStatic<Unirest> mockStatic = Mockito.mockStatic(Unirest.class)) {
             mockGetToken(mockStatic, new JSONObject());
             Optional<String> txHash = vegaApiClient.submitLiquidityCommitment(
