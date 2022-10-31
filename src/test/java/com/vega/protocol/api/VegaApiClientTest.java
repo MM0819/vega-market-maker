@@ -250,6 +250,25 @@ public class VegaApiClientTest {
         }
     }
 
+    private void getAssets(
+            final int count,
+            final int statusCode
+    ) {
+        try(MockedStatic<Unirest> mockStatic = Mockito.mockStatic(Unirest.class)) {
+            try(InputStream is = getClass().getClassLoader().getResourceAsStream("vega-assets-rest.json")) {
+                String accountsJson = IOUtils.toString(Objects.requireNonNull(is), StandardCharsets.UTF_8);
+                mockGetToken(mockStatic, tokenJson());
+                mockGetRequest("/assets", mockStatic, new JSONObject(accountsJson), statusCode);
+                List<Asset> assets = vegaApiClient.getAssets();
+                Assertions.assertEquals(count, assets.size());
+            } catch (Exception e) {
+                Assertions.fail();
+            }
+        } catch(Exception e) {
+            Assertions.fail();
+        }
+    }
+
     private Optional<String> submitOrder(
             final JSONObject jsonResponse
     ) {
@@ -400,19 +419,12 @@ public class VegaApiClientTest {
 
     @Test
     public void testGetAssets() {
-        try(MockedStatic<Unirest> mockStatic = Mockito.mockStatic(Unirest.class)) {
-            try(InputStream is = getClass().getClassLoader().getResourceAsStream("vega-assets-rest.json")) {
-                String accountsJson = IOUtils.toString(Objects.requireNonNull(is), StandardCharsets.UTF_8);
-                mockGetToken(mockStatic, tokenJson());
-                mockGetRequest("/assets", mockStatic, new JSONObject(accountsJson), 200);
-                List<Asset> assets = vegaApiClient.getAssets();
-                Assertions.assertEquals(20, assets.size());
-            } catch (Exception e) {
-                Assertions.fail();
-            }
-        } catch(Exception e) {
-            Assertions.fail();
-        }
+        getAssets(20, 200);
+    }
+
+    @Test
+    public void testGetAssetsWithApiError() {
+        getAssets(0, 500);
     }
 
     @Test
