@@ -133,9 +133,9 @@ public class VegaApiClient {
                 JSONArray sellsArray = liquidityProvisionObject.getJSONArray("sells");
                 JSONArray buysArray = liquidityProvisionObject.getJSONArray("buys");
                 List<LiquidityCommitmentOffset> bids = orderService.parseLiquidityOrders(
-                        buysArray, market.getDecimalPlaces(), false);
+                        buysArray, market.getDecimalPlaces());
                 List<LiquidityCommitmentOffset> asks = orderService.parseLiquidityOrders(
-                        sellsArray, market.getDecimalPlaces(), false);
+                        sellsArray, market.getDecimalPlaces());
                 LiquidityCommitment liquidityCommitment = new LiquidityCommitment()
                         .setCommitmentAmount(decimalUtils.convertToDecimals(
                                 asset.getDecimalPlaces(), commitmentAmount))

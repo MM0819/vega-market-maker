@@ -5,7 +5,7 @@ import org.apache.commons.codec.binary.Hex;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
-public final class CryptoUtils {
+public class CryptoUtils {
 
     public static final String HMAC256 = "HmacSHA256";
     public static final String HMAC512 = "HmacSHA512";

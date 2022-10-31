@@ -396,9 +396,9 @@ public class VegaWebSocketClient extends WebSocketClient {
                 Market market = marketStore.getById(marketId)
                         .orElseThrow(() -> new TradingException(ErrorCode.MARKET_NOT_FOUND));
                 List<LiquidityCommitmentOffset> bids = orderService.parseLiquidityOrders(
-                        buysArray, market.getDecimalPlaces(), true);
+                        buysArray, market.getDecimalPlaces());
                 List<LiquidityCommitmentOffset> asks = orderService.parseLiquidityOrders(
-                        sellsArray, market.getDecimalPlaces(), true);
+                        sellsArray, market.getDecimalPlaces());
                 LiquidityCommitment liquidityCommitment = new LiquidityCommitment()
                         .setCommitmentAmount(commitmentAmount)
                         .setFee(fee)

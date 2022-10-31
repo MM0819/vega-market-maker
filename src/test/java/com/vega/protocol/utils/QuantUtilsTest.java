@@ -17,21 +17,58 @@ public class QuantUtilsTest {
     }
 
     @Test
-    public void testGetProbabilityOfTrading() {
+    public void testGetProbabilityOfTradingForBuyOrder() {
         double mu = 0;
         double tau = 1.0 / 365.25;
-        double s = 100;
+        double bestBid = 100;
         double sigma = 1.2;
         double lowerBound = 95.0;
         double upperBound = 100.0;
         MarketSide side = MarketSide.BUY;
         double price = 99.999;
-        double result = quantUtils.getProbabilityOfTrading(mu, sigma, s, tau, lowerBound, upperBound, price, side);
+        double result = quantUtils.getProbabilityOfTrading(mu, sigma, bestBid, tau, lowerBound, upperBound, price, side);
         Assertions.assertEquals(result, 0.9997857769969329);
-        for(double i=0; i<=50; i++) {
-            price = upperBound * (1 - (i * 0.001));
-            result = quantUtils.getProbabilityOfTrading(mu, sigma, s, tau, lowerBound, upperBound, price, side);
-            log.info("{} = {}", Math.round(price * 1000.0) / 1000.0, Math.round(result * 1000.0) / 1000.0);
-        }
+    }
+
+    @Test
+    public void testGetProbabilityOfTradingForSellOrder() {
+        double mu = 0;
+        double tau = 1.0 / 365.25;
+        double bestAsk = 95;
+        double sigma = 1.2;
+        double lowerBound = 95.0;
+        double upperBound = 100.0;
+        MarketSide side = MarketSide.SELL;
+        double price = 95.001;
+        double result = quantUtils.getProbabilityOfTrading(mu, sigma, bestAsk, tau, lowerBound, upperBound, price, side);
+        Assertions.assertEquals(result, 0.9997689694868312);
+    }
+
+    @Test
+    public void testGetProbabilityOfTradingAboveUpperBound() {
+        double mu = 0;
+        double tau = 1.0 / 365.25;
+        double bestAsk = 95;
+        double sigma = 1.2;
+        double lowerBound = 95.0;
+        double upperBound = 100.0;
+        MarketSide side = MarketSide.SELL;
+        double price = 101;
+        double result = quantUtils.getProbabilityOfTrading(mu, sigma, bestAsk, tau, lowerBound, upperBound, price, side);
+        Assertions.assertEquals(result, 0);
+    }
+
+    @Test
+    public void testGetProbabilityOfTradingBelowLowerBound() {
+        double mu = 0;
+        double tau = 1.0 / 365.25;
+        double bestAsk = 95;
+        double sigma = 1.2;
+        double lowerBound = 95.0;
+        double upperBound = 100.0;
+        MarketSide side = MarketSide.SELL;
+        double price = 94;
+        double result = quantUtils.getProbabilityOfTrading(mu, sigma, bestAsk, tau, lowerBound, upperBound, price, side);
+        Assertions.assertEquals(result, 0);
     }
 }

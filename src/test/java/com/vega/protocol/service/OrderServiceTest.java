@@ -73,7 +73,7 @@ public class OrderServiceTest {
                     .getJSONObject("node")
                     .getJSONArray("buys");
             List<LiquidityCommitmentOffset> liquidityOrders =
-                    orderService.parseLiquidityOrders(ordersArray, 5, false);
+                    orderService.parseLiquidityOrders(ordersArray, 5);
             Assertions.assertEquals(2, liquidityOrders.size());
         } catch (Exception e) {
             log.error(e.getMessage(), e);

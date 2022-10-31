@@ -86,7 +86,6 @@ public class UpdateLiquidityCommitmentTaskTest {
                 new ReferencePrice().setBidPrice(BigDecimal.valueOf(19999))
                         .setAskPrice(BigDecimal.valueOf(20001)).setMidPrice(BigDecimal.valueOf(20000))));
         Mockito.when(liquidityCommitmentStore.getItems()).thenReturn(Collections.emptyList());
-        Mockito.when(pricingUtils.getScalingFactor(Mockito.anyDouble())).thenReturn(1d);
         Mockito.when(pricingUtils.getDistribution(
                 Mockito.anyDouble(), Mockito.anyDouble(), Mockito.anyDouble(), Mockito.any(MarketSide.class)))
                 .thenReturn(List.of(new DistributionStep().setPrice(1d).setSize(1d)));
@@ -128,7 +127,6 @@ public class UpdateLiquidityCommitmentTaskTest {
                 .setTargetStake(BigDecimal.ONE).setSuppliedStake(BigDecimal.ONE));
         Mockito.when(accountService.getTotalBalance(USDT)).thenReturn(BigDecimal.valueOf(100000));
         Mockito.when(positionService.getExposure(MARKET_ID)).thenReturn(BigDecimal.valueOf(1));
-        Mockito.when(pricingUtils.getScalingFactor(Mockito.anyDouble())).thenReturn(0.5);
         Mockito.when(pricingUtils.getDistribution(
                         Mockito.anyDouble(), Mockito.anyDouble(), Mockito.anyDouble(), Mockito.any(MarketSide.class)))
                 .thenReturn(List.of(new DistributionStep().setPrice(1d).setSize(1d)));
@@ -151,7 +149,6 @@ public class UpdateLiquidityCommitmentTaskTest {
                 .setTargetStake(BigDecimal.ONE).setSuppliedStake(BigDecimal.ONE));
         Mockito.when(accountService.getTotalBalance(USDT)).thenReturn(BigDecimal.valueOf(100000));
         Mockito.when(positionService.getExposure(MARKET_ID)).thenReturn(BigDecimal.valueOf(-1));
-        Mockito.when(pricingUtils.getScalingFactor(Mockito.anyDouble())).thenReturn(0.5);
         Mockito.when(pricingUtils.getDistribution(
                         Mockito.anyDouble(), Mockito.anyDouble(), Mockito.anyDouble(), Mockito.any(MarketSide.class)))
                 .thenReturn(List.of(new DistributionStep().setPrice(1d).setSize(1d)));

@@ -59,17 +59,4 @@ public class PricingUtils {
         distribution.forEach(d -> d.setSize(d.getSize() * modifier));
         return distribution;
     }
-
-    /**
-     * Get the scaling factor, used to push orders out from the mid-price
-     *
-     * @param openVolumeRatio the % of total collateral allocated to our open volume
-     *
-     * @return the scaling factor (a number between 0 and 1)
-     */
-    public double getScalingFactor(
-            final double openVolumeRatio
-    ) {
-        return Math.max(0, 1 - Math.abs(openVolumeRatio));
-    }
 }

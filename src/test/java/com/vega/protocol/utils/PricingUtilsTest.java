@@ -1,6 +1,8 @@
 package com.vega.protocol.utils;
 
+import com.vega.protocol.constant.ErrorCode;
 import com.vega.protocol.constant.MarketSide;
+import com.vega.protocol.exception.TradingException;
 import com.vega.protocol.model.AppConfig;
 import com.vega.protocol.model.DistributionStep;
 import com.vega.protocol.store.AppConfigStore;
@@ -61,14 +63,13 @@ public class PricingUtilsTest {
     }
 
     @Test
-    public void testGetScalingFactor() {
-        double scalingFactor = pricingUtils.getScalingFactor(0);
-        Assertions.assertEquals(scalingFactor, 1.0);
-    }
-
-    @Test
-    public void testGetScalingFactorWithOpenVolume() {
-        double scalingFactor = pricingUtils.getScalingFactor(0.5);
-        Assertions.assertEquals(scalingFactor, 0.5);
+    public void testGetDistributionWithMissingConfig() {
+        Mockito.when(appConfigStore.get()).thenReturn(Optional.empty());
+        try {
+            pricingUtils.getDistribution(100.0, 2000.0, 0.02, MarketSide.SELL);
+            Assertions.fail();
+        } catch (TradingException e) {
+            Assertions.assertEquals(e.getMessage(), ErrorCode.APP_CONFIG_NOT_FOUND);
+        }
     }
 }

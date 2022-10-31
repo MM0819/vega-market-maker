@@ -133,7 +133,6 @@ public class UpdateQuotesTaskTest {
             askDistribution.add(new DistributionStep().setPrice(4d).setSize(1d));
         }
         Mockito.when(orderStore.getItems()).thenReturn(currentOrders);
-        Mockito.when(pricingUtils.getScalingFactor(Mockito.anyDouble())).thenReturn(1d);
         if(exposure.doubleValue() > 0) {
             Mockito.when(pricingUtils.getDistribution(19999d, 0.1d, 0.05d, MarketSide.BUY))
                     .thenReturn(bidDistribution);

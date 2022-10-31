@@ -45,22 +45,15 @@ public class OrderService {
      */
     public List<LiquidityCommitmentOffset> parseLiquidityOrders(
             final JSONArray ordersArray,
-            final int decimalPlaces,
-            final boolean useRegex
+            final int decimalPlaces
     ) throws JSONException {
         List<LiquidityCommitmentOffset> liquidityOrders = new ArrayList<>();
         for(int i=0; i<ordersArray.length(); i++) {
             JSONObject object = ordersArray.getJSONObject(i).getJSONObject("liquidityOrder");
             Integer proportion = object.getInt("proportion");
             BigDecimal offset = BigDecimal.valueOf(object.getDouble("offset"));
-            PeggedReference reference;
-            if(useRegex) {
-                reference = PeggedReference.valueOf(object.getString("reference")
-                        .replaceAll("([a-z])([A-Z])", "$1_$2").toUpperCase());
-            } else {
-                reference = PeggedReference.valueOf(object.getString("reference")
+            PeggedReference reference = PeggedReference.valueOf(object.getString("reference")
                         .replace("PEGGED_REFERENCE_", ""));
-            }
             LiquidityCommitmentOffset bid = new LiquidityCommitmentOffset()
                     .setOffset(decimalUtils.convertToDecimals(decimalPlaces, offset))
                     .setProportion(proportion)
