@@ -6,6 +6,7 @@ import com.vega.protocol.constant.ReferencePriceSource;
 import com.vega.protocol.initializer.DataInitializer;
 import com.vega.protocol.initializer.WebSocketInitializer;
 import com.vega.protocol.service.PositionService;
+import com.vega.protocol.store.ReferencePriceStore;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,6 +22,7 @@ public class HedgeExposureTaskTest {
     private PositionService positionService;
     private IGApiClient igApiClient;
     private BinanceApiClient binanceApiClient;
+    private ReferencePriceStore referencePriceStore;
 
     private static final String MARKET_ID = "1";
     private static final String PARTY_ID = "1";
@@ -30,7 +32,7 @@ public class HedgeExposureTaskTest {
     ) {
         return new HedgeExposureTask(dataInitializer, webSocketInitializer, MARKET_ID, enabled,
                 PARTY_ID, ReferencePriceSource.BINANCE, "AAPL.CASH", "BTCUSDT",
-                positionService, igApiClient, binanceApiClient);
+                positionService, igApiClient, binanceApiClient, referencePriceStore);
     }
 
     @BeforeEach
