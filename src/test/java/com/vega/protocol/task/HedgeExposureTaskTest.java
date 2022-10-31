@@ -42,6 +42,7 @@ public class HedgeExposureTaskTest {
         positionService = Mockito.mock(PositionService.class);
         igApiClient = Mockito.mock(IGApiClient.class);
         binanceApiClient = Mockito.mock(BinanceApiClient.class);
+        referencePriceStore = Mockito.mock(ReferencePriceStore.class);
         hedgeExposureTask = getHedgeExposureTask(true);
     }
 
