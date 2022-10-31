@@ -4,7 +4,7 @@ import com.vega.protocol.constant.*;
 import com.vega.protocol.exception.TradingException;
 import com.vega.protocol.model.*;
 import com.vega.protocol.service.OrderService;
-import com.vega.protocol.store.vega.*;
+import com.vega.protocol.store.*;
 import com.vega.protocol.utils.DecimalUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.java_websocket.client.WebSocketClient;

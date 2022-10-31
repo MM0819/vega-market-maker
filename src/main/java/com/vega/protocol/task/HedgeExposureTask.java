@@ -1,13 +1,18 @@
 package com.vega.protocol.task;
 
 import com.vega.protocol.api.BinanceApiClient;
+import com.vega.protocol.api.ExchangeApiClient;
 import com.vega.protocol.api.IGApiClient;
+import com.vega.protocol.constant.ErrorCode;
 import com.vega.protocol.constant.MarketSide;
 import com.vega.protocol.constant.ReferencePriceSource;
+import com.vega.protocol.exception.TradingException;
 import com.vega.protocol.initializer.DataInitializer;
 import com.vega.protocol.initializer.WebSocketInitializer;
 import com.vega.protocol.model.Position;
+import com.vega.protocol.model.ReferencePrice;
 import com.vega.protocol.service.PositionService;
+import com.vega.protocol.store.ReferencePriceStore;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -26,6 +31,7 @@ public class HedgeExposureTask extends TradingTask {
     private final ReferencePriceSource referencePriceSource;
     private final String referencePriceMarket;
     private final String igMarketEpic;
+    private final ReferencePriceStore referencePriceStore;
 
     public HedgeExposureTask(DataInitializer dataInitializer,
                              WebSocketInitializer webSocketInitializer,
@@ -37,7 +43,8 @@ public class HedgeExposureTask extends TradingTask {
                              @Value("${reference.price.market}") String referencePriceMarket,
                              PositionService positionService,
                              IGApiClient igApiClient,
-                             BinanceApiClient binanceApiClient) {
+                             BinanceApiClient binanceApiClient,
+                             ReferencePriceStore referencePriceStore) {
         super(dataInitializer, webSocketInitializer, taskEnabled);
         this.positionService = positionService;
         this.marketId = marketId;
@@ -47,6 +54,7 @@ public class HedgeExposureTask extends TradingTask {
         this.binanceApiClient = binanceApiClient;
         this.referencePriceMarket = referencePriceMarket;
         this.igMarketEpic = igMarketEpic;
+        this.referencePriceStore = referencePriceStore;
     }
 
     @Override
@@ -67,29 +75,41 @@ public class HedgeExposureTask extends TradingTask {
         BigDecimal exposure = positionService.getExposure(marketId);
         if(exposure.doubleValue() != 0) {
             log.info("Hedging exposure...");
-            if(referencePriceSource.equals(ReferencePriceSource.BINANCE)) {
-                BigDecimal hedgeExposure = binanceApiClient.getPosition(referencePriceMarket)
-                        .orElse(new Position().setSize(BigDecimal.ZERO)).getSize();
-                BigDecimal diff = hedgeExposure.subtract(exposure).abs();
-                if(hedgeExposure.abs().doubleValue() < exposure.abs().doubleValue()) {
-                    MarketSide side = exposure.doubleValue() < 0 ? MarketSide.BUY : MarketSide.SELL;
-                    binanceApiClient.submitMarketOrder(referencePriceMarket, diff, side); // TODO - should TWAP this
-                } else if(hedgeExposure.abs().doubleValue() > exposure.abs().doubleValue()) {
-                    MarketSide side = exposure.doubleValue() < 0 ? MarketSide.SELL : MarketSide.BUY;
-                    binanceApiClient.submitMarketOrder(referencePriceMarket, diff, side); // TODO - should TWAP this
-                }
-            } else {
-                BigDecimal hedgeExposure = binanceApiClient.getPosition(igMarketEpic)
-                        .orElse(new Position().setSize(BigDecimal.ZERO)).getSize();
-                BigDecimal diff = hedgeExposure.subtract(exposure).abs();
-                if(hedgeExposure.abs().doubleValue() < exposure.abs().doubleValue()) {
-                    MarketSide side = exposure.doubleValue() < 0 ? MarketSide.BUY : MarketSide.SELL;
-                    igApiClient.submitMarketOrder(igMarketEpic, diff, side); // TODO - should TWAP this
-                } else if(hedgeExposure.abs().doubleValue() > exposure.abs().doubleValue()) {
-                    MarketSide side = exposure.doubleValue() < 0 ? MarketSide.SELL : MarketSide.BUY;
-                    igApiClient.submitMarketOrder(igMarketEpic, diff, side); // TODO - should TWAP this
-                }
+            ExchangeApiClient exchangeApiClient = referencePriceSource.equals(ReferencePriceSource.BINANCE) ?
+                    binanceApiClient : igApiClient;
+            String marketSymbol = referencePriceSource.equals(ReferencePriceSource.BINANCE) ?
+                    referencePriceMarket : igMarketEpic;
+            BigDecimal hedgeExposure = exchangeApiClient.getPosition(marketSymbol)
+                    .orElse(new Position().setSize(BigDecimal.ZERO)).getSize();
+            BigDecimal diff = hedgeExposure.subtract(exposure).abs();
+            if(hedgeExposure.abs().doubleValue() < exposure.abs().doubleValue()) {
+                MarketSide side = exposure.doubleValue() < 0 ? MarketSide.BUY : MarketSide.SELL;
+                executeTwap(side, marketSymbol, diff, exchangeApiClient);
+            } else if(hedgeExposure.abs().doubleValue() > exposure.abs().doubleValue()) {
+                MarketSide side = exposure.doubleValue() < 0 ? MarketSide.SELL : MarketSide.BUY;
+                executeTwap(side, marketSymbol, diff, exchangeApiClient);
             }
+        }
+    }
+
+    private void executeTwap(
+        final MarketSide side,
+        final String symbol,
+        final BigDecimal diff,
+        final ExchangeApiClient exchangeApiClient
+    ) {
+        BigDecimal remainingSize = diff;
+        while(remainingSize.doubleValue() > 0) {
+            ReferencePrice referencePrice = referencePriceStore.get()
+                    .orElseThrow(() -> new TradingException(ErrorCode.REFERENCE_PRICE_NOT_FOUND));
+            BigDecimal size = side.equals(MarketSide.BUY) ? referencePrice.getAskSize() : referencePrice.getBidSize();
+            if(size.doubleValue() > remainingSize.doubleValue()) {
+                size = remainingSize;
+                remainingSize = BigDecimal.ZERO;
+            } else {
+                remainingSize = remainingSize.subtract(size);
+            }
+            exchangeApiClient.submitMarketOrder(symbol, size, side);
         }
     }
 }

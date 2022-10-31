@@ -1,7 +1,6 @@
 package com.vega.protocol.store;
 
 import com.vega.protocol.model.LiquidityCommitment;
-import com.vega.protocol.store.vega.LiquidityCommitmentStore;
 
 public class LiquidityCommitmentStoreTest extends MultipleItemStoreTest<LiquidityCommitment, LiquidityCommitmentStore> {
 

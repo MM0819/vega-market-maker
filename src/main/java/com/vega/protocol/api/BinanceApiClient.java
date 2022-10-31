@@ -10,7 +10,12 @@ import java.util.Optional;
 
 @Slf4j
 @Component
-public class BinanceApiClient {
+public class BinanceApiClient implements ExchangeApiClient {
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public void submitMarketOrder(
             final String symbol,
             final BigDecimal size,
@@ -19,6 +24,10 @@ public class BinanceApiClient {
         // TODO - submit market order
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public Optional<Position> getPosition(
             final String symbol
     ) {

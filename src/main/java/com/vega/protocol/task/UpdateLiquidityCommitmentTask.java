@@ -12,7 +12,7 @@ import com.vega.protocol.service.MarketService;
 import com.vega.protocol.service.PositionService;
 import com.vega.protocol.store.AppConfigStore;
 import com.vega.protocol.store.ReferencePriceStore;
-import com.vega.protocol.store.vega.LiquidityCommitmentStore;
+import com.vega.protocol.store.LiquidityCommitmentStore;
 import com.vega.protocol.utils.PricingUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;

@@ -1,7 +1,7 @@
 package com.vega.protocol.controller;
 
 import com.vega.protocol.model.LiquidityCommitment;
-import com.vega.protocol.store.vega.LiquidityCommitmentStore;
+import com.vega.protocol.store.LiquidityCommitmentStore;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;

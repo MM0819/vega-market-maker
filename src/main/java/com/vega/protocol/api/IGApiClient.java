@@ -10,19 +10,27 @@ import java.util.Optional;
 
 @Slf4j
 @Component
-public class IGApiClient {
+public class IGApiClient implements ExchangeApiClient {
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public void submitMarketOrder(
             final String symbol,
             final BigDecimal size,
             final MarketSide side
     ) {
-        // TODO - submit market order
+
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public Optional<Position> getPosition(
             final String symbol
     ) {
-        return Optional.empty(); // TODO - get position for given market
+        return Optional.empty();
     }
 }

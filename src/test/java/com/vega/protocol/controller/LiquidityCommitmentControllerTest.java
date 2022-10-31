@@ -3,7 +3,7 @@ package com.vega.protocol.controller;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vega.protocol.model.LiquidityCommitment;
-import com.vega.protocol.store.vega.LiquidityCommitmentStore;
+import com.vega.protocol.store.LiquidityCommitmentStore;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

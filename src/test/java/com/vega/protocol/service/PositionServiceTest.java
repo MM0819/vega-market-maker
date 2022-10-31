@@ -3,7 +3,7 @@ package com.vega.protocol.service;
 import com.vega.protocol.constant.MarketSide;
 import com.vega.protocol.model.Market;
 import com.vega.protocol.model.Position;
-import com.vega.protocol.store.vega.PositionStore;
+import com.vega.protocol.store.PositionStore;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

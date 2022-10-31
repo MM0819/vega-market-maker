@@ -1,7 +1,7 @@
 package com.vega.protocol.service;
 
 import com.vega.protocol.model.Account;
-import com.vega.protocol.store.vega.AccountStore;
+import com.vega.protocol.store.AccountStore;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

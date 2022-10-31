@@ -10,7 +10,7 @@ import com.vega.protocol.service.AccountService;
 import com.vega.protocol.service.MarketService;
 import com.vega.protocol.service.PositionService;
 import com.vega.protocol.store.AppConfigStore;
-import com.vega.protocol.store.vega.LiquidityCommitmentStore;
+import com.vega.protocol.store.LiquidityCommitmentStore;
 import com.vega.protocol.store.ReferencePriceStore;
 import com.vega.protocol.utils.PricingUtils;
 import org.junit.jupiter.api.Assertions;
