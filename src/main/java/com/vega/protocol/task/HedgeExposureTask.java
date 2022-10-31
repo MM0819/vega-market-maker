@@ -13,6 +13,7 @@ import com.vega.protocol.model.Position;
 import com.vega.protocol.model.ReferencePrice;
 import com.vega.protocol.service.PositionService;
 import com.vega.protocol.store.ReferencePriceStore;
+import com.vega.protocol.utils.SleepUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -27,34 +28,34 @@ public class HedgeExposureTask extends TradingTask {
     private final IGApiClient igApiClient;
     private final BinanceApiClient binanceApiClient;
     private final String marketId;
-    private final String partyId;
     private final ReferencePriceSource referencePriceSource;
     private final String referencePriceMarket;
     private final String igMarketEpic;
     private final ReferencePriceStore referencePriceStore;
+    private final SleepUtils sleepUtils;
 
     public HedgeExposureTask(DataInitializer dataInitializer,
                              WebSocketInitializer webSocketInitializer,
                              @Value("${vega.market.id}") String marketId,
                              @Value("${hedge.exposure.enabled}") Boolean taskEnabled,
-                             @Value("${naive.flow.party.id}") String partyId,
                              @Value("${reference.price.source}") ReferencePriceSource referencePriceSource,
                              @Value("${ig.market.epic}") String igMarketEpic,
                              @Value("${reference.price.market}") String referencePriceMarket,
                              PositionService positionService,
                              IGApiClient igApiClient,
                              BinanceApiClient binanceApiClient,
-                             ReferencePriceStore referencePriceStore) {
+                             ReferencePriceStore referencePriceStore,
+                             SleepUtils sleepUtils) {
         super(dataInitializer, webSocketInitializer, taskEnabled);
         this.positionService = positionService;
         this.marketId = marketId;
-        this.partyId = partyId;
         this.referencePriceSource = referencePriceSource;
         this.igApiClient = igApiClient;
         this.binanceApiClient = binanceApiClient;
         this.referencePriceMarket = referencePriceMarket;
         this.igMarketEpic = igMarketEpic;
         this.referencePriceStore = referencePriceStore;
+        this.sleepUtils = sleepUtils;
     }
 
     @Override
@@ -92,13 +93,22 @@ public class HedgeExposureTask extends TradingTask {
         }
     }
 
+    /**
+     * Execute a TWAP trade
+     *
+     * @param side {@link MarketSide}
+     * @param symbol the market symbol
+     * @param totalSize the total trade size
+     * @param exchangeApiClient {@link ExchangeApiClient}
+     */
     private void executeTwap(
         final MarketSide side,
         final String symbol,
-        final BigDecimal diff,
+        final BigDecimal totalSize,
         final ExchangeApiClient exchangeApiClient
     ) {
-        BigDecimal remainingSize = diff;
+        log.info("TWAP >> {} {} {}", side, totalSize, symbol);
+        BigDecimal remainingSize = totalSize;
         while(remainingSize.doubleValue() > 0) {
             ReferencePrice referencePrice = referencePriceStore.get()
                     .orElseThrow(() -> new TradingException(ErrorCode.REFERENCE_PRICE_NOT_FOUND));
@@ -110,6 +120,8 @@ public class HedgeExposureTask extends TradingTask {
                 remainingSize = remainingSize.subtract(size);
             }
             exchangeApiClient.submitMarketOrder(symbol, size, side);
+            log.info("TWAP >> Remaining size = {}", remainingSize);
+            sleepUtils.sleep(500L);
         }
     }
 }
