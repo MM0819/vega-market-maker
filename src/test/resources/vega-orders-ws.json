@@ -20,7 +20,8 @@
           "size": "415",
           "remaining": "415",
           "status": "STATUS_ACTIVE",
-          "marketId": "5e6035fe6a6df78c9ec44b333c231e63d357acef0a0620d2c243f5865d1dc0d8"
+          "marketId": "5e6035fe6a6df78c9ec44b333c231e63d357acef0a0620d2c243f5865d1dc0d8",
+          "liquidityProvisionId": ""
         },
         {
           "id": "e13df96d6f6a63c0a53f25994996ca88a1e17acdb6a52ee8706b57a23c3d421f",
@@ -30,7 +31,8 @@
           "size": "415",
           "remaining": "415",
           "status": "STATUS_ACTIVE",
-          "marketId": "5e6035fe6a6df78c9ec44b333c231e63d357acef0a0620d2c243f5865d1dc0d8"
+          "marketId": "5e6035fe6a6df78c9ec44b333c231e63d357acef0a0620d2c243f5865d1dc0d8",
+          "liquidityProvisionId": "5e6035fe6a6df78c9ec44b333c231e63d357acef0a0620d2c243f5865d1dc0ff"
         }
       ]
     }

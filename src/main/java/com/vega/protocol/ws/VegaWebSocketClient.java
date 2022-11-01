@@ -272,12 +272,11 @@ public class VegaWebSocketClient extends WebSocketClient {
                 Asset asset = assetStore.getById(assetId).orElseThrow(() ->
                         new TradingException(ErrorCode.ASSET_NOT_FOUND));
                 int decimals = asset.getDecimalPlaces();
-                JSONObject marketObject = accountObject.optJSONObject("market");
+                String marketId = accountObject.optString("marketId");
                 AccountType type = AccountType.valueOf(accountObject.getString("type")
                         .replace("ACCOUNT_TYPE_", ""));
                 String id = String.format("%s-%s-%s", asset.getSymbol(), partyId, type);
-                if(marketObject != null && !type.equals(AccountType.GENERAL)) {
-                    String marketId = marketObject.getString("id");
+                if(!StringUtils.hasText(marketId) && !type.equals(AccountType.GENERAL)) {
                     id = String.format("%s-%s", id, marketId);
                 }
                 BigDecimal balance = BigDecimal.valueOf(accountObject.getDouble("balance"));
@@ -515,9 +514,8 @@ public class VegaWebSocketClient extends WebSocketClient {
         try {
             array = data.getJSONArray(key);
         } catch(Exception e) {
-            JSONObject obj = data.optJSONObject(key);
-            array = obj != null ? array.put(obj) : null;
+            array.put(data.optJSONObject(key));
         }
-        return array == null ? new JSONArray() : array;
+        return array;
     }
 }

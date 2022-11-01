@@ -1,7 +1,10 @@
 package com.vega.protocol.api;
 
+import com.vega.protocol.constant.MarketSide;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.math.BigDecimal;
 
 public class BinanceApiClientTest {
 
@@ -13,7 +16,12 @@ public class BinanceApiClientTest {
     }
 
     @Test
-    public void test() {
-        // TODO - test Binance API client
+    public void testSubmitMarketORder() {
+        binanceApiClient.submitMarketOrder("BTCUSDT", BigDecimal.ONE, MarketSide.BUY);
+    }
+
+    @Test
+    public void testGetPosition() {
+        binanceApiClient.getPosition("BTCUSDT");
     }
 }

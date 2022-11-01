@@ -17,7 +17,11 @@
           "priceMonitoringBounds": [
             {
               "minValidPrice": "1000000",
-              "maxValidPrice": "1000000"
+              "maxValidPrice": "100000"
+            },
+            {
+              "minValidPrice": "500000",
+              "maxValidPrice": "200000"
             }
           ]
         },

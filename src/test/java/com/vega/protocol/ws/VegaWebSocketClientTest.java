@@ -54,7 +54,10 @@ public class VegaWebSocketClientTest {
             final int count
     ) {
         if(count > 0) {
-            Mockito.when(marketStore.getById(Mockito.any())).thenReturn(Optional.of(new Market().setSettlementAsset("USDT")));
+            Mockito.when(marketStore.getById("c6233d79a53a81b9d9d889c5beb42baaa1e3eb412d19bfd854dfa35309ce4190"))
+                    .thenReturn(Optional.of(new Market().setSettlementAsset("BTC")));
+            Mockito.when(marketStore.getById("7738ae422f8a905a618cb5b113e1267f1d288417361741ed033762f89f64637d"))
+                    .thenReturn(Optional.of(new Market().setSettlementAsset("USDT")));
         }
         Mockito.when(assetStore.getById(Mockito.any())).thenReturn(asset);
         asset.ifPresent(value -> Mockito.when(assetStore.getItems()).thenReturn(List.of(value)));
@@ -62,7 +65,7 @@ public class VegaWebSocketClientTest {
                 .getResourceAsStream(String.format("vega-markets-ws-%s.json", count == 0 ? count + 1 : count))) {
             String marketsJson = IOUtils.toString(Objects.requireNonNull(is), StandardCharsets.UTF_8);
             vegaWebSocketClient.onMessage(marketsJson);
-            Mockito.verify(marketStore, Mockito.times(count)).update(Mockito.any(Market.class));
+            Mockito.verify(marketStore, Mockito.times(count > 1 ? count - 1 : count)).update(Mockito.any(Market.class));
         } catch (Exception e) {
             Assertions.fail();
         }
@@ -124,7 +127,7 @@ public class VegaWebSocketClientTest {
 
     @Test
     public void testHandleAccountsMany() {
-        handleAccounts(3);
+        handleAccounts(4);
     }
 
     @Test
