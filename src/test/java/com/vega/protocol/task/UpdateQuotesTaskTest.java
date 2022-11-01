@@ -154,7 +154,7 @@ public class UpdateQuotesTaskTest {
         }
         Mockito.verify(vegaApiClient, Mockito.times(modifier))
                 .submitBulkInstruction(Mockito.anyList(), Mockito.anyList(),
-                        Mockito.any(Market.class), Mockito.anyString(), Mockito.anyInt());
+                        Mockito.any(Market.class), Mockito.anyString());
     }
 
     @Test

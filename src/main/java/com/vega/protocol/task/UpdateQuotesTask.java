@@ -187,15 +187,15 @@ public class UpdateQuotesTask extends TradingTask {
                     .orElseThrow(() -> new TradingException(ErrorCode.NETWORK_PARAMETER_NOT_FOUND));
             int maxBatchSize = Integer.parseInt(maxBatchSizeParam.getValue());
             if ((cancellations.size() + submissions.size()) <= maxBatchSize) {
-                vegaApiClient.submitBulkInstruction(cancellations, submissions, market, partyId, 0);
+                vegaApiClient.submitBulkInstruction(cancellations, submissions, market, partyId);
             } else {
                 List<List<String>> cancellationBatches = ListUtils.partition(cancellations, maxBatchSize);
                 List<List<Order>> submissionBatches = ListUtils.partition(submissions, maxBatchSize);
                 for (List<Order> batch : submissionBatches) {
-                    vegaApiClient.submitBulkInstruction(Collections.emptyList(), batch, market, partyId, 0);
+                    vegaApiClient.submitBulkInstruction(Collections.emptyList(), batch, market, partyId);
                 }
                 for (List<String> batch : cancellationBatches) {
-                    vegaApiClient.submitBulkInstruction(batch, Collections.emptyList(), market, partyId, 0);
+                    vegaApiClient.submitBulkInstruction(batch, Collections.emptyList(), market, partyId);
                 }
             }
             log.info("Quotes successfully updated!");

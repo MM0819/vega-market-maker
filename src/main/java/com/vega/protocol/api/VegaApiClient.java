@@ -11,7 +11,6 @@ import com.vega.protocol.store.AssetStore;
 import com.vega.protocol.store.MarketStore;
 import com.vega.protocol.utils.DecimalUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -79,8 +78,6 @@ public class VegaApiClient {
                 DataType dataType = DataType.TEXT;
                 if(StringUtils.isNumeric(value)) {
                     dataType = DataType.NUMBER;
-                } else if(BooleanUtils.toBooleanObject(value) != null) {
-                    dataType = DataType.BOOLEAN;
                 }
                 NetworkParameter parameter = new NetworkParameter()
                         .setId(key)
@@ -696,11 +693,29 @@ public class VegaApiClient {
      *
      * @param cancellations {@link List<String>} orderIds
      * @param submissions {@link List<Order>} new orders
-     * @param attempt the attempt count
+     * @param market {@link Market}
+     * @param partyId the public key
      *
      * @return {@link Optional<String>}
      */
     public Optional<String> submitBulkInstruction(
+            final List<String> cancellations,
+            final List<Order> submissions,
+            final Market market,
+            final String partyId) {
+        return submitBulkInstruction(cancellations, submissions, market, partyId, 0);
+    }
+
+    /**
+     * Submit a bulk instruction comprised of multiple cancellations, amendments and submissions
+     *
+     * @param cancellations {@link List<String>} orderIds
+     * @param submissions {@link List<Order>} new orders
+     * @param attempt the attempt count
+     *
+     * @return {@link Optional<String>}
+     */
+    private Optional<String> submitBulkInstruction(
             final List<String> cancellations,
             final List<Order> submissions,
             final Market market,

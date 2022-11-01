@@ -269,6 +269,28 @@ public class VegaApiClientTest {
         }
     }
 
+    private void getNetworkParameters(
+            final int count,
+            final int statusCode
+    ) {
+        try(MockedStatic<Unirest> mockStatic = Mockito.mockStatic(Unirest.class)) {
+            String fileName = count > 0 ? "vega-network-parameters-rest.json" :
+                    "vega-network-parameters-rest-invalid.json";
+            try(InputStream is = getClass().getClassLoader()
+                    .getResourceAsStream(fileName)) {
+                String accountsJson = IOUtils.toString(Objects.requireNonNull(is), StandardCharsets.UTF_8);
+                mockGetToken(mockStatic, tokenJson());
+                mockGetRequest("/network/parameters", mockStatic, new JSONObject(accountsJson), statusCode);
+                List<NetworkParameter> params = vegaApiClient.getNetworkParameters();
+                Assertions.assertEquals(count, params.size());
+            } catch (Exception e) {
+                Assertions.fail();
+            }
+        } catch(Exception e) {
+            Assertions.fail();
+        }
+    }
+
     private Optional<String> submitOrder(
             final JSONObject jsonResponse
     ) {
@@ -279,6 +301,25 @@ public class VegaApiClientTest {
             mockSubmitTransaction(mockStatic, jsonResponse);
             Order order = newOrder();
             return vegaApiClient.submitOrder(order, PARTY_ID);
+        } catch(Exception e) {
+            Assertions.fail();
+        }
+        return Optional.empty();
+    }
+
+    private Optional<String> submitBatchInstruction(
+            final JSONObject jsonResponse
+    ) {
+        Mockito.when(decimalUtils.convertFromDecimals(Mockito.anyInt(), Mockito.any(BigDecimal.class)))
+                .thenReturn(BigDecimal.ONE);
+        try(MockedStatic<Unirest> mockStatic = Mockito.mockStatic(Unirest.class)) {
+            mockGetToken(mockStatic, tokenJson());
+            mockSubmitTransaction(mockStatic, jsonResponse);
+            Order order = newOrder();
+            List<String> cancellations = List.of("12345");
+            List<Order> submissions = List.of(order);
+            return vegaApiClient.submitBulkInstruction(cancellations, submissions,
+                    new Market().setId(MARKET_ID), PARTY_ID);
         } catch(Exception e) {
             Assertions.fail();
         }
@@ -364,6 +405,24 @@ public class VegaApiClientTest {
     }
 
     @Test
+    public void testSubmitBatchInstruction() throws JSONException {
+        Optional<String> txHash = submitBatchInstruction(txHashJson());
+        Assertions.assertTrue(txHash.isPresent());
+    }
+
+    @Test
+    public void testSubmitBatchInstructionWithWalletError() throws JSONException {
+        Optional<String> txHash = submitBatchInstruction(missingBlockJson());
+        Assertions.assertTrue(txHash.isEmpty());
+    }
+
+    @Test
+    public void testSubmitBatchInstructionWithGenericError() throws JSONException {
+        Optional<String> txHash = submitBatchInstruction(errorGenericJson());
+        Assertions.assertTrue(txHash.isEmpty());
+    }
+
+    @Test
     public void testSubmitOrder() throws JSONException {
         Optional<String> txHash = submitOrder(txHashJson());
         Assertions.assertTrue(txHash.isPresent());
@@ -430,6 +489,21 @@ public class VegaApiClientTest {
     @Test
     public void testGetAccounts() {
         getAccounts(Optional.of(new Asset().setDecimalPlaces(1)), 2, 200);
+    }
+
+    @Test
+    public void testGetNetworkParametersWithApiError() {
+        getNetworkParameters(0, 500);
+    }
+
+    @Test
+    public void testGetNetworkParameters() {
+        getNetworkParameters(108, 200);
+    }
+
+    @Test
+    public void testGetNetworkParametersWithException() {
+        getNetworkParameters(0, 200);
     }
 
     @Test
@@ -538,6 +612,18 @@ public class VegaApiClientTest {
         try(MockedStatic<Unirest> mockStatic = Mockito.mockStatic(Unirest.class)) {
             mockGetToken(mockStatic, tokenJson());
             Optional<String> txHash = vegaApiClient.submitOrder(new Order(), PARTY_ID);
+            Assertions.assertTrue(txHash.isEmpty());
+        } catch(Exception e) {
+            Assertions.fail();
+        }
+    }
+
+    @Test
+    public void testSubmitBatchInstructionWithMissingToken() {
+        try(MockedStatic<Unirest> mockStatic = Mockito.mockStatic(Unirest.class)) {
+            mockGetToken(mockStatic, new JSONObject());
+            Optional<String> txHash = vegaApiClient.submitBulkInstruction(Collections.emptyList(),
+                    Collections.emptyList(), new Market().setId(MARKET_ID), PARTY_ID);
             Assertions.assertTrue(txHash.isEmpty());
         } catch(Exception e) {
             Assertions.fail();

@@ -1,0 +1,18 @@
+{
+  "networkParameters": {
+    "edges": [
+      {
+        "node": {
+          "key": "blockchains.ethereumConfig"
+        },
+        "cursor": "YmxvY2tjaGFpbnMuZXRoZXJldW1Db25maWc="
+      }
+    ],
+    "pageInfo": {
+      "hasNextPage": false,
+      "hasPreviousPage": false,
+      "startCursor": "YmxvY2tjaGFpbnMuZXRoZXJldW1Db25maWc=",
+      "endCursor": "dmFsaWRhdG9ycy52b3RlLnJlcXVpcmVk"
+    }
+  }
+}
