@@ -49,12 +49,6 @@ public abstract class TradingTask {
     @PostConstruct
     public void initialize() {
         scheduler.initialize();
-        scheduler.schedule(() -> {
-            try {
-                execute();
-            } catch(Exception e) {
-                log.error(e.getMessage(), e);
-            }
-        }, new CronTrigger(getCronExpression()));
+        scheduler.schedule(this::execute, new CronTrigger(getCronExpression()));
     }
 }
