@@ -4,6 +4,7 @@ import com.vega.protocol.model.*;
 import com.vega.protocol.service.OrderService;
 import com.vega.protocol.store.*;
 import com.vega.protocol.utils.DecimalUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.java_websocket.handshake.HandshakeImpl1Server;
 import org.json.JSONException;
@@ -20,6 +21,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+@Slf4j
 public class VegaWebSocketClientTest {
 
     private VegaWebSocketClient vegaWebSocketClient;
@@ -67,6 +69,7 @@ public class VegaWebSocketClientTest {
             vegaWebSocketClient.onMessage(marketsJson);
             Mockito.verify(marketStore, Mockito.times(count > 1 ? count - 1 : count)).update(Mockito.any(Market.class));
         } catch (Exception e) {
+            log.error(e.getMessage(), e);
             Assertions.fail();
         }
     }
@@ -79,6 +82,7 @@ public class VegaWebSocketClientTest {
             vegaWebSocketClient.onMessage(positionsJson);
             Mockito.verify(positionStore, Mockito.times(count)).update(Mockito.any(Position.class));
         } catch (Exception e) {
+            log.error(e.getMessage(), e);
             Assertions.fail();
         }
     }
@@ -91,6 +95,24 @@ public class VegaWebSocketClientTest {
             vegaWebSocketClient.onMessage(accountsJson);
             Mockito.verify(accountStore, Mockito.times(count)).update(Mockito.any(Account.class));
         } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            Assertions.fail();
+        }
+    }
+
+    private void handleLiquidityCommitments(int count) {
+        if(count > 0) {
+            Mockito.when(marketStore.getById(Mockito.any())).thenReturn(Optional.of(new Market()));
+        }
+        Mockito.when(assetStore.getById(Mockito.any())).thenReturn(Optional.of(new Asset().setDecimalPlaces(1)));
+        try(InputStream is = getClass().getClassLoader()
+                .getResourceAsStream("vega-liquidity-provisions-ws.json")) {
+            String accountsJson = IOUtils.toString(Objects.requireNonNull(is), StandardCharsets.UTF_8);
+            vegaWebSocketClient.onMessage(accountsJson);
+            Mockito.verify(liquidityCommitmentStore, Mockito.times(count))
+                    .update(Mockito.any(LiquidityCommitment.class));
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
             Assertions.fail();
         }
     }
@@ -118,6 +140,16 @@ public class VegaWebSocketClientTest {
     @Test
     public void testHandlePositionsMany() {
         handlePositions(2);
+    }
+
+    @Test
+    public void testHandleLiquidityCommitments() {
+        handleLiquidityCommitments(1);
+    }
+
+    @Test
+    public void testHandleLiquidityCommitmentsMissingMarket() {
+        handleLiquidityCommitments(0);
     }
 
     @Test

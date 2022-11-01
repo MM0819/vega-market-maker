@@ -385,13 +385,14 @@ public class VegaWebSocketClient extends WebSocketClient {
             try {
                 JSONObject liquidityCommitmentObject = liquidityCommitmentsArray.getJSONObject(i);
                 String id = liquidityCommitmentObject.getString("id");
-                BigDecimal commitmentAmount = BigDecimal.valueOf(liquidityCommitmentObject.getDouble("commitmentAmount"));
+                BigDecimal commitmentAmount = BigDecimal.valueOf(
+                        liquidityCommitmentObject.getDouble("commitmentAmount"));
                 BigDecimal fee = BigDecimal.valueOf(liquidityCommitmentObject.getDouble("fee"));
                 LiquidityCommitmentStatus status = LiquidityCommitmentStatus.valueOf(liquidityCommitmentObject
                         .getString("status").replace("STATUS_", ""));
                 JSONArray buysArray = liquidityCommitmentObject.getJSONArray("buys");
                 JSONArray sellsArray = liquidityCommitmentObject.getJSONArray("sells");
-                String marketId = liquidityCommitmentObject.getString("marketID");
+                String marketId = liquidityCommitmentObject.getString("marketId");
                 Market market = marketStore.getById(marketId)
                         .orElseThrow(() -> new TradingException(ErrorCode.MARKET_NOT_FOUND));
                 List<LiquidityCommitmentOffset> bids = orderService.parseLiquidityOrders(
