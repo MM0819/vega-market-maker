@@ -58,11 +58,17 @@ public class HedgeExposureTask extends TradingTask {
         this.sleepUtils = sleepUtils;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String getCronExpression() {
         return "0 * * * * *";
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void execute() {
         if(!isInitialized()) {

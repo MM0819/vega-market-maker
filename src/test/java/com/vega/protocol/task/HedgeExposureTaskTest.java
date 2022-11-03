@@ -5,6 +5,7 @@ import com.vega.protocol.api.IGApiClient;
 import com.vega.protocol.constant.ReferencePriceSource;
 import com.vega.protocol.initializer.DataInitializer;
 import com.vega.protocol.initializer.WebSocketInitializer;
+import com.vega.protocol.model.ReferencePrice;
 import com.vega.protocol.service.PositionService;
 import com.vega.protocol.store.ReferencePriceStore;
 import com.vega.protocol.utils.SleepUtils;
@@ -14,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import java.math.BigDecimal;
+import java.util.Optional;
 
 public class HedgeExposureTaskTest {
 
@@ -36,6 +38,15 @@ public class HedgeExposureTaskTest {
                 positionService, igApiClient, binanceApiClient, referencePriceStore, sleepUtils);
     }
 
+    private ReferencePrice referencePrice() {
+        return new ReferencePrice()
+                .setAskPrice(BigDecimal.ONE)
+                .setBidPrice(BigDecimal.ONE)
+                .setAskSize(BigDecimal.ONE)
+                .setBidSize(BigDecimal.ONE)
+                .setMidPrice(BigDecimal.ONE);
+    }
+
     @BeforeEach
     public void setup() {
         dataInitializer = Mockito.mock(DataInitializer.class);
@@ -53,14 +64,32 @@ public class HedgeExposureTaskTest {
         Mockito.when(dataInitializer.isInitialized()).thenReturn(true);
         Mockito.when(webSocketInitializer.isVegaWebSocketsInitialized()).thenReturn(true);
         Mockito.when(webSocketInitializer.isBinanceWebSocketInitialized()).thenReturn(true);
+        Mockito.when(positionService.getExposure(MARKET_ID)).thenReturn(BigDecimal.ONE);
+        Mockito.when(referencePriceStore.get()).thenReturn(Optional.of(referencePrice()));
+        hedgeExposureTask.execute();
+    }
+
+    @Test
+    public void testExecuteWithZeroExposure() {
+        Mockito.when(dataInitializer.isInitialized()).thenReturn(true);
+        Mockito.when(webSocketInitializer.isVegaWebSocketsInitialized()).thenReturn(true);
+        Mockito.when(webSocketInitializer.isBinanceWebSocketInitialized()).thenReturn(true);
         Mockito.when(positionService.getExposure(MARKET_ID)).thenReturn(BigDecimal.ZERO);
         hedgeExposureTask.execute();
+        Mockito.verify(binanceApiClient, Mockito.times(0))
+                .submitMarketOrder(Mockito.any(), Mockito.any(), Mockito.any());
+        Mockito.verify(igApiClient, Mockito.times(0))
+                .submitMarketOrder(Mockito.any(), Mockito.any(), Mockito.any());
     }
 
     @Test
     public void testExecuteNotInitialized() {
         hedgeExposureTask.execute();
         Mockito.when(dataInitializer.isInitialized()).thenReturn(false);
+        Mockito.verify(binanceApiClient, Mockito.times(0))
+                .submitMarketOrder(Mockito.any(), Mockito.any(), Mockito.any());
+        Mockito.verify(igApiClient, Mockito.times(0))
+                .submitMarketOrder(Mockito.any(), Mockito.any(), Mockito.any());
     }
 
     @Test
@@ -70,6 +99,10 @@ public class HedgeExposureTaskTest {
         Mockito.when(webSocketInitializer.isVegaWebSocketsInitialized()).thenReturn(true);
         Mockito.when(webSocketInitializer.isBinanceWebSocketInitialized()).thenReturn(true);
         hedgeExposureTask.execute();
+        Mockito.verify(binanceApiClient, Mockito.times(0))
+                .submitMarketOrder(Mockito.any(), Mockito.any(), Mockito.any());
+        Mockito.verify(igApiClient, Mockito.times(0))
+                .submitMarketOrder(Mockito.any(), Mockito.any(), Mockito.any());
     }
 
     @Test
