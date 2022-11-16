@@ -543,18 +543,20 @@ public class VegaApiClient {
         try {
             String reference = String.format("%s-%s", partyId, UUID.randomUUID());
             Market market = order.getMarket();
-            String price = decimalUtils.convertFromDecimals(
-                    market.getDecimalPlaces(), order.getPrice()).toBigInteger().toString();
             String size = decimalUtils.convertFromDecimals(
                     market.getPositionDecimalPlaces(), order.getSize()).toBigInteger().toString();
             JSONObject orderSubmission = new JSONObject()
                     .put("marketId", market.getId())
-                    .put("price", price)
                     .put("size", size)
                     .put("side", String.format("SIDE_%s", order.getSide().name()))
-                    .put("timeInForce", String.format("TIME_IN_FORCE_%s", order.getTimeInForce().name()))
-                    .put("type", String.format("TYPE_%s", order.getType().name()))
+                    .put("type", String.format("TYPE_%s", order.getType().name())).put("timeInForce",
+                            String.format("TIME_IN_FORCE_%s", order.getTimeInForce().name()))
                     .put("reference", reference);
+            if(!order.getType().equals(OrderType.MARKET)) {
+                String price = decimalUtils.convertFromDecimals(
+                        market.getDecimalPlaces(), order.getPrice()).toBigInteger().toString();
+                orderSubmission = orderSubmission.put("price", price);
+            }
             JSONObject submission = new JSONObject()
                     .put("orderSubmission", orderSubmission)
                     .put("pubKey", partyId)

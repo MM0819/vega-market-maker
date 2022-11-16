@@ -24,7 +24,7 @@ public class PricingUtilsTest {
     public void setup() {
         appConfigStore = Mockito.mock(AppConfigStore.class);
         pricingUtils = new PricingUtils(appConfigStore);
-        Mockito.when(appConfigStore.get()).thenReturn(Optional.of(new AppConfig().setPricingStepSize(0.1)));
+        Mockito.when(appConfigStore.get()).thenReturn(Optional.of(new AppConfig()));
     }
 
 

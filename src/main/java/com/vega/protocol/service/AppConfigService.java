@@ -59,9 +59,6 @@ public class AppConfigService {
         if(ObjectUtils.isEmpty(config.getOrderCount())) {
             throw new TradingException(ErrorCode.ORDER_COUNT_MANDATORY);
         }
-        if(ObjectUtils.isEmpty(config.getPricingStepSize())) {
-            throw new TradingException(ErrorCode.PRICING_STEP_SIZE_MANDATORY);
-        }
         appConfigStore.update(config);
         return config;
     }

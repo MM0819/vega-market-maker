@@ -245,12 +245,17 @@ public class UpdateQuotesTask extends TradingTask {
     ) {
         NetworkParameter tauScalingParam = networkParameterStore.getById(TAU_SCALING_PARAM)
                 .orElseThrow(() -> new TradingException(ErrorCode.NETWORK_PARAMETER_NOT_FOUND));
+        ReferencePrice referencePrice = referencePriceStore.get()
+                .orElseThrow(() -> new TradingException(ErrorCode.REFERENCE_PRICE_NOT_FOUND));
         return orders.stream().map(o -> {
             double mu = o.getMarket().getMu();
             double tau = o.getMarket().getTau() * new BigDecimal(tauScalingParam.getValue()).doubleValue();
             double sigma = o.getMarket().getSigma();
             double bestPrice = o.getSide().equals(MarketSide.BUY) ? o.getMarket().getBestBidPrice().doubleValue() :
                     o.getMarket().getBestAskPrice().doubleValue();
+            if(bestPrice == 0) {
+                bestPrice = referencePrice.getMidPrice().doubleValue();
+            }
             double minValidPrice = o.getMarket().getMinValidPrice().doubleValue();
             double maxValidPrice = o.getMarket().getMaxValidPrice().doubleValue();
             double price = o.getPrice().doubleValue();

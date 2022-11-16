@@ -32,7 +32,6 @@ public class DataInitializerTest {
     private final Double ASK_SIZE_FACTOR = 1.0;
     private final Double BID_QUOTE_RANGE = 0.05;
     private final Double ASK_QUOTE_RANGE = 0.05;
-    private final Double PRICING_SIZE_STEP = 0.1;
     private final Double COMMITMENT_FACTOR = 1.0;
     private final Double COMMITMENT_SPREAD = 0.02;
     private final Integer COMMITMENT_ORDER_COUNT = 3;
@@ -52,7 +51,7 @@ public class DataInitializerTest {
         dataInitializer = new DataInitializer(orderStore, marketStore, positionStore, appConfigStore, accountStore,
                 liquidityCommitmentStore, assetStore, networkParameterStore, vegaApiClient, PARTY_ID, FEE, MIN_SPREAD,
                 MAX_SPREAD, COMMITMENT_SPREAD, ORDER_COUNT, BID_SIZE_FACTOR, ASK_SIZE_FACTOR, COMMITMENT_FACTOR,
-                BID_QUOTE_RANGE, ASK_QUOTE_RANGE, PRICING_SIZE_STEP, COMMITMENT_ORDER_COUNT, STAKE_BUFFER);
+                BID_QUOTE_RANGE, ASK_QUOTE_RANGE, COMMITMENT_ORDER_COUNT, STAKE_BUFFER);
     }
 
     @Test

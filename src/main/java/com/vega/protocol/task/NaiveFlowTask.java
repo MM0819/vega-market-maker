@@ -4,6 +4,7 @@ import com.vega.protocol.api.VegaApiClient;
 import com.vega.protocol.constant.MarketSide;
 import com.vega.protocol.constant.OrderStatus;
 import com.vega.protocol.constant.OrderType;
+import com.vega.protocol.constant.TimeInForce;
 import com.vega.protocol.initializer.DataInitializer;
 import com.vega.protocol.initializer.WebSocketInitializer;
 import com.vega.protocol.model.Market;
@@ -73,6 +74,7 @@ public class NaiveFlowTask extends TradingTask {
                 .setStatus(OrderStatus.ACTIVE)
                 .setSide(side)
                 .setSize(size)
+                .setTimeInForce(TimeInForce.IOC)
                 .setMarket(market)
                 .setPartyId(partyId);
         vegaApiClient.submitOrder(order, partyId);

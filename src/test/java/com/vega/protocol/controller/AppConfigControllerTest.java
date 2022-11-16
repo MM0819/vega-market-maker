@@ -44,8 +44,7 @@ public class AppConfigControllerTest {
                 .setBidSizeFactor(1.0)
                 .setBidQuoteRange(0.05)
                 .setAskSizeFactor(1.0)
-                .setAskQuoteRange(0.05)
-                .setPricingStepSize(0.1);
+                .setAskQuoteRange(0.05);
     }
 
     @BeforeEach
@@ -202,19 +201,5 @@ public class AppConfigControllerTest {
         String body = result.getResponse().getContentAsString();
         Assertions.assertEquals(body, mapper.writeValueAsString(new ErrorResponse()
                 .setError(ErrorCode.ASK_SIZE_FACTOR_MANDATORY)));
-    }
-
-    @Test
-    public void testUpdateAppConfigMissingPricingStepSize() throws Exception {
-        AppConfig config = getAppConfig()
-                .setPricingStepSize(null);
-        MvcResult result = mvc.perform(MockMvcRequestBuilders.put("/app-config")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(mapper.writeValueAsString(config)))
-                .andExpect(status().isInternalServerError())
-                .andReturn();
-        String body = result.getResponse().getContentAsString();
-        Assertions.assertEquals(body, mapper.writeValueAsString(new ErrorResponse()
-                .setError(ErrorCode.PRICING_STEP_SIZE_MANDATORY)));
     }
 }

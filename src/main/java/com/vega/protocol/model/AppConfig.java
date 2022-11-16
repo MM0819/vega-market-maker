@@ -17,6 +17,5 @@ public class AppConfig {
     private Double commitmentSpread;
     private Integer commitmentOrderCount;
     private Double fee;
-    private Double pricingStepSize;
     private Double stakeBuffer;
 }

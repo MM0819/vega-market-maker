@@ -31,7 +31,6 @@ public class DataInitializer {
     private final Double commitmentBalanceRatio;
     private final Double bidQuoteRange;
     private final Double askQuoteRange;
-    private final Double pricingStepSize;
     private final Double commitmentSpread;
     private final Integer commitmentOrderCount;
     private final Double stakeBuffer;
@@ -59,7 +58,6 @@ public class DataInitializer {
                            @Value("${commitment.balance.ratio}") Double commitmentBalanceRatio,
                            @Value("${bid.quote.range}") Double bidQuoteRange,
                            @Value("${ask.quote.range}") Double askQuoteRange,
-                           @Value("${pricing.step.size}") Double pricingStepSize,
                            @Value("${commitment.order.count}") Integer commitmentOrderCount,
                            @Value("${stake.buffer}") Double stakeBuffer) {
         this.orderStore = orderStore;
@@ -81,7 +79,6 @@ public class DataInitializer {
         this.askSizeFactor = askSizeFactor;
         this.bidQuoteRange = bidQuoteRange;
         this.askQuoteRange = askQuoteRange;
-        this.pricingStepSize = pricingStepSize;
         this.commitmentSpread = commitmentSpread;
         this.commitmentOrderCount = commitmentOrderCount;
         this.stakeBuffer = stakeBuffer;
@@ -102,7 +99,6 @@ public class DataInitializer {
                 .setCommitmentBalanceRatio(commitmentBalanceRatio)
                 .setBidQuoteRange(bidQuoteRange)
                 .setAskQuoteRange(askQuoteRange)
-                .setPricingStepSize(pricingStepSize)
                 .setCommitmentOrderCount(commitmentOrderCount)
                 .setStakeBuffer(stakeBuffer);
         appConfigStore.update(config);

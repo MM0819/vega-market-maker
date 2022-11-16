@@ -63,7 +63,6 @@ public class UpdateQuotesTaskTest {
                 .setBidQuoteRange(0.05)
                 .setAskSizeFactor(1.0)
                 .setAskQuoteRange(0.05)
-                .setPricingStepSize(0.1)
                 .setCommitmentSpread(0.005)
                 .setCommitmentOrderCount(1)
                 .setCommitmentBalanceRatio(0.1);
