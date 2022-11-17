@@ -340,8 +340,8 @@ public class VegaWebSocketClient extends WebSocketClient {
 	int activeCount = 0;
         for(int i=0; i<ordersArray.length(); i++) {
             try {
-                JSONObject orderObject = ordersArray.getJSONObject(i);
-		//log.info(orderObject.toString());
+                JSONObject orderObject = ordersArray.optJSONObject(i);
+                if(orderObject == null) continue;
                 String id = orderObject.getString("id");
                 MarketSide side = MarketSide.valueOf(orderObject.getString("side")
                         .replace("SIDE_", ""));
@@ -357,18 +357,18 @@ public class VegaWebSocketClient extends WebSocketClient {
                         .replace("STATUS_", ""));
 		if(status.equals(OrderStatus.ACTIVE)) activeCount++;
 		if(status.equals(OrderStatus.CANCELLED)) cancelCount++;
-                Order order = new Order()
-                        .setSize(decimalUtils.convertToDecimals(market.getPositionDecimalPlaces(), size))
-                        .setPrice(decimalUtils.convertToDecimals(market.getDecimalPlaces(), price))
-                        .setType(type)
-                        .setStatus(status)
-                        .setRemainingSize(decimalUtils.convertToDecimals(market.getPositionDecimalPlaces(), remainingSize))
-                        .setId(id)
-                        .setPartyId(partyId)
-                        .setMarket(market)
-                        .setSide(side)
-                        .setIsPeggedOrder(orderObject.has("liquidityProvisionId") &&
-                                orderObject.getString("liquidityProvisionId").length() > 0);
+            Order order = new Order()
+                    .setSize(decimalUtils.convertToDecimals(market.getPositionDecimalPlaces(), size))
+                    .setPrice(decimalUtils.convertToDecimals(market.getDecimalPlaces(), price))
+                    .setType(type)
+                    .setStatus(status)
+                    .setRemainingSize(decimalUtils.convertToDecimals(market.getPositionDecimalPlaces(), remainingSize))
+                    .setId(id)
+                    .setPartyId(partyId)
+                    .setMarket(market)
+                    .setSide(side)
+                    .setIsPeggedOrder(orderObject.has("liquidityProvisionId") &&
+                            orderObject.getString("liquidityProvisionId").length() > 0);
                 orderStore.update(order);
             } catch(Exception e) {
                 log.info(data.toString());
@@ -443,7 +443,7 @@ public class VegaWebSocketClient extends WebSocketClient {
                 BigDecimal bestBidSize = new BigDecimal(marketObject.getString("bestBidVolume"));
                 BigDecimal bestAskSize = new BigDecimal(marketObject.getString("bestOfferVolume"));
                 BigDecimal targetStake = new BigDecimal(marketObject.getString("targetStake"));
-                BigDecimal suppliedStake = new BigDecimal(marketObject.getString("suppliedStake")); // TODO - is this necessary anywhere else??
+                BigDecimal suppliedStake = new BigDecimal(marketObject.getString("suppliedStake"));
                 BigDecimal openInterest = new BigDecimal(marketObject.getString("openInterest"));
                 JSONArray priceMonitoringBounds = marketObject.getJSONArray("priceMonitoringBounds");
                 BigDecimal minValidPrice = BigDecimal.ZERO;

@@ -9,6 +9,7 @@ import com.vega.protocol.model.Order;
 import com.vega.protocol.service.AccountService;
 import com.vega.protocol.service.MarketService;
 import com.vega.protocol.service.OrderService;
+import com.vega.protocol.store.ReferencePriceStore;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -26,6 +27,7 @@ public class NaiveFlowTaskTest {
     private final VegaApiClient vegaApiClient = Mockito.mock(VegaApiClient.class);
     private final MarketService marketService = Mockito.mock(MarketService.class);
     private final OrderService orderService = Mockito.mock(OrderService.class);
+    private final ReferencePriceStore referencePriceStore = Mockito.mock(ReferencePriceStore.class);
     private final DataInitializer dataInitializer = Mockito.mock(DataInitializer .class);
     private final WebSocketInitializer webSocketInitializer = Mockito.mock(WebSocketInitializer.class);
 
@@ -33,7 +35,7 @@ public class NaiveFlowTaskTest {
             boolean enabled
     ) {
         return new NaiveFlowTask(MARKET_ID, enabled, PARTY_ID, vegaApiClient, marketService,
-                orderService, dataInitializer, webSocketInitializer);
+                orderService, referencePriceStore, dataInitializer, webSocketInitializer);
     }
 
     @BeforeEach

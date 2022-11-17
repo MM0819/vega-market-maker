@@ -20,6 +20,7 @@ import org.springframework.stereotype.Component;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -31,7 +32,6 @@ public class UpdateQuotesTask extends TradingTask {
     private static final String MIN_PROB_OF_TRADING_PARAM = "market.liquidity.minimum.probabilityOfTrading.lpOrders";
 
     private final AppConfigStore appConfigStore;
-    private final ReferencePriceStore referencePriceStore;
     private final OrderStore orderStore;
     private final LiquidityCommitmentStore liquidityCommitmentStore;
     private final NetworkParameterStore networkParameterStore;
@@ -62,10 +62,9 @@ public class UpdateQuotesTask extends TradingTask {
                             DataInitializer dataInitializer,
                             WebSocketInitializer webSocketInitializer,
                             @Value("${update.quotes.cron.expression}") String updateQuotesCronExpression) {
-        super(dataInitializer, webSocketInitializer, taskEnabled);
+        super(dataInitializer, webSocketInitializer, referencePriceStore, taskEnabled);
         this.appConfigStore = appConfigStore;
         this.marketId = marketId;
-        this.referencePriceStore = referencePriceStore;
         this.orderStore = orderStore;
         this.liquidityCommitmentStore = liquidityCommitmentStore;
         this.networkParameterStore = networkParameterStore;
@@ -150,7 +149,7 @@ public class UpdateQuotesTask extends TradingTask {
                         .setTimeInForce(TimeInForce.GTC)
                         .setMarket(market)
                         .setPartyId(partyId)
-        ).sorted(Comparator.comparing(Order::getPrice).reversed()).toList();
+        ).collect(Collectors.toList());
         List<Order> asks = askDistribution.stream().map(d ->
                 new Order()
                         .setSize(BigDecimal.valueOf(d.getSize() * config.getAskSizeFactor()))
@@ -161,7 +160,28 @@ public class UpdateQuotesTask extends TradingTask {
                         .setTimeInForce(TimeInForce.GTC)
                         .setMarket(market)
                         .setPartyId(partyId)
-        ).sorted(Comparator.comparing(Order::getPrice)).toList();
+        ).collect(Collectors.toList());
+        BigDecimal bboSize = BigDecimal.valueOf(1 / Math.pow(10, market.getPositionDecimalPlaces()));
+        bids.add(new Order()
+                .setSize(bboSize)
+                .setPrice(referencePrice.getBidPrice().multiply(BigDecimal.valueOf(1 - config.getBboOffset())))
+                .setStatus(OrderStatus.ACTIVE)
+                .setSide(MarketSide.BUY)
+                .setType(OrderType.LIMIT)
+                .setTimeInForce(TimeInForce.GTC)
+                .setMarket(market)
+                .setPartyId(partyId));
+        asks.add(new Order()
+                .setSize(bboSize)
+                .setPrice(referencePrice.getAskPrice().multiply(BigDecimal.valueOf(1 + config.getBboOffset())))
+                .setStatus(OrderStatus.ACTIVE)
+                .setSide(MarketSide.SELL)
+                .setType(OrderType.LIMIT)
+                .setTimeInForce(TimeInForce.GTC)
+                .setMarket(market)
+                .setPartyId(partyId));
+        asks.sort(Comparator.comparing(Order::getPrice));
+        bids.sort(Comparator.comparing(Order::getPrice).reversed());
         Order bestBid = bids.get(0);
         Order bestAsk = asks.get(0);
         updateSpread(bids, asks, config, exposure, openVolumeRatio);
@@ -190,7 +210,7 @@ public class UpdateQuotesTask extends TradingTask {
             log.info("Max batch size = {}; Total batch size = {}; Cancellations = {}; Submissions = {}",
                     maxBatchSize, totalBatchSize, cancellations.size(), submissions.size());
             if (totalBatchSize <= maxBatchSize && totalBatchSize > 0) {
-	    	vegaApiClient.submitBulkInstruction(cancellations, submissions, market, partyId);
+                vegaApiClient.submitBulkInstruction(cancellations, submissions, market, partyId);
             } else {
                 List<List<String>> cancellationBatches = ListUtils.partition(cancellations, maxBatchSize);
                 List<List<Order>> submissionBatches = ListUtils.partition(submissions, maxBatchSize);

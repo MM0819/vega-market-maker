@@ -18,4 +18,5 @@ public class AppConfig {
     private Integer commitmentOrderCount;
     private Double fee;
     private Double stakeBuffer;
+    private Double bboOffset;
 }

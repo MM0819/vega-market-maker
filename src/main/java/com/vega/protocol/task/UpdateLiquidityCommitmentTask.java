@@ -11,8 +11,8 @@ import com.vega.protocol.service.AccountService;
 import com.vega.protocol.service.MarketService;
 import com.vega.protocol.service.PositionService;
 import com.vega.protocol.store.AppConfigStore;
-import com.vega.protocol.store.ReferencePriceStore;
 import com.vega.protocol.store.LiquidityCommitmentStore;
+import com.vega.protocol.store.ReferencePriceStore;
 import com.vega.protocol.utils.PricingUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -22,6 +22,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 @Component
@@ -31,13 +32,11 @@ public class UpdateLiquidityCommitmentTask extends TradingTask {
     private final AccountService accountService;
     private final PositionService positionService;
     private final AppConfigStore appConfigStore;
-    private final ReferencePriceStore referencePriceStore;
     private final LiquidityCommitmentStore liquidityCommitmentStore;
     private final VegaApiClient vegaApiClient;
     private final String marketId;
     private final String partyId;
     private final String updateLiquidityCommitmentCronExpression;
-    private final PricingUtils pricingUtils;
 
     public UpdateLiquidityCommitmentTask(@Value("${vega.market.id}") String marketId,
                                          @Value("${update.liquidity.commitment.enabled}") Boolean taskEnabled,
@@ -49,22 +48,19 @@ public class UpdateLiquidityCommitmentTask extends TradingTask {
                                          VegaApiClient vegaApiClient,
                                          ReferencePriceStore referencePriceStore,
                                          LiquidityCommitmentStore liquidityCommitmentStore,
-                                         PricingUtils pricingUtils,
                                          DataInitializer dataInitializer,
                                          WebSocketInitializer webSocketInitializer,
                                          @Value("${update.liquidity.commitment.cron.expression}") String updateLiquidityCommitmentCronExpression) {
-        super(dataInitializer, webSocketInitializer, taskEnabled);
+        super(dataInitializer, webSocketInitializer, referencePriceStore, taskEnabled);
         this.marketService = marketService;
         this.accountService = accountService;
         this.positionService = positionService;
         this.appConfigStore = appConfigStore;
-        this.referencePriceStore = referencePriceStore;
         this.liquidityCommitmentStore = liquidityCommitmentStore;
         this.vegaApiClient = vegaApiClient;
         this.marketId = marketId;
         this.updateLiquidityCommitmentCronExpression = updateLiquidityCommitmentCronExpression;
         this.partyId = partyId;
-        this.pricingUtils = pricingUtils;
     }
 
     @Override
@@ -131,8 +127,14 @@ public class UpdateLiquidityCommitmentTask extends TradingTask {
                 .setFee(BigDecimal.valueOf(config.getFee()))
                 .setBids(bids)
                 .setAsks(asks);
-        boolean hasCommitment = liquidityCommitmentStore.getItems().stream()
-                .anyMatch(c -> c.getMarket().getId().equals(marketId));
+        Optional<LiquidityCommitment> currentCommitment = liquidityCommitmentStore.getItems().stream()
+                .filter(c -> c.getMarket().getId().equals(marketId)).findFirst();
+        boolean hasCommitment = currentCommitment.isPresent();
+        if(hasCommitment) {
+            BigDecimal stakeFromOthers = market.getSuppliedStake()
+                    .subtract(currentCommitment.get().getCommitmentAmount());
+            commitmentAmount = commitmentAmount.subtract(stakeFromOthers);
+        }
         vegaApiClient.submitLiquidityCommitment(liquidityCommitment, partyId, hasCommitment);
         log.info("Liquidity commitment updated -> {}", commitmentAmount);
     }

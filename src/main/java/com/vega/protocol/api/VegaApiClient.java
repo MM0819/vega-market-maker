@@ -170,7 +170,7 @@ public class VegaApiClient {
                 JSONObject assetObject = assetsArray.getJSONObject(i).getJSONObject("node");
                 String id = assetObject.getString("id");
                 String symbol = assetObject.getJSONObject("details").getString("symbol");
-                int quantum = assetObject.getJSONObject("details").getInt("quantum");
+                double quantum = assetObject.getJSONObject("details").getDouble("quantum");
                 int decimalPlaces = assetObject.getJSONObject("details").getInt("decimals");
                 String name = assetObject.getJSONObject("details").getString("name");
                 AssetStatus status = AssetStatus.valueOf(assetObject.getString("status")

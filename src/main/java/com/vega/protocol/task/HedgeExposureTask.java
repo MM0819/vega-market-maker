@@ -31,7 +31,6 @@ public class HedgeExposureTask extends TradingTask {
     private final ReferencePriceSource referencePriceSource;
     private final String referencePriceMarket;
     private final String igMarketEpic;
-    private final ReferencePriceStore referencePriceStore;
     private final SleepUtils sleepUtils;
 
     public HedgeExposureTask(DataInitializer dataInitializer,
@@ -46,7 +45,7 @@ public class HedgeExposureTask extends TradingTask {
                              BinanceApiClient binanceApiClient,
                              ReferencePriceStore referencePriceStore,
                              SleepUtils sleepUtils) {
-        super(dataInitializer, webSocketInitializer, taskEnabled);
+        super(dataInitializer, webSocketInitializer, referencePriceStore, taskEnabled);
         this.positionService = positionService;
         this.marketId = marketId;
         this.referencePriceSource = referencePriceSource;
@@ -54,7 +53,6 @@ public class HedgeExposureTask extends TradingTask {
         this.binanceApiClient = binanceApiClient;
         this.referencePriceMarket = referencePriceMarket;
         this.igMarketEpic = igMarketEpic;
-        this.referencePriceStore = referencePriceStore;
         this.sleepUtils = sleepUtils;
     }
 

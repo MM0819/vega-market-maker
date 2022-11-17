@@ -37,7 +37,6 @@ public class UpdateLiquidityCommitmentTaskTest {
     private final PositionService positionService = Mockito.mock(PositionService.class);
     private final LiquidityCommitmentStore liquidityCommitmentStore = Mockito.mock(LiquidityCommitmentStore.class);
     private final VegaApiClient vegaApiClient = Mockito.mock(VegaApiClient.class);
-    private final PricingUtils pricingUtils = Mockito.mock(PricingUtils.class);
     private final DataInitializer dataInitializer = Mockito.mock(DataInitializer.class);
     private final WebSocketInitializer webSocketInitializer = Mockito.mock(WebSocketInitializer.class);
 
@@ -62,7 +61,7 @@ public class UpdateLiquidityCommitmentTaskTest {
     ) {
         return new UpdateLiquidityCommitmentTask(MARKET_ID, enabled, PARTY_ID,
                 marketService, accountService, positionService, appConfigStore, vegaApiClient, referencePriceStore,
-                liquidityCommitmentStore, pricingUtils, dataInitializer,
+                liquidityCommitmentStore, dataInitializer,
                 webSocketInitializer, "*/15 * * * * *");
     }
 
@@ -85,9 +84,6 @@ public class UpdateLiquidityCommitmentTaskTest {
                 new ReferencePrice().setBidPrice(BigDecimal.valueOf(19999))
                         .setAskPrice(BigDecimal.valueOf(20001)).setMidPrice(BigDecimal.valueOf(20000))));
         Mockito.when(liquidityCommitmentStore.getItems()).thenReturn(Collections.emptyList());
-        Mockito.when(pricingUtils.getDistribution(
-                Mockito.anyDouble(), Mockito.anyDouble(), Mockito.anyDouble(), Mockito.any(MarketSide.class)))
-                .thenReturn(List.of(new DistributionStep().setPrice(1d).setSize(1d)));
         updateLiquidityCommitmentTask.execute();
         Mockito.verify(vegaApiClient, Mockito.times(1)).submitLiquidityCommitment(
                 Mockito.any(LiquidityCommitment.class), Mockito.anyString(), Mockito.anyBoolean()); // TODO - fix assertion
@@ -126,9 +122,6 @@ public class UpdateLiquidityCommitmentTaskTest {
                 .setTargetStake(BigDecimal.valueOf(9000)).setSuppliedStake(BigDecimal.ONE));
         Mockito.when(accountService.getTotalBalance(USDT)).thenReturn(BigDecimal.valueOf(100000));
         Mockito.when(positionService.getExposure(MARKET_ID)).thenReturn(BigDecimal.valueOf(1));
-        Mockito.when(pricingUtils.getDistribution(
-                        Mockito.anyDouble(), Mockito.anyDouble(), Mockito.anyDouble(), Mockito.any(MarketSide.class)))
-                .thenReturn(List.of(new DistributionStep().setPrice(1d).setSize(1d)));
         Mockito.when(appConfigStore.get()).thenReturn(Optional.of(getAppConfig()));
         Mockito.when(referencePriceStore.get()).thenReturn(Optional.of(
                 new ReferencePrice().setBidPrice(BigDecimal.valueOf(19999))
@@ -148,9 +141,6 @@ public class UpdateLiquidityCommitmentTaskTest {
                 .setTargetStake(BigDecimal.valueOf(1000000000)).setSuppliedStake(BigDecimal.ONE));
         Mockito.when(accountService.getTotalBalance(USDT)).thenReturn(BigDecimal.valueOf(100000));
         Mockito.when(positionService.getExposure(MARKET_ID)).thenReturn(BigDecimal.valueOf(-1));
-        Mockito.when(pricingUtils.getDistribution(
-                        Mockito.anyDouble(), Mockito.anyDouble(), Mockito.anyDouble(), Mockito.any(MarketSide.class)))
-                .thenReturn(List.of(new DistributionStep().setPrice(1d).setSize(1d)));
         Mockito.when(appConfigStore.get()).thenReturn(Optional.of(getAppConfig()));
         Mockito.when(referencePriceStore.get()).thenReturn(Optional.of(
                 new ReferencePrice().setBidPrice(BigDecimal.valueOf(19999))

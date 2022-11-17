@@ -34,6 +34,7 @@ public class DataInitializer {
     private final Double commitmentSpread;
     private final Integer commitmentOrderCount;
     private final Double stakeBuffer;
+    private final Double bboOffset;
 
     @Getter
     private boolean initialized = false;
@@ -59,7 +60,8 @@ public class DataInitializer {
                            @Value("${bid.quote.range}") Double bidQuoteRange,
                            @Value("${ask.quote.range}") Double askQuoteRange,
                            @Value("${commitment.order.count}") Integer commitmentOrderCount,
-                           @Value("${stake.buffer}") Double stakeBuffer) {
+                           @Value("${stake.buffer}") Double stakeBuffer,
+                           @Value("${bbo.offset}") Double bboOffset) {
         this.orderStore = orderStore;
         this.marketStore = marketStore;
         this.positionStore = positionStore;
@@ -82,6 +84,7 @@ public class DataInitializer {
         this.commitmentSpread = commitmentSpread;
         this.commitmentOrderCount = commitmentOrderCount;
         this.stakeBuffer = stakeBuffer;
+        this.bboOffset = bboOffset;
     }
 
     /**
@@ -100,7 +103,8 @@ public class DataInitializer {
                 .setBidQuoteRange(bidQuoteRange)
                 .setAskQuoteRange(askQuoteRange)
                 .setCommitmentOrderCount(commitmentOrderCount)
-                .setStakeBuffer(stakeBuffer);
+                .setStakeBuffer(stakeBuffer)
+                .setBboOffset(bboOffset);
         appConfigStore.update(config);
         updateState();
         initialized = true;

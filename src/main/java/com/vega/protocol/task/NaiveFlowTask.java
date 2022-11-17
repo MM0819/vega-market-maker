@@ -11,6 +11,7 @@ import com.vega.protocol.model.Market;
 import com.vega.protocol.model.Order;
 import com.vega.protocol.service.MarketService;
 import com.vega.protocol.service.OrderService;
+import com.vega.protocol.store.ReferencePriceStore;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -36,9 +37,10 @@ public class NaiveFlowTask extends TradingTask {
                          VegaApiClient vegaApiClient,
                          MarketService marketService,
                          OrderService orderService,
+                         ReferencePriceStore referencePriceStore,
                          DataInitializer dataInitializer,
                          WebSocketInitializer webSocketInitializer) {
-        super(dataInitializer, webSocketInitializer, taskEnabled);
+        super(dataInitializer, webSocketInitializer, referencePriceStore, taskEnabled);
         this.vegaApiClient = vegaApiClient;
         this.marketService = marketService;
         this.marketId = marketId;

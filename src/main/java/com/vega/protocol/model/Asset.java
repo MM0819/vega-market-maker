@@ -13,6 +13,6 @@ public class Asset extends UniqueItem {
     private String name;
     private String symbol;
     private Integer decimalPlaces;
-    private Integer quantum;
+    private Double quantum;
     private AssetStatus status;
 }
