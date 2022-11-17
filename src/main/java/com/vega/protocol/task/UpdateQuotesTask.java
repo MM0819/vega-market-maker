@@ -176,7 +176,7 @@ public class UpdateQuotesTask extends TradingTask {
         List<Order> submissions = new ArrayList<>();
         submissions.addAll(bids);
         submissions.addAll(asks);
-        List<Order> currentOrders = orderStore.getItems().stream().filter(o -> !o.getIsPeggedOrder()).toList();
+        List<Order> currentOrders = orderStore.getItems().stream().filter(o -> !o.getIsPeggedOrder()).filter(o -> o.getStatus().equals(OrderStatus.ACTIVE)).toList();
         List<Order> currentBids = currentOrders.stream().filter(o -> o.getSide().equals(MarketSide.BUY))
                 .sorted(Comparator.comparing(Order::getPrice).reversed()).toList();
         List<Order> currentAsks = currentOrders.stream().filter(o -> o.getSide().equals(MarketSide.SELL))
@@ -186,8 +186,11 @@ public class UpdateQuotesTask extends TradingTask {
             NetworkParameter maxBatchSizeParam = networkParameterStore.getById(MAX_BATCH_SIZE_PARAM)
                     .orElseThrow(() -> new TradingException(ErrorCode.NETWORK_PARAMETER_NOT_FOUND));
             int maxBatchSize = Integer.parseInt(maxBatchSizeParam.getValue());
-            if ((cancellations.size() + submissions.size()) <= maxBatchSize) {
-                vegaApiClient.submitBulkInstruction(cancellations, submissions, market, partyId);
+            int totalBatchSize = cancellations.size() + submissions.size();
+            log.info("Max batch size = {}; Total batch size = {}; Cancellations = {}; Submissions = {}",
+                    maxBatchSize, totalBatchSize, cancellations.size(), submissions.size());
+            if (totalBatchSize <= maxBatchSize && totalBatchSize > 0) {
+	    	vegaApiClient.submitBulkInstruction(cancellations, submissions, market, partyId);
             } else {
                 List<List<String>> cancellationBatches = ListUtils.partition(cancellations, maxBatchSize);
                 List<List<Order>> submissionBatches = ListUtils.partition(submissions, maxBatchSize);
@@ -311,7 +314,7 @@ public class UpdateQuotesTask extends TradingTask {
             final Order bestAsk,
             final AppConfig config
     ) {
-        if(currentBids.size() > 0 && currentAsks.size() > 0) {
+        /*if(currentBids.size() > 0 && currentAsks.size() > 0) {
             Order currentBestBid = currentBids.get(0);
             Order currentBestAsk = currentAsks.get(0);
             BigDecimal staticMidPrice = (bestBid.getPrice().add(bestAsk.getPrice()))
@@ -325,7 +328,7 @@ public class UpdateQuotesTask extends TradingTask {
                         Math.round(priceDelta * 10000.0) / 100.0);
                 return false;
             }
-        }
+        }*/
         return true;
     }
 }

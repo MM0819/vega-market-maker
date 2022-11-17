@@ -98,8 +98,7 @@ public class UpdateLiquidityCommitmentTask extends TradingTask {
         BigDecimal bidPoolSize = balance.multiply(BigDecimal.valueOf(0.5));
         BigDecimal askPoolSize = bidPoolSize.divide(midPrice, market.getDecimalPlaces(), RoundingMode.HALF_DOWN);
         BigDecimal commitmentAmount = bidPoolSize.multiply(BigDecimal.valueOf(config.getCommitmentBalanceRatio()));
-        BigDecimal requiredStake = (market.getTargetStake().multiply(BigDecimal.valueOf(1 + config.getStakeBuffer())))
-                .subtract(market.getSuppliedStake());
+        BigDecimal requiredStake = (market.getTargetStake().multiply(BigDecimal.valueOf(1 + config.getStakeBuffer())));
         log.info("Exposure = {}\nBid pool size = {}\nAsk pool size = {}; Required stake = {}",
                 exposure, bidPoolSize, askPoolSize, requiredStake);
         if(requiredStake.doubleValue() > commitmentAmount.doubleValue() &&

@@ -336,9 +336,12 @@ public class VegaWebSocketClient extends WebSocketClient {
      */
     private void handleOrders(JSONObject data) {
         JSONArray ordersArray = getDataAsArray(data, "orders");
+	int cancelCount = 0;
+	int activeCount = 0;
         for(int i=0; i<ordersArray.length(); i++) {
             try {
                 JSONObject orderObject = ordersArray.getJSONObject(i);
+		//log.info(orderObject.toString());
                 String id = orderObject.getString("id");
                 MarketSide side = MarketSide.valueOf(orderObject.getString("side")
                         .replace("SIDE_", ""));
@@ -352,6 +355,8 @@ public class VegaWebSocketClient extends WebSocketClient {
                         .replace("TYPE_", ""));
                 OrderStatus status = OrderStatus.valueOf(orderObject.getString("status")
                         .replace("STATUS_", ""));
+		if(status.equals(OrderStatus.ACTIVE)) activeCount++;
+		if(status.equals(OrderStatus.CANCELLED)) cancelCount++;
                 Order order = new Order()
                         .setSize(decimalUtils.convertToDecimals(market.getPositionDecimalPlaces(), size))
                         .setPrice(decimalUtils.convertToDecimals(market.getDecimalPlaces(), price))
@@ -370,6 +375,7 @@ public class VegaWebSocketClient extends WebSocketClient {
                 log.error(e.getMessage(), e);
             }
         }
+	log.debug("Cancel count = {}; Active count = {}", cancelCount, activeCount);
     }
 
     /**
@@ -431,21 +437,21 @@ public class VegaWebSocketClient extends WebSocketClient {
                         .replace("STATE_", ""));
                 MarketTradingMode tradingMode = MarketTradingMode.valueOf(marketObject.getString("marketTradingMode")
                         .replace("TRADING_MODE_", ""));
-                BigDecimal markPrice = BigDecimal.valueOf(marketObject.getLong("markPrice"));
-                BigDecimal bestBidPrice = BigDecimal.valueOf(marketObject.getLong("bestBidPrice"));
-                BigDecimal bestAskPrice = BigDecimal.valueOf(marketObject.getLong("bestOfferPrice"));
-                BigDecimal bestBidSize = BigDecimal.valueOf(marketObject.getLong("bestBidVolume"));
-                BigDecimal bestAskSize = BigDecimal.valueOf(marketObject.getLong("bestOfferVolume"));
-                BigDecimal targetStake = BigDecimal.valueOf(marketObject.getLong("targetStake"));
-                BigDecimal suppliedStake = BigDecimal.valueOf(marketObject.getLong("suppliedStake"));
-                BigDecimal openInterest = BigDecimal.valueOf(marketObject.getLong("openInterest"));
+                BigDecimal markPrice = new BigDecimal(marketObject.getString("markPrice"));
+                BigDecimal bestBidPrice = new BigDecimal(marketObject.getString("bestBidPrice"));
+                BigDecimal bestAskPrice = new BigDecimal(marketObject.getString("bestOfferPrice"));
+                BigDecimal bestBidSize = new BigDecimal(marketObject.getString("bestBidVolume"));
+                BigDecimal bestAskSize = new BigDecimal(marketObject.getString("bestOfferVolume"));
+                BigDecimal targetStake = new BigDecimal(marketObject.getString("targetStake"));
+                BigDecimal suppliedStake = new BigDecimal(marketObject.getString("suppliedStake")); // TODO - is this necessary anywhere else??
+                BigDecimal openInterest = new BigDecimal(marketObject.getString("openInterest"));
                 JSONArray priceMonitoringBounds = marketObject.getJSONArray("priceMonitoringBounds");
                 BigDecimal minValidPrice = BigDecimal.ZERO;
                 BigDecimal maxValidPrice = BigDecimal.valueOf(Double.MAX_VALUE);
                 for(int j=0; j<priceMonitoringBounds.length(); j++) {
                     JSONObject bound = priceMonitoringBounds.getJSONObject(j);
-                    BigDecimal min = BigDecimal.valueOf(bound.getLong("minValidPrice"));
-                    BigDecimal max = BigDecimal.valueOf(bound.getLong("maxValidPrice"));
+                    BigDecimal min = new BigDecimal(bound.getString("minValidPrice"));
+                    BigDecimal max = new BigDecimal(bound.getString("maxValidPrice"));
                     if(min.doubleValue() > minValidPrice.doubleValue()) {
                         minValidPrice = min;
                     }
