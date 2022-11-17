@@ -35,9 +35,13 @@ public class MarketConfig {
     @Column(nullable = false)
     private Integer updateHedgeFrequency;
     @Column(nullable = false)
+    private Integer updateNaiveFlowFrequency;
+    @Column(nullable = false)
     private Boolean updateQuotesEnabled;
     @Column(nullable = false)
     private Boolean updateLiquidityCommitmentEnabled;
     @Column(nullable = false)
     private Boolean updateHedgeEnabled;
+    @Column(nullable = false)
+    private Boolean naiveFlowEnabled;
 }

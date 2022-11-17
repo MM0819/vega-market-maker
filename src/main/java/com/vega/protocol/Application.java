@@ -1,6 +1,7 @@
 package com.vega.protocol;
 
 import com.vega.protocol.initializer.DataInitializer;
+import com.vega.protocol.initializer.TaskInitializer;
 import com.vega.protocol.initializer.WebSocketInitializer;
 import com.vega.protocol.utils.SleepUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -16,13 +17,16 @@ public class Application implements CommandLineRunner {
 
     private final WebSocketInitializer webSocketInitializer;
     private final DataInitializer dataInitializer;
+    private final TaskInitializer taskInitializer;
     private final SleepUtils sleepUtils;
 
     public Application(WebSocketInitializer webSocketInitializer,
                        DataInitializer dataInitializer,
+                       TaskInitializer taskInitializer,
                        SleepUtils sleepUtils) {
         this.webSocketInitializer = webSocketInitializer;
         this.dataInitializer = dataInitializer;
+        this.taskInitializer = taskInitializer;
         this.sleepUtils = sleepUtils;
     }
 
@@ -36,5 +40,7 @@ public class Application implements CommandLineRunner {
         dataInitializer.initialize();
         sleepUtils.sleep(5000L);
         webSocketInitializer.initialize();
+        sleepUtils.sleep(5000L);
+        taskInitializer.initialize();
     }
 }
