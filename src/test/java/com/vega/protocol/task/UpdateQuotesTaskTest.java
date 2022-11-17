@@ -5,17 +5,18 @@ import com.vega.protocol.constant.ErrorCode;
 import com.vega.protocol.constant.MarketSide;
 import com.vega.protocol.constant.MarketTradingMode;
 import com.vega.protocol.constant.OrderStatus;
+import com.vega.protocol.entity.MarketConfig;
 import com.vega.protocol.initializer.DataInitializer;
 import com.vega.protocol.initializer.WebSocketInitializer;
 import com.vega.protocol.model.*;
+import com.vega.protocol.repository.TradingConfigRepository;
 import com.vega.protocol.service.AccountService;
 import com.vega.protocol.service.MarketService;
 import com.vega.protocol.service.PositionService;
-import com.vega.protocol.store.AppConfigStore;
-import com.vega.protocol.store.ReferencePriceStore;
 import com.vega.protocol.store.LiquidityCommitmentStore;
 import com.vega.protocol.store.NetworkParameterStore;
 import com.vega.protocol.store.OrderStore;
+import com.vega.protocol.store.ReferencePriceStore;
 import com.vega.protocol.utils.PricingUtils;
 import com.vega.protocol.utils.QuantUtils;
 import org.junit.jupiter.api.Assertions;
@@ -40,7 +41,6 @@ public class UpdateQuotesTaskTest {
 
     private UpdateQuotesTask updateQuotesTask;
     private final ReferencePriceStore referencePriceStore = Mockito.mock(ReferencePriceStore.class);
-    private final AppConfigStore appConfigStore = Mockito.mock(AppConfigStore.class);
     private final OrderStore orderStore = Mockito.mock(OrderStore.class);
     private final VegaApiClient vegaApiClient = Mockito.mock(VegaApiClient.class);
     private final MarketService marketService = Mockito.mock(MarketService.class);
@@ -52,29 +52,15 @@ public class UpdateQuotesTaskTest {
     private final WebSocketInitializer webSocketInitializer = Mockito.mock(WebSocketInitializer.class);
     private final LiquidityCommitmentStore liquidityCommitmentStore = Mockito.mock(LiquidityCommitmentStore.class);
     private final NetworkParameterStore networkParameterStore = Mockito.mock(NetworkParameterStore.class);
-
-    private AppConfig getAppConfig() {
-        return new AppConfig()
-                .setFee(0.001)
-                .setMinSpread(0.003)
-                .setMaxSpread(0.01)
-                .setOrderCount(10)
-                .setBidSizeFactor(1.0)
-                .setBidQuoteRange(0.05)
-                .setAskSizeFactor(1.0)
-                .setAskQuoteRange(0.05)
-                .setCommitmentSpread(0.005)
-                .setCommitmentOrderCount(1)
-                .setCommitmentBalanceRatio(0.1);
-    }
+    private final TradingConfigRepository tradingConfigRepository = Mockito.mock(TradingConfigRepository.class);
 
     private UpdateQuotesTask getTask(
             final boolean enabled
     ) {
-        return new UpdateQuotesTask(MARKET_ID, enabled, PARTY_ID, referencePriceStore, appConfigStore, orderStore,
+        return new UpdateQuotesTask(referencePriceStore, orderStore,
                 liquidityCommitmentStore, networkParameterStore, vegaApiClient, marketService, accountService,
                 positionService, pricingUtils, quantUtils, dataInitializer, webSocketInitializer,
-                "*/15 * * * * *");
+                tradingConfigRepository);
     }
 
     @BeforeEach
@@ -97,7 +83,6 @@ public class UpdateQuotesTaskTest {
                 .setTradingMode(tradingMode));
         Mockito.when(accountService.getTotalBalance(USDT)).thenReturn(balance);
         Mockito.when(positionService.getExposure(MARKET_ID)).thenReturn(exposure);
-        Mockito.when(appConfigStore.get()).thenReturn(Optional.of(getAppConfig()));
         Mockito.when(referencePriceStore.get()).thenReturn(Optional.of(new ReferencePrice()
                 .setAskPrice(BigDecimal.valueOf(20001))
                 .setBidPrice(BigDecimal.valueOf(19999))
@@ -133,20 +118,20 @@ public class UpdateQuotesTaskTest {
         }
         Mockito.when(orderStore.getItems()).thenReturn(currentOrders);
         if(exposure.doubleValue() > 0) {
-            Mockito.when(pricingUtils.getDistribution(19999d, 0.1d, 0.05d, MarketSide.BUY))
+            Mockito.when(pricingUtils.getDistribution(19999d, 0.1d, 0.05d, MarketSide.BUY, 10))
                     .thenReturn(bidDistribution);
         } else {
-            Mockito.when(pricingUtils.getDistribution(19999d, 0.2d, 0.05d, MarketSide.BUY))
+            Mockito.when(pricingUtils.getDistribution(19999d, 0.2d, 0.05d, MarketSide.BUY, 10))
                     .thenReturn(bidDistribution);
         }
         if(exposure.doubleValue() < 0) {
-            Mockito.when(pricingUtils.getDistribution(20001d, 0.1d, 0.05d, MarketSide.SELL))
+            Mockito.when(pricingUtils.getDistribution(20001d, 0.1d, 0.05d, MarketSide.SELL, 10))
                     .thenReturn(askDistribution);
         } else {
-            Mockito.when(pricingUtils.getDistribution(20001d, 0.2d, 0.05d, MarketSide.SELL))
+            Mockito.when(pricingUtils.getDistribution(20001d, 0.2d, 0.05d, MarketSide.SELL, 10))
                     .thenReturn(askDistribution);
         }
-        updateQuotesTask.execute();
+        updateQuotesTask.execute(new MarketConfig());
         int modifier = 1;
         if(balance.doubleValue() == 0 || bidDistributionSize == 0 || askDistributionSize == 0) {
             modifier = 0;
@@ -162,7 +147,7 @@ public class UpdateQuotesTaskTest {
         Mockito.when(dataInitializer.isInitialized()).thenReturn(true);
         Mockito.when(webSocketInitializer.isVegaWebSocketsInitialized()).thenReturn(true);
         Mockito.when(webSocketInitializer.isBinanceWebSocketInitialized()).thenReturn(true);
-        updateQuotesTask.execute();
+        updateQuotesTask.execute(new MarketConfig());
         Mockito.verify(vegaApiClient, Mockito.times(0)).submitLiquidityCommitment(
                 Mockito.any(LiquidityCommitment.class), Mockito.anyString(), Mockito.anyBoolean());
     }
@@ -214,7 +199,7 @@ public class UpdateQuotesTaskTest {
         Mockito.when(accountService.getTotalBalance(USDT)).thenReturn(BigDecimal.valueOf(100000));
         Mockito.when(positionService.getExposure(MARKET_ID)).thenReturn(BigDecimal.ZERO);
         try {
-            updateQuotesTask.execute();
+            updateQuotesTask.execute(new MarketConfig());
             Assertions.fail();
         } catch(Exception e) {
             Assertions.assertEquals(e.getMessage(), ErrorCode.APP_CONFIG_NOT_FOUND);
@@ -231,9 +216,8 @@ public class UpdateQuotesTaskTest {
                 .setTradingMode(MarketTradingMode.CONTINUOUS));
         Mockito.when(accountService.getTotalBalance(USDT)).thenReturn(BigDecimal.valueOf(100000));
         Mockito.when(positionService.getExposure(MARKET_ID)).thenReturn(BigDecimal.ZERO);
-        Mockito.when(appConfigStore.get()).thenReturn(Optional.of(getAppConfig()));
         try {
-            updateQuotesTask.execute();
+            updateQuotesTask.execute(new MarketConfig());
             Assertions.fail();
         } catch(Exception e) {
             Assertions.assertEquals(e.getMessage(), ErrorCode.REFERENCE_PRICE_NOT_FOUND);
@@ -243,13 +227,8 @@ public class UpdateQuotesTaskTest {
     @Test
     public void testExecuteNotInitialized() {
         Mockito.when(dataInitializer.isInitialized()).thenReturn(false);
-        updateQuotesTask.execute();
+        updateQuotesTask.execute(new MarketConfig());
         Mockito.verify(vegaApiClient, Mockito.times(0))
                 .submitOrder(Mockito.any(Order.class), Mockito.anyString());
-    }
-
-    @Test
-    public void testGetCronExpression() {
-        Assertions.assertEquals("*/15 * * * * *", updateQuotesTask.getCronExpression());
     }
 }

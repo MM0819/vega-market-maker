@@ -5,6 +5,7 @@ import com.vega.protocol.constant.MarketSide;
 import com.vega.protocol.constant.OrderStatus;
 import com.vega.protocol.constant.OrderType;
 import com.vega.protocol.constant.TimeInForce;
+import com.vega.protocol.entity.MarketConfig;
 import com.vega.protocol.initializer.DataInitializer;
 import com.vega.protocol.initializer.WebSocketInitializer;
 import com.vega.protocol.model.Market;
@@ -26,41 +27,33 @@ public class NaiveFlowTask extends TradingTask {
     private final VegaApiClient vegaApiClient;
     private final MarketService marketService;
     private final OrderService orderService;
-    private final String marketId;
     private final String partyId;
     private MarketSide bias = MarketSide.BUY;
     private LocalDateTime nextBiasUpdate = LocalDateTime.now().minusHours(1);
 
-    public NaiveFlowTask(@Value("${vega.market.id}") String marketId,
-                         @Value("${naive.flow.enabled}") Boolean taskEnabled,
-                         @Value("${naive.flow.party.id}") String partyId,
+    public NaiveFlowTask(@Value("${naive.flow.party.id}") String partyId,
                          VegaApiClient vegaApiClient,
                          MarketService marketService,
                          OrderService orderService,
                          ReferencePriceStore referencePriceStore,
                          DataInitializer dataInitializer,
                          WebSocketInitializer webSocketInitializer) {
-        super(dataInitializer, webSocketInitializer, referencePriceStore, taskEnabled);
+        super(dataInitializer, webSocketInitializer, referencePriceStore);
         this.vegaApiClient = vegaApiClient;
         this.marketService = marketService;
-        this.marketId = marketId;
         this.partyId = partyId;
         this.orderService = orderService;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public String getCronExpression() {
-        return "*/5 * * * * *";
-    }
-
-    @Override
-    public void execute() {
+    public void execute(
+            final MarketConfig marketConfig
+    ) {
         if(!isInitialized()) {
             log.warn("Cannot execute {} because data is not initialized", getClass().getSimpleName());
-            return;
-        }
-        if(!taskEnabled) {
-            log.debug("Cannot execute {} because it is disabled", getClass().getSimpleName());
             return;
         }
         updateBias();
@@ -69,7 +62,7 @@ public class NaiveFlowTask extends TradingTask {
         if(threshold > 0.7) {
             side = orderService.getOtherSide(bias);
         }
-        Market market = marketService.getById(marketId);
+        Market market = marketService.getById(marketConfig.getMarketId());
         BigDecimal size = BigDecimal.valueOf(1 / Math.pow(10, market.getPositionDecimalPlaces()));
         Order order = new Order()
                 .setType(OrderType.MARKET)

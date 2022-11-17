@@ -2,14 +2,13 @@ package com.vega.protocol.task;
 
 import com.vega.protocol.api.BinanceApiClient;
 import com.vega.protocol.api.IGApiClient;
-import com.vega.protocol.constant.ReferencePriceSource;
+import com.vega.protocol.entity.MarketConfig;
 import com.vega.protocol.initializer.DataInitializer;
 import com.vega.protocol.initializer.WebSocketInitializer;
 import com.vega.protocol.model.ReferencePrice;
 import com.vega.protocol.service.PositionService;
 import com.vega.protocol.store.ReferencePriceStore;
 import com.vega.protocol.utils.SleepUtils;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -30,12 +29,9 @@ public class HedgeExposureTaskTest {
 
     private static final String MARKET_ID = "1";
 
-    private HedgeExposureTask getHedgeExposureTask(
-            final boolean enabled
-    ) {
-        return new HedgeExposureTask(dataInitializer, webSocketInitializer, MARKET_ID, enabled,
-                ReferencePriceSource.BINANCE, "AAPL.CASH", "BTCUSDT",
-                positionService, igApiClient, binanceApiClient, referencePriceStore, sleepUtils);
+    private HedgeExposureTask getHedgeExposureTask() {
+        return new HedgeExposureTask(dataInitializer, webSocketInitializer, positionService, igApiClient,
+                binanceApiClient, referencePriceStore, sleepUtils);
     }
 
     private ReferencePrice referencePrice() {
@@ -56,7 +52,7 @@ public class HedgeExposureTaskTest {
         binanceApiClient = Mockito.mock(BinanceApiClient.class);
         referencePriceStore = Mockito.mock(ReferencePriceStore.class);
         sleepUtils = Mockito.mock(SleepUtils.class);
-        hedgeExposureTask = getHedgeExposureTask(true);
+        hedgeExposureTask = getHedgeExposureTask();
     }
 
     @Test
@@ -66,7 +62,7 @@ public class HedgeExposureTaskTest {
         Mockito.when(webSocketInitializer.isBinanceWebSocketInitialized()).thenReturn(true);
         Mockito.when(positionService.getExposure(MARKET_ID)).thenReturn(BigDecimal.ONE);
         Mockito.when(referencePriceStore.get()).thenReturn(Optional.of(referencePrice()));
-        hedgeExposureTask.execute();
+        hedgeExposureTask.execute(new MarketConfig());
     }
 
     @Test
@@ -75,7 +71,7 @@ public class HedgeExposureTaskTest {
         Mockito.when(webSocketInitializer.isVegaWebSocketsInitialized()).thenReturn(true);
         Mockito.when(webSocketInitializer.isBinanceWebSocketInitialized()).thenReturn(true);
         Mockito.when(positionService.getExposure(MARKET_ID)).thenReturn(BigDecimal.ZERO);
-        hedgeExposureTask.execute();
+        hedgeExposureTask.execute(new MarketConfig());
         Mockito.verify(binanceApiClient, Mockito.times(0))
                 .submitMarketOrder(Mockito.any(), Mockito.any(), Mockito.any());
         Mockito.verify(igApiClient, Mockito.times(0))
@@ -84,7 +80,7 @@ public class HedgeExposureTaskTest {
 
     @Test
     public void testExecuteNotInitialized() {
-        hedgeExposureTask.execute();
+        hedgeExposureTask.execute(new MarketConfig());
         Mockito.when(dataInitializer.isInitialized()).thenReturn(false);
         Mockito.verify(binanceApiClient, Mockito.times(0))
                 .submitMarketOrder(Mockito.any(), Mockito.any(), Mockito.any());
@@ -94,20 +90,14 @@ public class HedgeExposureTaskTest {
 
     @Test
     public void testExecuteDisabled() {
-        hedgeExposureTask = getHedgeExposureTask(false);
+        hedgeExposureTask = getHedgeExposureTask();
         Mockito.when(dataInitializer.isInitialized()).thenReturn(true);
         Mockito.when(webSocketInitializer.isVegaWebSocketsInitialized()).thenReturn(true);
         Mockito.when(webSocketInitializer.isBinanceWebSocketInitialized()).thenReturn(true);
-        hedgeExposureTask.execute();
+        hedgeExposureTask.execute(new MarketConfig());
         Mockito.verify(binanceApiClient, Mockito.times(0))
                 .submitMarketOrder(Mockito.any(), Mockito.any(), Mockito.any());
         Mockito.verify(igApiClient, Mockito.times(0))
                 .submitMarketOrder(Mockito.any(), Mockito.any(), Mockito.any());
-    }
-
-    @Test
-    public void testGetCronExpression() {
-        String cron = hedgeExposureTask.getCronExpression();
-        Assertions.assertEquals(cron, "0 * * * * *");
     }
 }

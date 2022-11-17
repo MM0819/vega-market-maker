@@ -15,4 +15,5 @@ public class ErrorCode {
     public static final String GET_VEGA_TOKEN_FAILED = "Could not get Vega token.";
     public static final String ASSET_NOT_FOUND = "Asset not found.";
     public static final String NETWORK_PARAMETER_NOT_FOUND = "Network parameter not found.";
+    public static final String TRADING_CONFIG_NOT_FOUND = "Trading config not found.";
 }

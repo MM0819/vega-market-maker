@@ -1,11 +1,7 @@
 package com.vega.protocol.utils;
 
-import com.vega.protocol.constant.ErrorCode;
 import com.vega.protocol.constant.MarketSide;
-import com.vega.protocol.exception.TradingException;
-import com.vega.protocol.model.AppConfig;
 import com.vega.protocol.model.DistributionStep;
-import com.vega.protocol.store.AppConfigStore;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -14,18 +10,14 @@ import java.util.List;
 @Component
 public class PricingUtils {
 
-    private final AppConfigStore configStore;
-
-    public PricingUtils(AppConfigStore configStore) {
-        this.configStore = configStore;
-    }
-
     /**
      * Build the distribution for a given mid-price, target volume and range
      *
      * @param midPrice this will be the best bid or ask
      * @param totalVolume the total volume across all quotes
      * @param range the depth for the quotes
+     * @param side {@link MarketSide}
+     * @param orderCount the number of orders to return
      *
      * @return {@link List<DistributionStep>}
      */
@@ -33,12 +25,11 @@ public class PricingUtils {
             final double midPrice,
             final double totalVolume,
             final double range,
-            final MarketSide side
+            final MarketSide side,
+            final int orderCount
     ) {
-        AppConfig config = configStore.get().orElseThrow(() -> new TradingException(ErrorCode.APP_CONFIG_NOT_FOUND));
         List<DistributionStep> distribution = new ArrayList<>();
-        int count = config.getOrderCount();
-        double iter = 6.0 / count;
+        double iter = 6.0 / (double) orderCount;
         double adjustment = Math.pow(3, 1.0 / 3.0);
         double total_size = 0;
         for(double x=-3; x<=3; x+=iter) {

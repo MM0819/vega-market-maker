@@ -6,6 +6,7 @@ import com.vega.protocol.api.IGApiClient;
 import com.vega.protocol.constant.ErrorCode;
 import com.vega.protocol.constant.MarketSide;
 import com.vega.protocol.constant.ReferencePriceSource;
+import com.vega.protocol.entity.MarketConfig;
 import com.vega.protocol.exception.TradingException;
 import com.vega.protocol.initializer.DataInitializer;
 import com.vega.protocol.initializer.WebSocketInitializer;
@@ -15,7 +16,6 @@ import com.vega.protocol.service.PositionService;
 import com.vega.protocol.store.ReferencePriceStore;
 import com.vega.protocol.utils.SleepUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -27,32 +27,19 @@ public class HedgeExposureTask extends TradingTask {
     private final PositionService positionService;
     private final IGApiClient igApiClient;
     private final BinanceApiClient binanceApiClient;
-    private final String marketId;
-    private final ReferencePriceSource referencePriceSource;
-    private final String referencePriceMarket;
-    private final String igMarketEpic;
     private final SleepUtils sleepUtils;
 
     public HedgeExposureTask(DataInitializer dataInitializer,
                              WebSocketInitializer webSocketInitializer,
-                             @Value("${vega.market.id}") String marketId,
-                             @Value("${hedge.exposure.enabled}") Boolean taskEnabled,
-                             @Value("${reference.price.source}") ReferencePriceSource referencePriceSource,
-                             @Value("${ig.market.epic}") String igMarketEpic,
-                             @Value("${reference.price.market}") String referencePriceMarket,
                              PositionService positionService,
                              IGApiClient igApiClient,
                              BinanceApiClient binanceApiClient,
                              ReferencePriceStore referencePriceStore,
                              SleepUtils sleepUtils) {
-        super(dataInitializer, webSocketInitializer, referencePriceStore, taskEnabled);
+        super(dataInitializer, webSocketInitializer, referencePriceStore);
         this.positionService = positionService;
-        this.marketId = marketId;
-        this.referencePriceSource = referencePriceSource;
         this.igApiClient = igApiClient;
         this.binanceApiClient = binanceApiClient;
-        this.referencePriceMarket = referencePriceMarket;
-        this.igMarketEpic = igMarketEpic;
         this.sleepUtils = sleepUtils;
     }
 
@@ -60,39 +47,27 @@ public class HedgeExposureTask extends TradingTask {
      * {@inheritDoc}
      */
     @Override
-    public String getCronExpression() {
-        return "0 * * * * *";
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void execute() {
+    public void execute(
+            final MarketConfig marketConfig
+    ) {
         if(!isInitialized()) {
             log.warn("Cannot execute {} because data is not initialized", getClass().getSimpleName());
             return;
         }
-        if(!taskEnabled) {
-            log.debug("Cannot execute {} because it is disabled", getClass().getSimpleName());
-            return;
-        }
-        BigDecimal exposure = positionService.getExposure(marketId);
+        BigDecimal exposure = positionService.getExposure(marketConfig.getMarketId());
         if(exposure.doubleValue() != 0) {
             log.info("Hedging exposure...");
-            ExchangeApiClient exchangeApiClient = referencePriceSource.equals(ReferencePriceSource.BINANCE) ?
-                    binanceApiClient : igApiClient;
-            String marketSymbol = referencePriceSource.equals(ReferencePriceSource.BINANCE) ?
-                    referencePriceMarket : igMarketEpic;
-            BigDecimal hedgeExposure = exchangeApiClient.getPosition(marketSymbol)
+            ExchangeApiClient exchangeApiClient = marketConfig.getReferencePriceSource()
+                    .equals(ReferencePriceSource.BINANCE) ? binanceApiClient : igApiClient;
+            BigDecimal hedgeExposure = exchangeApiClient.getPosition(marketConfig.getHedgeSymbol())
                     .orElse(new Position().setSize(BigDecimal.ZERO)).getSize();
             BigDecimal diff = hedgeExposure.subtract(exposure).abs();
             if(hedgeExposure.abs().doubleValue() < exposure.abs().doubleValue()) {
                 MarketSide side = exposure.doubleValue() < 0 ? MarketSide.BUY : MarketSide.SELL;
-                executeTwap(side, marketSymbol, diff, exchangeApiClient);
+                executeTwap(side, marketConfig.getHedgeSymbol(), diff, exchangeApiClient);
             } else if(hedgeExposure.abs().doubleValue() > exposure.abs().doubleValue()) {
                 MarketSide side = exposure.doubleValue() < 0 ? MarketSide.SELL : MarketSide.BUY;
-                executeTwap(side, marketSymbol, diff, exchangeApiClient);
+                executeTwap(side, marketConfig.getHedgeSymbol(), diff, exchangeApiClient);
             }
         }
     }

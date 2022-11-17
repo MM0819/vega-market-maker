@@ -16,6 +16,7 @@ import org.mockito.Mockito;
 
 import java.io.InputStream;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -87,7 +88,7 @@ public class OrderServiceTest {
         List<LiquidityCommitmentOffset> offsets = new ArrayList<>();
         offsets.add(new LiquidityCommitmentOffset()
                 .setOffset(BigDecimal.ONE)
-                .setProportion(1)
+                .setProportion(BigInteger.ONE)
                 .setReference(PeggedReference.MID));
         JSONArray array = orderService.buildLiquidityOrders(3, offsets);
         Assertions.assertEquals(1, array.length());

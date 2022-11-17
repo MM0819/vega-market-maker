@@ -2,11 +2,11 @@ package com.vega.protocol.task;
 
 import com.vega.protocol.api.VegaApiClient;
 import com.vega.protocol.constant.MarketSide;
+import com.vega.protocol.entity.MarketConfig;
 import com.vega.protocol.initializer.DataInitializer;
 import com.vega.protocol.initializer.WebSocketInitializer;
 import com.vega.protocol.model.Market;
 import com.vega.protocol.model.Order;
-import com.vega.protocol.service.AccountService;
 import com.vega.protocol.service.MarketService;
 import com.vega.protocol.service.OrderService;
 import com.vega.protocol.store.ReferencePriceStore;
@@ -14,8 +14,6 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
-
-import java.math.BigDecimal;
 
 public class NaiveFlowTaskTest {
 
@@ -34,7 +32,7 @@ public class NaiveFlowTaskTest {
     private NaiveFlowTask getNaiveFlowTask(
             boolean enabled
     ) {
-        return new NaiveFlowTask(MARKET_ID, enabled, PARTY_ID, vegaApiClient, marketService,
+        return new NaiveFlowTask(PARTY_ID, vegaApiClient, marketService,
                 orderService, referencePriceStore, dataInitializer, webSocketInitializer);
     }
 
@@ -53,7 +51,7 @@ public class NaiveFlowTaskTest {
         for(int i=0; i<count; i++) {
             Mockito.when(orderService.getOtherSide(Mockito.any()))
                     .thenReturn(i % 2 == 0 ? MarketSide.BUY : MarketSide.SELL);
-            naiveFlowTask.execute();
+            naiveFlowTask.execute(new MarketConfig());
         }
         Mockito.verify(vegaApiClient, Mockito.times(count)).submitOrder(Mockito.any(Order.class), Mockito.anyString());
     }
@@ -64,7 +62,7 @@ public class NaiveFlowTaskTest {
         Mockito.when(webSocketInitializer.isVegaWebSocketsInitialized()).thenReturn(true);
         Mockito.when(webSocketInitializer.isBinanceWebSocketInitialized()).thenReturn(true);
         naiveFlowTask = getNaiveFlowTask(false);
-        naiveFlowTask.execute();
+        naiveFlowTask.execute(new MarketConfig());
         Mockito.verify(vegaApiClient, Mockito.times(0)).submitOrder(Mockito.any(Order.class), Mockito.anyString());
     }
 
@@ -72,12 +70,12 @@ public class NaiveFlowTaskTest {
     public void testExecuteNotInitialized() {
         Mockito.when(dataInitializer.isInitialized()).thenReturn(false);
         naiveFlowTask = getNaiveFlowTask(false);
-        naiveFlowTask.execute();
+        naiveFlowTask.execute(new MarketConfig());
         Mockito.verify(vegaApiClient, Mockito.times(0)).submitOrder(Mockito.any(Order.class), Mockito.anyString());
     }
 
     @Test
-    public void testInitializedFalseWhenDataNotInitalized() {
+    public void testInitializedFalseWhenDataNotInitialized() {
         Mockito.when(dataInitializer.isInitialized()).thenReturn(false);
         naiveFlowTask = getNaiveFlowTask(true);
         boolean result = naiveFlowTask.isInitialized();
@@ -85,7 +83,7 @@ public class NaiveFlowTaskTest {
     }
 
     @Test
-    public void testInitializedFalseWhenVegaNotInitalized() {
+    public void testInitializedFalseWhenVegaNotInitialized() {
         Mockito.when(dataInitializer.isInitialized()).thenReturn(true);
         Mockito.when(webSocketInitializer.isVegaWebSocketsInitialized()).thenReturn(false);
         naiveFlowTask = getNaiveFlowTask(true);
@@ -94,7 +92,7 @@ public class NaiveFlowTaskTest {
     }
 
     @Test
-    public void testInitializedFalseWhenBinanceNotInitalized() {
+    public void testInitializedFalseWhenBinanceNotInitialized() {
         Mockito.when(dataInitializer.isInitialized()).thenReturn(true);
         Mockito.when(webSocketInitializer.isVegaWebSocketsInitialized()).thenReturn(true);
         Mockito.when(webSocketInitializer.isBinanceWebSocketInitialized()).thenReturn(false);
@@ -104,7 +102,7 @@ public class NaiveFlowTaskTest {
     }
 
     @Test
-    public void testInitializedTrueWhenPolygonInitalized() {
+    public void testInitializedTrueWhenPolygonInitialized() {
         Mockito.when(dataInitializer.isInitialized()).thenReturn(true);
         Mockito.when(webSocketInitializer.isVegaWebSocketsInitialized()).thenReturn(true);
         Mockito.when(webSocketInitializer.isPolygonWebSocketInitialized()).thenReturn(true);
@@ -114,7 +112,7 @@ public class NaiveFlowTaskTest {
     }
 
     @Test
-    public void testInitializedTrueWhenBinanceInitalized() {
+    public void testInitializedTrueWhenBinanceInitialized() {
         Mockito.when(dataInitializer.isInitialized()).thenReturn(true);
         Mockito.when(webSocketInitializer.isVegaWebSocketsInitialized()).thenReturn(true);
         Mockito.when(webSocketInitializer.isBinanceWebSocketInitialized()).thenReturn(true);
@@ -124,7 +122,7 @@ public class NaiveFlowTaskTest {
     }
 
     @Test
-    public void testInitializedTrueWhenBinanceAndPolygonInitalized() {
+    public void testInitializedTrueWhenBinanceAndPolygonInitialized() {
         Mockito.when(dataInitializer.isInitialized()).thenReturn(true);
         Mockito.when(webSocketInitializer.isVegaWebSocketsInitialized()).thenReturn(true);
         Mockito.when(webSocketInitializer.isBinanceWebSocketInitialized()).thenReturn(true);
@@ -135,7 +133,7 @@ public class NaiveFlowTaskTest {
     }
 
     @Test
-    public void testInitializedTrueWhenPolygonInitalizedAndVegaNotInitailized() {
+    public void testInitializedTrueWhenPolygonInitializedAndVegaNotInitialized() {
         Mockito.when(dataInitializer.isInitialized()).thenReturn(true);
         Mockito.when(webSocketInitializer.isVegaWebSocketsInitialized()).thenReturn(false);
         Mockito.when(webSocketInitializer.isPolygonWebSocketInitialized()).thenReturn(true);
@@ -145,7 +143,7 @@ public class NaiveFlowTaskTest {
     }
 
     @Test
-    public void testInitializedTrueWhenBinanceInitalizedAndVegaNotInitailized() {
+    public void testInitializedTrueWhenBinanceInitializedAndVegaNotInitialized() {
         Mockito.when(dataInitializer.isInitialized()).thenReturn(true);
         Mockito.when(webSocketInitializer.isVegaWebSocketsInitialized()).thenReturn(false);
         Mockito.when(webSocketInitializer.isBinanceWebSocketInitialized()).thenReturn(true);
@@ -155,7 +153,7 @@ public class NaiveFlowTaskTest {
     }
 
     @Test
-    public void testInitializedTrueWhenBinanceAndPolygonInitalizedAndVegaNotInitailized() {
+    public void testInitializedTrueWhenBinanceAndPolygonInitializedAndVegaNotInitialized() {
         Mockito.when(dataInitializer.isInitialized()).thenReturn(true);
         Mockito.when(webSocketInitializer.isVegaWebSocketsInitialized()).thenReturn(false);
         Mockito.when(webSocketInitializer.isBinanceWebSocketInitialized()).thenReturn(true);
@@ -166,7 +164,7 @@ public class NaiveFlowTaskTest {
     }
 
     @Test
-    public void testInitializedTrueWhenPolygonInitalizedAndDataNotInitailized() {
+    public void testInitializedTrueWhenPolygonInitializedAndDataNotInitialized() {
         Mockito.when(dataInitializer.isInitialized()).thenReturn(false);
         Mockito.when(webSocketInitializer.isVegaWebSocketsInitialized()).thenReturn(true);
         Mockito.when(webSocketInitializer.isPolygonWebSocketInitialized()).thenReturn(true);
@@ -176,7 +174,7 @@ public class NaiveFlowTaskTest {
     }
 
     @Test
-    public void testInitializedTrueWhenBinanceInitalizedAndDataNotInitailized() {
+    public void testInitializedTrueWhenBinanceInitializedAndDataNotInitialized() {
         Mockito.when(dataInitializer.isInitialized()).thenReturn(false);
         Mockito.when(webSocketInitializer.isVegaWebSocketsInitialized()).thenReturn(true);
         Mockito.when(webSocketInitializer.isBinanceWebSocketInitialized()).thenReturn(true);
@@ -186,7 +184,7 @@ public class NaiveFlowTaskTest {
     }
 
     @Test
-    public void testInitializedTrueWhenBinanceAndPolygonInitalizedAndDataNotInitailized() {
+    public void testInitializedTrueWhenBinanceAndPolygonInitializedAndDataNotInitialized() {
         Mockito.when(dataInitializer.isInitialized()).thenReturn(false);
         Mockito.when(webSocketInitializer.isVegaWebSocketsInitialized()).thenReturn(true);
         Mockito.when(webSocketInitializer.isBinanceWebSocketInitialized()).thenReturn(true);
@@ -194,15 +192,5 @@ public class NaiveFlowTaskTest {
         naiveFlowTask = getNaiveFlowTask(true);
         boolean result = naiveFlowTask.isInitialized();
         Assertions.assertFalse(result);
-    }
-
-    @Test
-    public void testGetCronExpression() {
-        Assertions.assertEquals("*/5 * * * * *", naiveFlowTask.getCronExpression());
-    }
-
-    @Test
-    public void testInitialized() {
-        naiveFlowTask.initialize();
     }
 }

@@ -2,19 +2,24 @@ package com.vega.protocol.task;
 
 import com.vega.protocol.api.VegaApiClient;
 import com.vega.protocol.constant.*;
+import com.vega.protocol.entity.MarketConfig;
+import com.vega.protocol.entity.TradingConfig;
 import com.vega.protocol.exception.TradingException;
 import com.vega.protocol.initializer.DataInitializer;
 import com.vega.protocol.initializer.WebSocketInitializer;
 import com.vega.protocol.model.*;
+import com.vega.protocol.repository.TradingConfigRepository;
 import com.vega.protocol.service.AccountService;
 import com.vega.protocol.service.MarketService;
 import com.vega.protocol.service.PositionService;
-import com.vega.protocol.store.*;
+import com.vega.protocol.store.LiquidityCommitmentStore;
+import com.vega.protocol.store.NetworkParameterStore;
+import com.vega.protocol.store.OrderStore;
+import com.vega.protocol.store.ReferencePriceStore;
 import com.vega.protocol.utils.PricingUtils;
 import com.vega.protocol.utils.QuantUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.ListUtils;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -31,25 +36,18 @@ public class UpdateQuotesTask extends TradingTask {
     private static final String STAKE_TO_SISKAS_PARAM = "market.liquidity.stakeToCcySiskas";
     private static final String MIN_PROB_OF_TRADING_PARAM = "market.liquidity.minimum.probabilityOfTrading.lpOrders";
 
-    private final AppConfigStore appConfigStore;
     private final OrderStore orderStore;
     private final LiquidityCommitmentStore liquidityCommitmentStore;
     private final NetworkParameterStore networkParameterStore;
     private final VegaApiClient vegaApiClient;
-    private final String marketId;
     private final MarketService marketService;
     private final AccountService accountService;
     private final PositionService positionService;
     private final PricingUtils pricingUtils;
     private final QuantUtils quantUtils;
-    private final String partyId;
-    private final String updateQuotesCronExpression;
+    private final TradingConfigRepository tradingConfigRepository;
 
-    public UpdateQuotesTask(@Value("${vega.market.id}") String marketId,
-                            @Value("${update.quotes.enabled}") Boolean taskEnabled,
-                            @Value("${vega.party.id}") String partyId,
-                            ReferencePriceStore referencePriceStore,
-                            AppConfigStore appConfigStore,
+    public UpdateQuotesTask(ReferencePriceStore referencePriceStore,
                             OrderStore orderStore,
                             LiquidityCommitmentStore liquidityCommitmentStore,
                             NetworkParameterStore networkParameterStore,
@@ -61,10 +59,8 @@ public class UpdateQuotesTask extends TradingTask {
                             QuantUtils quantUtils,
                             DataInitializer dataInitializer,
                             WebSocketInitializer webSocketInitializer,
-                            @Value("${update.quotes.cron.expression}") String updateQuotesCronExpression) {
-        super(dataInitializer, webSocketInitializer, referencePriceStore, taskEnabled);
-        this.appConfigStore = appConfigStore;
-        this.marketId = marketId;
+                            TradingConfigRepository tradingConfigRepository) {
+        super(dataInitializer, webSocketInitializer, referencePriceStore);
         this.orderStore = orderStore;
         this.liquidityCommitmentStore = liquidityCommitmentStore;
         this.networkParameterStore = networkParameterStore;
@@ -74,31 +70,22 @@ public class UpdateQuotesTask extends TradingTask {
         this.positionService = positionService;
         this.pricingUtils = pricingUtils;
         this.quantUtils = quantUtils;
-        this.partyId = partyId;
-        this.updateQuotesCronExpression = updateQuotesCronExpression;
+        this.tradingConfigRepository = tradingConfigRepository;
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public String getCronExpression() {
-        return updateQuotesCronExpression;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void execute() {
+    public void execute(
+            final MarketConfig marketConfig
+    ) {
         if(!isInitialized()) {
             log.warn("Cannot execute {} because data is not initialized", getClass().getSimpleName());
             return;
         }
-        if(!taskEnabled) {
-            log.debug("Cannot execute {} because it is disabled", getClass().getSimpleName());
-            return;
-        }
+        String marketId = marketConfig.getMarketId();;
+        String partyId = marketConfig.getPartyId();
         log.info("Updating quotes...");
         Market market = marketService.getById(marketId);
         BigDecimal balance = accountService.getTotalBalance(market.getSettlementAsset());
@@ -108,8 +95,8 @@ public class UpdateQuotesTask extends TradingTask {
         }
         BigDecimal exposure = positionService.getExposure(marketId);
         // TODO - we should use the net exposure here after considering our hedge on Binance / IG
-        AppConfig config = appConfigStore.get()
-                .orElseThrow(() -> new TradingException(ErrorCode.APP_CONFIG_NOT_FOUND));
+        TradingConfig tradingConfig = tradingConfigRepository.findByMarketConfig(marketConfig)
+                .orElseThrow(() -> new TradingException(ErrorCode.TRADING_CONFIG_NOT_FOUND));
         ReferencePrice referencePrice = referencePriceStore.get()
                 .orElseThrow(() -> new TradingException(ErrorCode.REFERENCE_PRICE_NOT_FOUND));
         BigDecimal midPrice = referencePrice.getMidPrice();
@@ -118,19 +105,21 @@ public class UpdateQuotesTask extends TradingTask {
         double openVolumeRatio = Math.min(0.99, exposure.abs().doubleValue() / askPoolSize.doubleValue());
         log.info("\n\nReference price = {}\nExposure = {}\nBid pool size = {}\nAsk pool size = {}\n",
                 referencePrice, exposure, bidPoolSize, askPoolSize);
-        BigDecimal bidVolume = askPoolSize.multiply(BigDecimal.valueOf(config.getCommitmentBalanceRatio()));
-        BigDecimal askVolume = askPoolSize.multiply(BigDecimal.valueOf(config.getCommitmentBalanceRatio()));
-        double bidQuoteRange = config.getBidQuoteRange();
-        double askQuoteRange = config.getAskQuoteRange();
+        BigDecimal bidVolume = askPoolSize.multiply(BigDecimal.valueOf(tradingConfig.getCommitmentBalanceRatio()));
+        BigDecimal askVolume = askPoolSize.multiply(BigDecimal.valueOf(tradingConfig.getCommitmentBalanceRatio()));
+        double bidQuoteRange = tradingConfig.getBidQuoteRange();
+        double askQuoteRange = tradingConfig.getAskQuoteRange();
         if(exposure.doubleValue() > 0) {
             bidVolume = bidVolume.multiply(BigDecimal.valueOf(1 - openVolumeRatio));
         } else if(exposure.doubleValue() < 0) {
             askVolume = askVolume.multiply(BigDecimal.valueOf(1 - openVolumeRatio));
         }
         List<DistributionStep> askDistribution = pricingUtils.getDistribution(
-                referencePrice.getAskPrice().doubleValue(), askVolume.doubleValue(), askQuoteRange, MarketSide.SELL);
+                referencePrice.getAskPrice().doubleValue(), askVolume.doubleValue(), askQuoteRange,
+                MarketSide.SELL, tradingConfig.getQuoteOrderCount());
         List<DistributionStep> bidDistribution = pricingUtils.getDistribution(
-                referencePrice.getBidPrice().doubleValue(), bidVolume.doubleValue(), bidQuoteRange, MarketSide.BUY);
+                referencePrice.getBidPrice().doubleValue(), bidVolume.doubleValue(), bidQuoteRange,
+                MarketSide.BUY, tradingConfig.getQuoteOrderCount());
         if(bidDistribution.size() == 0) {
             log.warn("Bid distribution was empty !!");
             return;
@@ -141,7 +130,7 @@ public class UpdateQuotesTask extends TradingTask {
         }
         List<Order> bids = bidDistribution.stream().map(d ->
                 new Order()
-                        .setSize(BigDecimal.valueOf(d.getSize() * config.getBidSizeFactor()))
+                        .setSize(BigDecimal.valueOf(d.getSize() * tradingConfig.getBidSizeFactor()))
                         .setPrice(BigDecimal.valueOf(d.getPrice()))
                         .setStatus(OrderStatus.ACTIVE)
                         .setSide(MarketSide.BUY)
@@ -152,7 +141,7 @@ public class UpdateQuotesTask extends TradingTask {
         ).collect(Collectors.toList());
         List<Order> asks = askDistribution.stream().map(d ->
                 new Order()
-                        .setSize(BigDecimal.valueOf(d.getSize() * config.getAskSizeFactor()))
+                        .setSize(BigDecimal.valueOf(d.getSize() * tradingConfig.getAskSizeFactor()))
                         .setPrice(BigDecimal.valueOf(d.getPrice()))
                         .setStatus(OrderStatus.ACTIVE)
                         .setSide(MarketSide.SELL)
@@ -164,7 +153,7 @@ public class UpdateQuotesTask extends TradingTask {
         BigDecimal bboSize = BigDecimal.valueOf(1 / Math.pow(10, market.getPositionDecimalPlaces()));
         bids.add(new Order()
                 .setSize(bboSize)
-                .setPrice(referencePrice.getBidPrice().multiply(BigDecimal.valueOf(1 - config.getBboOffset())))
+                .setPrice(referencePrice.getBidPrice().multiply(BigDecimal.valueOf(1 - tradingConfig.getBboOffset())))
                 .setStatus(OrderStatus.ACTIVE)
                 .setSide(MarketSide.BUY)
                 .setType(OrderType.LIMIT)
@@ -173,7 +162,7 @@ public class UpdateQuotesTask extends TradingTask {
                 .setPartyId(partyId));
         asks.add(new Order()
                 .setSize(bboSize)
-                .setPrice(referencePrice.getAskPrice().multiply(BigDecimal.valueOf(1 + config.getBboOffset())))
+                .setPrice(referencePrice.getAskPrice().multiply(BigDecimal.valueOf(1 + tradingConfig.getBboOffset())))
                 .setStatus(OrderStatus.ACTIVE)
                 .setSide(MarketSide.SELL)
                 .setType(OrderType.LIMIT)
@@ -184,24 +173,25 @@ public class UpdateQuotesTask extends TradingTask {
         bids.sort(Comparator.comparing(Order::getPrice).reversed());
         Order bestBid = bids.get(0);
         Order bestAsk = asks.get(0);
-        updateSpread(bids, asks, config, exposure, openVolumeRatio);
+        updateSpread(bids, asks, tradingConfig, exposure, openVolumeRatio);
         log.info("Bid price = {}; Ask price = {}", bestBid.getPrice(), bestAsk.getPrice());
         Optional<LiquidityCommitment> liquidityCommitmentOptional = liquidityCommitmentStore.getItems().stream()
                 .filter(lc -> lc.getMarket().getId().equals(marketId)).findFirst();
         if(liquidityCommitmentOptional.isPresent()) {
             BigDecimal commitmentAmount = liquidityCommitmentOptional.get().getCommitmentAmount();
-            adjustOrders(bids, commitmentAmount, config);
-            adjustOrders(asks, commitmentAmount, config);
+            adjustOrders(bids, commitmentAmount, tradingConfig);
+            adjustOrders(asks, commitmentAmount, tradingConfig);
         }
         List<Order> submissions = new ArrayList<>();
         submissions.addAll(bids);
         submissions.addAll(asks);
-        List<Order> currentOrders = orderStore.getItems().stream().filter(o -> !o.getIsPeggedOrder()).filter(o -> o.getStatus().equals(OrderStatus.ACTIVE)).toList();
+        List<Order> currentOrders = orderStore.getItems().stream().filter(o -> !o.getIsPeggedOrder())
+                .filter(o -> o.getStatus().equals(OrderStatus.ACTIVE)).toList();
         List<Order> currentBids = currentOrders.stream().filter(o -> o.getSide().equals(MarketSide.BUY))
                 .sorted(Comparator.comparing(Order::getPrice).reversed()).toList();
         List<Order> currentAsks = currentOrders.stream().filter(o -> o.getSide().equals(MarketSide.SELL))
                 .sorted(Comparator.comparing(Order::getPrice)).toList();
-        if(shouldUpdateQuotes(currentBids, currentAsks, bestBid, bestAsk, config)) {
+        if(shouldUpdateQuotes(currentBids, currentAsks, bestBid, bestAsk, tradingConfig)) {
             List<String> cancellations = currentOrders.stream().map(Order::getId).toList();
             NetworkParameter maxBatchSizeParam = networkParameterStore.getById(MAX_BATCH_SIZE_PARAM)
                     .orElseThrow(() -> new TradingException(ErrorCode.NETWORK_PARAMETER_NOT_FOUND));
@@ -230,21 +220,21 @@ public class UpdateQuotesTask extends TradingTask {
      *
      * @param bids {@link List<Order>}
      * @param asks {@link List<Order>}
-     * @param config {@link AppConfig}
+     * @param tradingConfig {@link TradingConfig}
      * @param exposure current exposure
      * @param openVolumeRatio the open volume as a ratio of account balance
      */
     private void updateSpread(
             final List<Order> bids,
             final List<Order> asks,
-            final AppConfig config,
+            final TradingConfig tradingConfig,
             final BigDecimal exposure,
             final double openVolumeRatio
     ) {
         Order bestBid = bids.get(0);
         Order bestAsk = asks.get(0);
-        double targetSpread = config.getMinSpread() +
-                (openVolumeRatio * (config.getMaxSpread() - config.getMinSpread()));
+        double targetSpread = tradingConfig.getMinSpread() +
+                (openVolumeRatio * (tradingConfig.getMaxSpread() - tradingConfig.getMinSpread()));
         double currentSpread = (bestAsk.getPrice().doubleValue() - bestBid.getPrice().doubleValue()) / 2.0;
         if(currentSpread < targetSpread) {
             double spreadDiff = targetSpread - currentSpread;
@@ -297,17 +287,17 @@ public class UpdateQuotesTask extends TradingTask {
      *
      * @param orders {@link List<Order>}
      * @param commitmentAmount the LP commitment amount
-     * @param config {@link AppConfig}
+     * @param tradingConfig {@link TradingConfig}
      */
     private void adjustOrders(
             final List<Order> orders,
             final BigDecimal commitmentAmount,
-            final AppConfig config
+            final TradingConfig tradingConfig
     ) {
         NetworkParameter stakeToSiskasParam = networkParameterStore.getById(STAKE_TO_SISKAS_PARAM)
                 .orElseThrow(() -> new TradingException(ErrorCode.NETWORK_PARAMETER_NOT_FOUND));
         BigDecimal effectiveVolume = getEffectiveVolume(orders);
-        BigDecimal targetVolume = (commitmentAmount.multiply(BigDecimal.valueOf(1 + config.getStakeBuffer())))
+        BigDecimal targetVolume = (commitmentAmount.multiply(BigDecimal.valueOf(1 + tradingConfig.getStakeBuffer())))
                 .multiply(new BigDecimal(stakeToSiskasParam.getValue()));
         BigDecimal volumeRatio = effectiveVolume.divide(targetVolume, 8, RoundingMode.HALF_DOWN);
         if(volumeRatio.doubleValue() < 1) {
@@ -323,7 +313,7 @@ public class UpdateQuotesTask extends TradingTask {
      * @param currentAsks the current asks
      * @param bestBid the new best bid
      * @param bestAsk the new best ask
-     * @param config {@link AppConfig}
+     * @param tradingConfig {@link TradingConfig}
      *
      * @return true / false
      */
@@ -332,7 +322,7 @@ public class UpdateQuotesTask extends TradingTask {
             final List<Order> currentAsks,
             final Order bestBid,
             final Order bestAsk,
-            final AppConfig config
+            final TradingConfig tradingConfig
     ) {
         /*if(currentBids.size() > 0 && currentAsks.size() > 0) {
             Order currentBestBid = currentBids.get(0);

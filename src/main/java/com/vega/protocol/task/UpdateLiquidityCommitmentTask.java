@@ -3,22 +3,26 @@ package com.vega.protocol.task;
 import com.vega.protocol.api.VegaApiClient;
 import com.vega.protocol.constant.ErrorCode;
 import com.vega.protocol.constant.PeggedReference;
+import com.vega.protocol.entity.MarketConfig;
+import com.vega.protocol.entity.TradingConfig;
 import com.vega.protocol.exception.TradingException;
 import com.vega.protocol.initializer.DataInitializer;
 import com.vega.protocol.initializer.WebSocketInitializer;
-import com.vega.protocol.model.*;
+import com.vega.protocol.model.LiquidityCommitment;
+import com.vega.protocol.model.LiquidityCommitmentOffset;
+import com.vega.protocol.model.Market;
+import com.vega.protocol.model.ReferencePrice;
+import com.vega.protocol.repository.TradingConfigRepository;
 import com.vega.protocol.service.AccountService;
 import com.vega.protocol.service.MarketService;
 import com.vega.protocol.service.PositionService;
-import com.vega.protocol.store.AppConfigStore;
 import com.vega.protocol.store.LiquidityCommitmentStore;
 import com.vega.protocol.store.ReferencePriceStore;
-import com.vega.protocol.utils.PricingUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,53 +35,41 @@ public class UpdateLiquidityCommitmentTask extends TradingTask {
     private final MarketService marketService;
     private final AccountService accountService;
     private final PositionService positionService;
-    private final AppConfigStore appConfigStore;
     private final LiquidityCommitmentStore liquidityCommitmentStore;
     private final VegaApiClient vegaApiClient;
-    private final String marketId;
-    private final String partyId;
-    private final String updateLiquidityCommitmentCronExpression;
+    private final TradingConfigRepository tradingConfigRepository;
 
-    public UpdateLiquidityCommitmentTask(@Value("${vega.market.id}") String marketId,
-                                         @Value("${update.liquidity.commitment.enabled}") Boolean taskEnabled,
-                                         @Value("${vega.party.id}") String partyId,
-                                         MarketService marketService,
+    public UpdateLiquidityCommitmentTask(MarketService marketService,
                                          AccountService accountService,
                                          PositionService positionService,
-                                         AppConfigStore appConfigStore,
                                          VegaApiClient vegaApiClient,
                                          ReferencePriceStore referencePriceStore,
                                          LiquidityCommitmentStore liquidityCommitmentStore,
                                          DataInitializer dataInitializer,
                                          WebSocketInitializer webSocketInitializer,
-                                         @Value("${update.liquidity.commitment.cron.expression}") String updateLiquidityCommitmentCronExpression) {
-        super(dataInitializer, webSocketInitializer, referencePriceStore, taskEnabled);
+                                         TradingConfigRepository tradingConfigRepository) {
+        super(dataInitializer, webSocketInitializer, referencePriceStore);
         this.marketService = marketService;
         this.accountService = accountService;
         this.positionService = positionService;
-        this.appConfigStore = appConfigStore;
         this.liquidityCommitmentStore = liquidityCommitmentStore;
         this.vegaApiClient = vegaApiClient;
-        this.marketId = marketId;
-        this.updateLiquidityCommitmentCronExpression = updateLiquidityCommitmentCronExpression;
-        this.partyId = partyId;
+        this.tradingConfigRepository = tradingConfigRepository;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public String getCronExpression() {
-        return updateLiquidityCommitmentCronExpression;
-    }
-
-    @Override
-    public void execute() {
+    public void execute(
+            final MarketConfig marketConfig
+    ) {
         if(!isInitialized()) {
             log.warn("Cannot execute {} because data is not initialized", getClass().getSimpleName());
             return;
         }
-        if(!taskEnabled) {
-            log.debug("Cannot execute {} because it is disabled", getClass().getSimpleName());
-            return;
-        }
+        String marketId = marketConfig.getMarketId();
+        String partyId = marketConfig.getPartyId();
         log.info("Updating liquidity commitment...");
         Market market = marketService.getById(marketId);
         BigDecimal balance = accountService.getTotalBalance(market.getSettlementAsset());
@@ -86,15 +78,15 @@ public class UpdateLiquidityCommitmentTask extends TradingTask {
             return;
         }
         BigDecimal exposure = positionService.getExposure(marketId);
-        AppConfig config = appConfigStore.get()
-                .orElseThrow(() -> new TradingException(ErrorCode.APP_CONFIG_NOT_FOUND));
+        TradingConfig tradingConfig = tradingConfigRepository.findByMarketConfig(marketConfig)
+                .orElseThrow(() -> new TradingException(ErrorCode.TRADING_CONFIG_NOT_FOUND));
         ReferencePrice referencePrice = referencePriceStore.get()
                 .orElseThrow(() -> new TradingException(ErrorCode.REFERENCE_PRICE_NOT_FOUND));
         BigDecimal midPrice = referencePrice.getMidPrice();
         BigDecimal bidPoolSize = balance.multiply(BigDecimal.valueOf(0.5));
         BigDecimal askPoolSize = bidPoolSize.divide(midPrice, market.getDecimalPlaces(), RoundingMode.HALF_DOWN);
-        BigDecimal commitmentAmount = bidPoolSize.multiply(BigDecimal.valueOf(config.getCommitmentBalanceRatio()));
-        BigDecimal requiredStake = (market.getTargetStake().multiply(BigDecimal.valueOf(1 + config.getStakeBuffer())));
+        BigDecimal commitmentAmount = bidPoolSize.multiply(BigDecimal.valueOf(tradingConfig.getCommitmentBalanceRatio()));
+        BigDecimal requiredStake = (market.getTargetStake().multiply(BigDecimal.valueOf(1 + tradingConfig.getStakeBuffer())));
         log.info("Exposure = {}\nBid pool size = {}\nAsk pool size = {}; Required stake = {}",
                 exposure, bidPoolSize, askPoolSize, requiredStake);
         if(requiredStake.doubleValue() > commitmentAmount.doubleValue() &&
@@ -105,18 +97,18 @@ public class UpdateLiquidityCommitmentTask extends TradingTask {
         List<LiquidityCommitmentOffset> asks = new ArrayList<>();
         double scalingFactor = exposure.abs().divide(askPoolSize, 8, RoundingMode.HALF_DOWN).doubleValue();
         int baseProportion = 100000000;
-        for(int i=0; i<config.getCommitmentOrderCount(); i++) {
+        for(int i=0; i<tradingConfig.getCommitmentOrderCount(); i++) {
             int bidProportion = (int) (exposure.doubleValue() > 0 ?
                     Math.max(1, baseProportion * (1 - scalingFactor)) : baseProportion);
             int askProportion = (int) (exposure.doubleValue() < 0 ?
                     Math.max(1, baseProportion * (1 - scalingFactor)) : baseProportion);
             LiquidityCommitmentOffset bidOffset = new LiquidityCommitmentOffset()
-                    .setOffset(midPrice.multiply(BigDecimal.valueOf(config.getCommitmentSpread() * (i+1))))
-                    .setProportion(bidProportion)
+                    .setOffset(midPrice.multiply(BigDecimal.valueOf(tradingConfig.getCommitmentSpread() * (i+1))))
+                    .setProportion(BigInteger.valueOf(bidProportion))
                     .setReference(PeggedReference.MID);
             LiquidityCommitmentOffset askOffset = new LiquidityCommitmentOffset()
-                    .setOffset(midPrice.multiply(BigDecimal.valueOf(config.getCommitmentSpread() * (i+1))))
-                    .setProportion(askProportion)
+                    .setOffset(midPrice.multiply(BigDecimal.valueOf(tradingConfig.getCommitmentSpread() * (i+1))))
+                    .setProportion(BigInteger.valueOf(askProportion))
                     .setReference(PeggedReference.MID);
             bids.add(bidOffset);
             asks.add(askOffset);
@@ -124,7 +116,7 @@ public class UpdateLiquidityCommitmentTask extends TradingTask {
         LiquidityCommitment liquidityCommitment = new LiquidityCommitment()
                 .setMarket(market)
                 .setCommitmentAmount(commitmentAmount)
-                .setFee(BigDecimal.valueOf(config.getFee()))
+                .setFee(BigDecimal.valueOf(tradingConfig.getFee()))
                 .setBids(bids)
                 .setAsks(asks);
         Optional<LiquidityCommitment> currentCommitment = liquidityCommitmentStore.getItems().stream()
