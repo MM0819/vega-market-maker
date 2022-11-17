@@ -10,6 +10,7 @@ import org.json.JSONObject;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -50,8 +51,8 @@ public class OrderService {
         List<LiquidityCommitmentOffset> liquidityOrders = new ArrayList<>();
         for(int i=0; i<ordersArray.length(); i++) {
             JSONObject object = ordersArray.getJSONObject(i).getJSONObject("liquidityOrder");
-            Integer proportion = object.getInt("proportion");
-            BigDecimal offset = BigDecimal.valueOf(object.getDouble("offset"));
+            BigInteger proportion = new BigInteger(object.getString("proportion"));
+            BigDecimal offset = new BigDecimal(object.getString("offset"));
             PeggedReference reference = PeggedReference.valueOf(object.getString("reference")
                         .replace("PEGGED_REFERENCE_", ""));
             LiquidityCommitmentOffset bid = new LiquidityCommitmentOffset()

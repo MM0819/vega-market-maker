@@ -121,8 +121,8 @@ public class VegaApiClient {
                 Asset asset = assetStore.getItems().stream()
                         .filter(a -> a.getSymbol().equals(market.getSettlementAsset())).findFirst()
                         .orElseThrow(() -> new TradingException(ErrorCode.ASSET_NOT_FOUND));
-                BigDecimal commitmentAmount = BigDecimal.valueOf(
-                        liquidityProvisionObject.getDouble("commitmentAmount"));
+                BigDecimal commitmentAmount = new BigDecimal(
+                        liquidityProvisionObject.getString("commitmentAmount"));
                 LiquidityCommitmentStatus status = LiquidityCommitmentStatus.valueOf(
                         liquidityProvisionObject.getString("status").replace("STATUS_", ""));
                 String id = liquidityProvisionObject.getString("id");
@@ -216,7 +216,7 @@ public class VegaApiClient {
                 Asset asset = assetStore.getItems().stream().filter(a -> a.getId().equals(assetId)).findFirst()
                         .orElseThrow(() -> new TradingException(ErrorCode.ASSET_NOT_FOUND));
                 String marketId = accountObject.getString("marketId");
-                BigDecimal balance = BigDecimal.valueOf(accountObject.getDouble("balance"));
+                BigDecimal balance = new BigDecimal(accountObject.getString("balance"));
                 AccountType type = AccountType.valueOf(accountObject.getString("type")
                         .replace("ACCOUNT_TYPE_", ""));
                 String id = String.format("%s-%s-%s", asset.getSymbol(), partyId, type);
@@ -315,10 +315,10 @@ public class VegaApiClient {
                 String marketId = positionObject.getString("marketId");
                 Market market = marketStore.getById(marketId)
                         .orElseThrow(() -> new TradingException(ErrorCode.MARKET_NOT_FOUND));
-                BigDecimal size = BigDecimal.valueOf(positionObject.getDouble("openVolume"));
-                BigDecimal entryPrice = BigDecimal.valueOf(positionObject.getDouble("averageEntryPrice"));
-                BigDecimal realisedPnl = BigDecimal.valueOf(positionObject.getDouble("realisedPnl"));
-                BigDecimal unrealisedPnl = BigDecimal.valueOf(positionObject.getDouble("unrealisedPnl"));
+                BigDecimal size = new BigDecimal(positionObject.getString("openVolume"));
+                BigDecimal entryPrice = new BigDecimal(positionObject.getString("averageEntryPrice"));
+                BigDecimal realisedPnl = new BigDecimal(positionObject.getString("realisedPnl"));
+                BigDecimal unrealisedPnl = new BigDecimal(positionObject.getString("unrealisedPnl"));
                 MarketSide side = size.doubleValue() > 0 ? MarketSide.BUY :
                         (size.doubleValue() < 0 ? MarketSide.SELL : null);
                 String id = String.format("%s-%s", marketId, partyId);
@@ -366,13 +366,13 @@ public class VegaApiClient {
                         .orElseThrow(() -> new TradingException(ErrorCode.MARKET_NOT_FOUND));
                 OrderType type = OrderType.valueOf(orderObject.getString("type")
                         .replace("TYPE_", ""));
-                BigDecimal size = BigDecimal.valueOf(orderObject.getDouble("size"));
+                BigDecimal size = new BigDecimal(orderObject.getString("size"));
                 OrderStatus status = OrderStatus.valueOf(orderObject.getString("status")
                         .replace("STATUS_", ""));
                 MarketSide side = MarketSide.valueOf(orderObject.getString("side")
                         .replace("SIDE_", ""));
-                BigDecimal remaining = BigDecimal.valueOf(orderObject.getDouble("remaining"));
-                BigDecimal price = BigDecimal.valueOf(orderObject.getDouble("price"));
+                BigDecimal remaining = new BigDecimal(orderObject.getString("remaining"));
+                BigDecimal price = new BigDecimal(orderObject.getString("price"));
                 String id = orderObject.getString("id");
                 Order order = new Order()
                         .setType(type)
@@ -628,6 +628,34 @@ public class VegaApiClient {
             final boolean amendment
     ) {
         return submitLiquidityCommitment(liquidityCommitment, partyId, amendment, 1);
+    }
+
+    /**
+     * Cancel liquidity commitment
+     *
+     * @param marketId the market ID
+     *
+     * @return {@link Optional<String>}
+     */
+    public Optional<String> cancelLiquidityCommitment(
+            final String marketId
+    ) {
+        return cancelLiquidityCommitment(marketId, 1);
+    }
+
+    /**
+     * Cancel liquidity commitment with recursive retry
+     *
+     * @param marketId the market ID
+     * @param attempt the attempt count
+     *
+     * @return {@link Optional<String>}
+     */
+    private Optional<String> cancelLiquidityCommitment(
+            final String marketId,
+            final int attempt
+    ) {
+        return Optional.empty(); // TODO - implement this
     }
 
     /**

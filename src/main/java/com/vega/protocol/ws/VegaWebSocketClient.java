@@ -279,7 +279,7 @@ public class VegaWebSocketClient extends WebSocketClient {
                 if(!StringUtils.hasText(marketId) && !type.equals(AccountType.GENERAL)) {
                     id = String.format("%s-%s", id, marketId);
                 }
-                BigDecimal balance = BigDecimal.valueOf(accountObject.getDouble("balance"));
+                BigDecimal balance = new BigDecimal(accountObject.getString("balance"));
                 Account account = new Account()
                         .setAsset(asset.getSymbol())
                         .setType(type)
@@ -307,10 +307,10 @@ public class VegaWebSocketClient extends WebSocketClient {
                 String marketId = positionObject.getString("marketId");
                 Market market = marketStore.getById(marketId)
                         .orElseThrow(() -> new TradingException(ErrorCode.MARKET_NOT_FOUND));
-                BigDecimal size = BigDecimal.valueOf(positionObject.getDouble("openVolume"));
-                BigDecimal unrealisedPnl = BigDecimal.valueOf(positionObject.getDouble("unrealisedPNL"));
-                BigDecimal realisedPnl = BigDecimal.valueOf(positionObject.getDouble("realisedPNL"));
-                BigDecimal entryPrice = BigDecimal.valueOf(positionObject.getDouble("averageEntryPrice"));
+                BigDecimal size = new BigDecimal(positionObject.getString("openVolume"));
+                BigDecimal unrealisedPnl = new BigDecimal(positionObject.getString("unrealisedPNL"));
+                BigDecimal realisedPnl = new BigDecimal(positionObject.getString("realisedPNL"));
+                BigDecimal entryPrice = new BigDecimal(positionObject.getString("averageEntryPrice"));
                 Position position = new Position()
                         .setPartyId(partyId)
                         .setUnrealisedPnl(decimalUtils.convertToDecimals(market.getDecimalPlaces(), unrealisedPnl))
@@ -345,9 +345,9 @@ public class VegaWebSocketClient extends WebSocketClient {
                 String id = orderObject.getString("id");
                 MarketSide side = MarketSide.valueOf(orderObject.getString("side")
                         .replace("SIDE_", ""));
-                BigDecimal size = BigDecimal.valueOf(orderObject.getDouble("size"));
-                BigDecimal remainingSize = BigDecimal.valueOf(orderObject.getDouble("remaining"));
-                BigDecimal price = BigDecimal.valueOf(orderObject.getDouble("price"));
+                BigDecimal size = new BigDecimal(orderObject.getString("size"));
+                BigDecimal remainingSize = new BigDecimal(orderObject.getString("remaining"));
+                BigDecimal price = new BigDecimal(orderObject.getString("price"));
                 String marketId = orderObject.getString("marketId");
                 Market market = marketStore.getById(marketId)
                         .orElseThrow(() -> new TradingException(ErrorCode.MARKET_NOT_FOUND));
@@ -391,8 +391,8 @@ public class VegaWebSocketClient extends WebSocketClient {
             try {
                 JSONObject liquidityCommitmentObject = liquidityCommitmentsArray.getJSONObject(i);
                 String id = liquidityCommitmentObject.getString("id");
-                BigDecimal commitmentAmount = BigDecimal.valueOf(
-                        liquidityCommitmentObject.getDouble("commitmentAmount"));
+                BigDecimal commitmentAmount = new BigDecimal(
+                        liquidityCommitmentObject.getString("commitmentAmount"));
                 BigDecimal fee = BigDecimal.valueOf(liquidityCommitmentObject.getDouble("fee"));
                 LiquidityCommitmentStatus status = LiquidityCommitmentStatus.valueOf(liquidityCommitmentObject
                         .getString("status").replace("STATUS_", ""));
