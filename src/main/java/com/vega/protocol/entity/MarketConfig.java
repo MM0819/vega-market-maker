@@ -43,5 +43,5 @@ public class MarketConfig {
     @Column(nullable = false)
     private Boolean updateHedgeEnabled;
     @Column(nullable = false)
-    private Boolean naiveFlowEnabled;
+    private Boolean updateNaiveFlowEnabled;
 }
