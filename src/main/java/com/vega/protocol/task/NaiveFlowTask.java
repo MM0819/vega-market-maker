@@ -13,6 +13,7 @@ import com.vega.protocol.model.Order;
 import com.vega.protocol.service.MarketService;
 import com.vega.protocol.service.OrderService;
 import com.vega.protocol.store.ReferencePriceStore;
+import com.vega.protocol.utils.SleepUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -20,6 +21,7 @@ import org.springframework.stereotype.Component;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 
 @Slf4j
 @Component
@@ -27,6 +29,7 @@ public class NaiveFlowTask extends TradingTask {
     private final VegaApiClient vegaApiClient;
     private final MarketService marketService;
     private final OrderService orderService;
+    private final SleepUtils sleepUtils;
     private final String partyId;
     private MarketSide bias = MarketSide.BUY;
     private LocalDateTime nextBiasUpdate = LocalDateTime.now().minusHours(1);
@@ -37,12 +40,14 @@ public class NaiveFlowTask extends TradingTask {
                          OrderService orderService,
                          ReferencePriceStore referencePriceStore,
                          DataInitializer dataInitializer,
-                         WebSocketInitializer webSocketInitializer) {
+                         WebSocketInitializer webSocketInitializer,
+                         SleepUtils sleepUtils) {
         super(dataInitializer, webSocketInitializer, referencePriceStore);
         this.vegaApiClient = vegaApiClient;
         this.marketService = marketService;
         this.partyId = partyId;
         this.orderService = orderService;
+        this.sleepUtils = sleepUtils;
     }
 
     /**
@@ -63,15 +68,17 @@ public class NaiveFlowTask extends TradingTask {
             side = orderService.getOtherSide(bias);
         }
         Market market = marketService.getById(marketConfig.getMarketId());
+        double modifier = ThreadLocalRandom.current().nextDouble(1, 10);
         BigDecimal size = BigDecimal.valueOf(1 / Math.pow(10, market.getPositionDecimalPlaces()));
         Order order = new Order()
                 .setType(OrderType.MARKET)
                 .setStatus(OrderStatus.ACTIVE)
                 .setSide(side)
-                .setSize(size)
+                .setSize(size.multiply(BigDecimal.valueOf(modifier)))
                 .setTimeInForce(TimeInForce.IOC)
                 .setMarket(market)
                 .setPartyId(partyId);
+        sleepUtils.sleep(ThreadLocalRandom.current().nextInt(100, 1000));
         vegaApiClient.submitOrder(order, partyId);
     }
 

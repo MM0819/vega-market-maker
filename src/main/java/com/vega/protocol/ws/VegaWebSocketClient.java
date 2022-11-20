@@ -336,8 +336,6 @@ public class VegaWebSocketClient extends WebSocketClient {
      */
     private void handleOrders(JSONObject data) {
         JSONArray ordersArray = getDataAsArray(data, "orders");
-	int cancelCount = 0;
-	int activeCount = 0;
         for(int i=0; i<ordersArray.length(); i++) {
             try {
                 JSONObject orderObject = ordersArray.optJSONObject(i);
@@ -355,9 +353,7 @@ public class VegaWebSocketClient extends WebSocketClient {
                         .replace("TYPE_", ""));
                 OrderStatus status = OrderStatus.valueOf(orderObject.getString("status")
                         .replace("STATUS_", ""));
-		if(status.equals(OrderStatus.ACTIVE)) activeCount++;
-		if(status.equals(OrderStatus.CANCELLED)) cancelCount++;
-            Order order = new Order()
+                Order order = new Order()
                     .setSize(decimalUtils.convertToDecimals(market.getPositionDecimalPlaces(), size))
                     .setPrice(decimalUtils.convertToDecimals(market.getDecimalPlaces(), price))
                     .setType(type)
@@ -369,13 +365,16 @@ public class VegaWebSocketClient extends WebSocketClient {
                     .setSide(side)
                     .setIsPeggedOrder(orderObject.has("liquidityProvisionId") &&
                             orderObject.getString("liquidityProvisionId").length() > 0);
-                orderStore.update(order);
+                if(status.equals(OrderStatus.CANCELLED)) {
+                    orderStore.remove(order);
+                } else {
+                    orderStore.update(order);
+                }
             } catch(Exception e) {
                 log.info(data.toString());
                 log.error(e.getMessage(), e);
             }
         }
-	log.debug("Cancel count = {}; Active count = {}", cancelCount, activeCount);
     }
 
     /**
