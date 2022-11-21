@@ -88,6 +88,10 @@ public class UpdateQuotesTask extends TradingTask {
         String partyId = marketConfig.getPartyId();
         log.info("Updating quotes...");
         Market market = marketService.getById(marketId);
+        if(!market.getState().equals(MarketState.ACTIVE)) {
+            log.warn("Cannot trade; market state = {}", market.getState());
+            return;
+        }
         BigDecimal balance = accountService.getTotalBalance(market.getSettlementAsset());
         if(balance.doubleValue() == 0) {
             log.info("Cannot update quotes because balance = {}", balance);

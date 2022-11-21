@@ -18,7 +18,8 @@ public class ErrorCode {
     public static final String NETWORK_PARAMETER_NOT_FOUND = "Network parameter not found.";
     public static final String TRADING_CONFIG_NOT_FOUND = "Trading config not found.";
     public static final String ALLOCATED_MARGIN_MANDATORY = "Mandatory field: 'allocatedMargin'";
-    public static final String HEDGE_SYMBOL_MANDATORY = "Mandatory field: 'allocatedMargin'";
+    public static final String HEDGE_SYMBOL_MANDATORY = "Mandatory field: 'hedgeSymbol'";
+    public static final String HEDGE_FEE_MANDATORY = "Mandatory field: 'hedgeFee'";
     public static final String PARTY_ID_MANDATORY = "Mandatory field: 'partyId'";
     public static final String MARKET_ID_MANDATORY = "Mandatory field: 'marketId'";
     public static final String REFERENCE_PRICE_SOURCE_MANDATORY = "Mandatory field: 'referencePriceSource'";

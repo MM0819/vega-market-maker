@@ -1,10 +1,7 @@
 package com.vega.protocol.task;
 
 import com.vega.protocol.api.VegaApiClient;
-import com.vega.protocol.constant.MarketSide;
-import com.vega.protocol.constant.OrderStatus;
-import com.vega.protocol.constant.OrderType;
-import com.vega.protocol.constant.TimeInForce;
+import com.vega.protocol.constant.*;
 import com.vega.protocol.entity.MarketConfig;
 import com.vega.protocol.initializer.DataInitializer;
 import com.vega.protocol.initializer.WebSocketInitializer;
@@ -68,6 +65,10 @@ public class NaiveFlowTask extends TradingTask {
             side = orderService.getOtherSide(bias);
         }
         Market market = marketService.getById(marketConfig.getMarketId());
+        if(!market.getState().equals(MarketState.ACTIVE)) {
+            log.warn("Cannot trade; market state = {}", market.getState());
+            return;
+        }
         double modifier = ThreadLocalRandom.current().nextDouble(1, 10);
         BigDecimal size = BigDecimal.valueOf(1 / Math.pow(10, market.getPositionDecimalPlaces()));
         Order order = new Order()

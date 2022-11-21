@@ -232,6 +232,9 @@ public class TradingConfigService {
         if(ObjectUtils.isEmpty(request.getHedgeSymbol())) {
             throw new TradingException(ErrorCode.HEDGE_SYMBOL_MANDATORY);
         }
+        if(ObjectUtils.isEmpty(request.getHedgeFee())) {
+            throw new TradingException(ErrorCode.HEDGE_FEE_MANDATORY);
+        }
         boolean configExists = marketConfigRepository.findByMarketId(request.getMarketId()).isPresent();
         if(configExists) {
             throw new TradingException(ErrorCode.MARKET_CONFIG_ALREADY_EXISTS);

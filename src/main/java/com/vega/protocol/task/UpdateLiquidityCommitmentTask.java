@@ -2,6 +2,7 @@ package com.vega.protocol.task;
 
 import com.vega.protocol.api.VegaApiClient;
 import com.vega.protocol.constant.ErrorCode;
+import com.vega.protocol.constant.MarketState;
 import com.vega.protocol.constant.PeggedReference;
 import com.vega.protocol.entity.MarketConfig;
 import com.vega.protocol.entity.TradingConfig;
@@ -72,6 +73,10 @@ public class UpdateLiquidityCommitmentTask extends TradingTask {
         String partyId = marketConfig.getPartyId();
         log.info("Updating liquidity commitment...");
         Market market = marketService.getById(marketId);
+        if(!market.getState().equals(MarketState.ACTIVE)) {
+            log.warn("Cannot trade; market state = {}", market.getState());
+            return;
+        }
         BigDecimal balance = accountService.getTotalBalance(market.getSettlementAsset());
         if(balance.doubleValue() == 0) {
             log.info("Cannot update liquidity commitment because balance = {}", balance);

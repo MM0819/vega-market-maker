@@ -32,4 +32,5 @@ public class Market extends UniqueItem {
     private double sigma;
     private BigDecimal minValidPrice;
     private BigDecimal maxValidPrice;
+    private double liquidityFee;
 }

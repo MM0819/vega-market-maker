@@ -44,4 +44,6 @@ public class MarketConfig {
     private Boolean updateHedgeEnabled;
     @Column(nullable = false)
     private Boolean updateNaiveFlowEnabled;
+    @Column(nullable = false)
+    private Double hedgeFee;
 }

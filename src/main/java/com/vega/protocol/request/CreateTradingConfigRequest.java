@@ -15,4 +15,5 @@ public class CreateTradingConfigRequest {
     private ReferencePriceSource referencePriceSource;
     private String referencePriceSymbol;
     private String hedgeSymbol;
+    private Double hedgeFee;
 }
