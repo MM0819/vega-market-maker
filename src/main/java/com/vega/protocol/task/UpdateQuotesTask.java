@@ -102,8 +102,7 @@ public class UpdateQuotesTask extends TradingTask {
         // TODO - we should use the net exposure here after considering our hedge on Binance / IG
         TradingConfig tradingConfig = tradingConfigRepository.findByMarketConfig(marketConfig)
                 .orElseThrow(() -> new TradingException(ErrorCode.TRADING_CONFIG_NOT_FOUND));
-        ReferencePrice referencePrice = referencePriceStore.get()
-                .orElseThrow(() -> new TradingException(ErrorCode.REFERENCE_PRICE_NOT_FOUND));
+        ReferencePrice referencePrice = referencePriceStore.get().get();
         BigDecimal midPrice = referencePrice.getMidPrice();
         BigDecimal bidPoolSize = balance.multiply(BigDecimal.valueOf(0.5));
         BigDecimal askPoolSize = bidPoolSize.divide(midPrice, market.getDecimalPlaces(), RoundingMode.HALF_DOWN);
