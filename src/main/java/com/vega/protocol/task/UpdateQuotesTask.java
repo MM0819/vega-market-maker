@@ -181,32 +181,26 @@ public class UpdateQuotesTask extends TradingTask {
         submissions.addAll(asks);
         List<Order> currentOrders = orderStore.getItems().stream().filter(o -> !o.getIsPeggedOrder())
                 .filter(o -> o.getStatus().equals(OrderStatus.ACTIVE)).toList();
-        List<Order> currentBids = currentOrders.stream().filter(o -> o.getSide().equals(MarketSide.BUY))
-                .sorted(Comparator.comparing(Order::getPrice).reversed()).toList();
-        List<Order> currentAsks = currentOrders.stream().filter(o -> o.getSide().equals(MarketSide.SELL))
-                .sorted(Comparator.comparing(Order::getPrice)).toList();
-        if(shouldUpdateQuotes(currentBids, currentAsks, bestBid, bestAsk, tradingConfig)) {
-            List<String> cancellations = currentOrders.stream().map(Order::getId).toList();
-            NetworkParameter maxBatchSizeParam = networkParameterStore.getById(MAX_BATCH_SIZE_PARAM)
-                    .orElseThrow(() -> new TradingException(ErrorCode.NETWORK_PARAMETER_NOT_FOUND));
-            int maxBatchSize = Integer.parseInt(maxBatchSizeParam.getValue());
-            int totalBatchSize = cancellations.size() + submissions.size();
-            log.info("Max batch size = {}; Total batch size = {}; Cancellations = {}; Submissions = {}",
-                    maxBatchSize, totalBatchSize, cancellations.size(), submissions.size());
-            if (totalBatchSize <= maxBatchSize && totalBatchSize > 0) {
-                vegaApiClient.submitBulkInstruction(cancellations, submissions, market, partyId);
-            } else {
-                List<List<String>> cancellationBatches = ListUtils.partition(cancellations, maxBatchSize);
-                List<List<Order>> submissionBatches = ListUtils.partition(submissions, maxBatchSize);
-                for (List<Order> batch : submissionBatches) {
-                    vegaApiClient.submitBulkInstruction(Collections.emptyList(), batch, market, partyId);
-                }
-                for (List<String> batch : cancellationBatches) {
-                    vegaApiClient.submitBulkInstruction(batch, Collections.emptyList(), market, partyId);
-                }
+        List<String> cancellations = currentOrders.stream().map(Order::getId).toList();
+        NetworkParameter maxBatchSizeParam = networkParameterStore.getById(MAX_BATCH_SIZE_PARAM)
+                .orElseThrow(() -> new TradingException(ErrorCode.NETWORK_PARAMETER_NOT_FOUND));
+        int maxBatchSize = Integer.parseInt(maxBatchSizeParam.getValue());
+        int totalBatchSize = cancellations.size() + submissions.size();
+        log.info("Max batch size = {}; Total batch size = {}; Cancellations = {}; Submissions = {}",
+                maxBatchSize, totalBatchSize, cancellations.size(), submissions.size());
+        if (totalBatchSize <= maxBatchSize && totalBatchSize > 0) {
+            vegaApiClient.submitBulkInstruction(cancellations, submissions, market, partyId);
+        } else {
+            List<List<String>> cancellationBatches = ListUtils.partition(cancellations, maxBatchSize);
+            List<List<Order>> submissionBatches = ListUtils.partition(submissions, maxBatchSize);
+            for (List<Order> batch : submissionBatches) {
+                vegaApiClient.submitBulkInstruction(Collections.emptyList(), batch, market, partyId);
             }
-            log.info("Quotes successfully updated!");
+            for (List<String> batch : cancellationBatches) {
+                vegaApiClient.submitBulkInstruction(batch, Collections.emptyList(), market, partyId);
+            }
         }
+        log.info("Quotes successfully updated!");
     }
 
     /**
@@ -311,41 +305,5 @@ public class UpdateQuotesTask extends TradingTask {
             BigDecimal modifier = BigDecimal.ONE.divide(volumeRatio, 8, RoundingMode.HALF_DOWN);
             orders.forEach(o -> o.setSize(o.getSize().multiply(modifier)));
         }
-    }
-
-    /**
-     * Check whether the price has changed sufficiently to justify updating our quotes
-     *
-     * @param currentBids the current bids
-     * @param currentAsks the current asks
-     * @param bestBid the new best bid
-     * @param bestAsk the new best ask
-     * @param tradingConfig {@link TradingConfig}
-     *
-     * @return true / false
-     */
-    private boolean shouldUpdateQuotes(
-            final List<Order> currentBids,
-            final List<Order> currentAsks,
-            final Order bestBid,
-            final Order bestAsk,
-            final TradingConfig tradingConfig
-    ) {
-        /*if(currentBids.size() > 0 && currentAsks.size() > 0) {
-            Order currentBestBid = currentBids.get(0);
-            Order currentBestAsk = currentAsks.get(0);
-            BigDecimal staticMidPrice = (bestBid.getPrice().add(bestAsk.getPrice()))
-                    .multiply(BigDecimal.valueOf(0.5));
-            BigDecimal currentMidPrice = (currentBestBid.getPrice().add(currentBestAsk.getPrice()))
-                    .multiply(BigDecimal.valueOf(0.5));
-            double priceDelta = ((staticMidPrice.subtract(currentMidPrice).abs())
-                    .divide(currentMidPrice, 4, RoundingMode.HALF_DOWN)).doubleValue();
-            if(priceDelta < (config.getMinSpread() / 2.0)) {
-                log.warn("Not updating quotes because the mid-price delta is only = {}%",
-                        Math.round(priceDelta * 10000.0) / 100.0);
-                return false;
-            }
-        }*/
-        return true;
     }
 }
