@@ -26,4 +26,5 @@ public class ErrorCode {
     public static final String REFERENCE_PRICE_SYMBOL_MANDATORY = "Mandatory field: 'referencePriceSymbol'";
     public static final String MARKET_CONFIG_ALREADY_EXISTS = "Market config already exists.";
     public static final String INVALID_MARKET_ID = "Market ID is invalid.";
+    public static final String TARGET_EDGE_MANDATORY = "Mandatory field: 'targetEdge'";
 }

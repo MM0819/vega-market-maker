@@ -35,6 +35,7 @@ public class UpdateQuotesTask extends TradingTask {
     private static final String MAX_BATCH_SIZE_PARAM = "spam.protection.max.batchSize";
     private static final String STAKE_TO_SISKAS_PARAM = "market.liquidity.stakeToCcySiskas";
     private static final String MIN_PROB_OF_TRADING_PARAM = "market.liquidity.minimum.probabilityOfTrading.lpOrders";
+    private static final String MAKER_FEE_PARAM = "market.fee.factors.makerFee";
 
     private final OrderStore orderStore;
     private final LiquidityCommitmentStore liquidityCommitmentStore;
@@ -142,7 +143,7 @@ public class UpdateQuotesTask extends TradingTask {
                         .setTimeInForce(TimeInForce.GTC)
                         .setMarket(market)
                         .setPartyId(partyId)
-        ).collect(Collectors.toList());
+        ).sorted(Comparator.comparing(Order::getPrice).reversed()).collect(Collectors.toList());
         List<Order> asks = askDistribution.stream().map(d ->
                 new Order()
                         .setSize(BigDecimal.valueOf(d.getSize() * tradingConfig.getAskSizeFactor()))
@@ -153,32 +154,21 @@ public class UpdateQuotesTask extends TradingTask {
                         .setTimeInForce(TimeInForce.GTC)
                         .setMarket(market)
                         .setPartyId(partyId)
-        ).collect(Collectors.toList());
-        BigDecimal bboSize = BigDecimal.valueOf(1 / Math.pow(10, market.getPositionDecimalPlaces()));
-        bids.add(new Order()
-                .setSize(bboSize)
-                .setPrice(referencePrice.getBidPrice().multiply(BigDecimal.valueOf(1 - tradingConfig.getBboOffset())))
-                .setStatus(OrderStatus.ACTIVE)
-                .setSide(MarketSide.BUY)
-                .setType(OrderType.LIMIT)
-                .setTimeInForce(TimeInForce.GTC)
-                .setMarket(market)
-                .setPartyId(partyId));
-        asks.add(new Order()
-                .setSize(bboSize)
-                .setPrice(referencePrice.getAskPrice().multiply(BigDecimal.valueOf(1 + tradingConfig.getBboOffset())))
-                .setStatus(OrderStatus.ACTIVE)
-                .setSide(MarketSide.SELL)
-                .setType(OrderType.LIMIT)
-                .setTimeInForce(TimeInForce.GTC)
-                .setMarket(market)
-                .setPartyId(partyId));
-        asks.sort(Comparator.comparing(Order::getPrice));
-        bids.sort(Comparator.comparing(Order::getPrice).reversed());
+        ).sorted(Comparator.comparing(Order::getPrice)).collect(Collectors.toList());
         Order bestBid = bids.get(0);
         Order bestAsk = asks.get(0);
-        updateSpread(bids, asks, tradingConfig, exposure, openVolumeRatio);
-        log.info("Bid price = {}; Ask price = {}", bestBid.getPrice(), bestAsk.getPrice());
+        NetworkParameter makerFeeParam = networkParameterStore.getById(MAKER_FEE_PARAM)
+                .orElseThrow(() -> new TradingException(ErrorCode.NETWORK_PARAMETER_NOT_FOUND));
+        double hedgeSpread = (bestAsk.getPrice().doubleValue() - bestBid.getPrice().doubleValue()) /
+                bestBid.getPrice().doubleValue();
+        double liquidityRebate = market.getLiquidityFee() > 0 ?
+                -1.0 * market.getLiquidityFee() : market.getLiquidityFee();
+        double makerRebate = Double.parseDouble(makerFeeParam.getValue()) > 0 ?
+                -1.0 * Double.parseDouble(makerFeeParam.getValue()) : Double.parseDouble(makerFeeParam.getValue());
+        double targetSpread = getTargetSpread(hedgeSpread, marketConfig.getTargetEdge(),
+                marketConfig.getHedgeFee(), liquidityRebate, makerRebate);
+        updateSpread(bids, asks, targetSpread);
+        log.info("Bid price = {}; Ask price = {}; Spread = {}", bestBid.getPrice(), bestAsk.getPrice(), targetSpread);
         Optional<LiquidityCommitment> liquidityCommitmentOptional = liquidityCommitmentStore.getItems().stream()
                 .filter(lc -> lc.getMarket().getId().equals(marketId)).findFirst();
         if(liquidityCommitmentOptional.isPresent()) {
@@ -220,33 +210,46 @@ public class UpdateQuotesTask extends TradingTask {
     }
 
     /**
-     * Updates the spread if we have acquired some exposure
+     * Get the target spread based on efficiency of hedging exposure
+     *
+     * @param hedgeSpread the spread on the hedging market
+     * @param targetEdge the edge that we want to target
+     * @param hedgeFee the fee on the hedging market
+     * @param liquidityRebate the liquidity rebate on Vega
+     * @param makerRebate the maker rebate on Vega
+     *
+     * @return the spread for Vega quotes
+     */
+    private double getTargetSpread(
+            final double hedgeSpread,
+            final double targetEdge,
+            final double hedgeFee,
+            final double liquidityRebate,
+            final double makerRebate
+    ) {
+        return targetEdge + hedgeFee + liquidityRebate + makerRebate + hedgeSpread;
+    }
+
+    /**
+     * Applies the target spread to bids and asks
      *
      * @param bids {@link List<Order>}
      * @param asks {@link List<Order>}
-     * @param tradingConfig {@link TradingConfig}
-     * @param exposure current exposure
-     * @param openVolumeRatio the open volume as a ratio of account balance
+     * @param targetSpread the target spread on Vega
      */
     private void updateSpread(
             final List<Order> bids,
             final List<Order> asks,
-            final TradingConfig tradingConfig,
-            final BigDecimal exposure,
-            final double openVolumeRatio
+            final double targetSpread
     ) {
         Order bestBid = bids.get(0);
         Order bestAsk = asks.get(0);
-        double targetSpread = tradingConfig.getMinSpread() +
-                (openVolumeRatio * (tradingConfig.getMaxSpread() - tradingConfig.getMinSpread()));
-        double currentSpread = (bestAsk.getPrice().doubleValue() - bestBid.getPrice().doubleValue()) / 2.0;
+        double currentSpread = (bestAsk.getPrice().doubleValue() - bestBid.getPrice().doubleValue()) /
+                bestBid.getPrice().doubleValue();
         if(currentSpread < targetSpread) {
-            double spreadDiff = targetSpread - currentSpread;
-            if(exposure.doubleValue() > 0) {
-                bids.forEach(b -> b.setPrice(b.getPrice().subtract(BigDecimal.valueOf(spreadDiff))));
-            } else {
-                asks.forEach(a -> a.setPrice(a.getPrice().add(BigDecimal.valueOf(spreadDiff))));
-            }
+            double delta = (targetSpread - currentSpread) * bestBid.getPrice().doubleValue() * 0.5;
+            bids.forEach(b -> b.setPrice(b.getPrice().subtract(BigDecimal.valueOf(delta))));
+            asks.forEach(a -> a.setPrice(a.getPrice().add(BigDecimal.valueOf(delta))));
         }
     }
 

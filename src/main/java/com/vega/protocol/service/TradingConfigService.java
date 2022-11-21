@@ -108,6 +108,8 @@ public class TradingConfigService {
                 .setReferencePriceSymbol(request.getReferencePriceSymbol())
                 .setReferencePriceSource(request.getReferencePriceSource())
                 .setUpdateHedgeEnabled(false)
+                .setHedgeFee(request.getHedgeFee())
+                .setTargetEdge(request.getTargetEdge())
                 .setUpdateLiquidityCommitmentEnabled(false)
                 .setUpdateNaiveFlowEnabled(false)
                 .setUpdateQuotesEnabled(false)
@@ -234,6 +236,9 @@ public class TradingConfigService {
         }
         if(ObjectUtils.isEmpty(request.getHedgeFee())) {
             throw new TradingException(ErrorCode.HEDGE_FEE_MANDATORY);
+        }
+        if(ObjectUtils.isEmpty(request.getTargetEdge())) {
+            throw new TradingException(ErrorCode.TARGET_EDGE_MANDATORY);
         }
         boolean configExists = marketConfigRepository.findByMarketId(request.getMarketId()).isPresent();
         if(configExists) {
