@@ -98,7 +98,9 @@
                     <excludes>
                         <exclude>**/*com/vega/protocol/Application**</exclude>
                         <exclude>**/*com/vega/protocol/constant/**</exclude>
+                        <exclude>**/*com/vega/protocol/entity/**</exclude>
                         <exclude>**/*com/vega/protocol/model/**</exclude>
+                        <exclude>**/*com/vega/protocol/request/**</exclude>
                         <exclude>**/*com/vega/protocol/response/**</exclude>
                     </excludes>
                 </configuration>
