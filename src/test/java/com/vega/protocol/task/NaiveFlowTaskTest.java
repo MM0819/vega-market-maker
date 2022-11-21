@@ -2,11 +2,13 @@ package com.vega.protocol.task;
 
 import com.vega.protocol.api.VegaApiClient;
 import com.vega.protocol.constant.MarketSide;
+import com.vega.protocol.constant.MarketState;
 import com.vega.protocol.entity.MarketConfig;
 import com.vega.protocol.initializer.DataInitializer;
 import com.vega.protocol.initializer.WebSocketInitializer;
 import com.vega.protocol.model.Market;
 import com.vega.protocol.model.Order;
+import com.vega.protocol.model.ReferencePrice;
 import com.vega.protocol.service.MarketService;
 import com.vega.protocol.service.OrderService;
 import com.vega.protocol.store.ReferencePriceStore;
@@ -15,6 +17,8 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+
+import java.util.Optional;
 
 public class NaiveFlowTaskTest {
 
@@ -48,12 +52,16 @@ public class NaiveFlowTaskTest {
         Mockito.when(dataInitializer.isInitialized()).thenReturn(true);
         Mockito.when(webSocketInitializer.isVegaWebSocketsInitialized()).thenReturn(true);
         Mockito.when(webSocketInitializer.isPolygonWebSocketInitialized()).thenReturn(true);
-        Mockito.when(marketService.getById(MARKET_ID)).thenReturn(new Market().setSettlementAsset(USDT));
+        Mockito.when(referencePriceStore.get()).thenReturn(Optional.of(new ReferencePrice()));
+        Mockito.when(marketService.getById(MARKET_ID)).thenReturn(new Market()
+                .setSettlementAsset(USDT)
+                .setState(MarketState.ACTIVE));
         int count = 20;
         for(int i=0; i<count; i++) {
             Mockito.when(orderService.getOtherSide(Mockito.any()))
                     .thenReturn(i % 2 == 0 ? MarketSide.BUY : MarketSide.SELL);
-            naiveFlowTask.execute(new MarketConfig());
+            MarketConfig marketConfig = new MarketConfig().setMarketId(MARKET_ID);
+            naiveFlowTask.execute(marketConfig);
         }
         Mockito.verify(vegaApiClient, Mockito.times(count)).submitOrder(Mockito.any(Order.class), Mockito.anyString());
     }
@@ -108,6 +116,7 @@ public class NaiveFlowTaskTest {
         Mockito.when(dataInitializer.isInitialized()).thenReturn(true);
         Mockito.when(webSocketInitializer.isVegaWebSocketsInitialized()).thenReturn(true);
         Mockito.when(webSocketInitializer.isPolygonWebSocketInitialized()).thenReturn(true);
+        Mockito.when(referencePriceStore.get()).thenReturn(Optional.of(new ReferencePrice()));
         naiveFlowTask = getNaiveFlowTask(true);
         boolean result = naiveFlowTask.isInitialized();
         Assertions.assertTrue(result);
@@ -118,6 +127,7 @@ public class NaiveFlowTaskTest {
         Mockito.when(dataInitializer.isInitialized()).thenReturn(true);
         Mockito.when(webSocketInitializer.isVegaWebSocketsInitialized()).thenReturn(true);
         Mockito.when(webSocketInitializer.isBinanceWebSocketInitialized()).thenReturn(true);
+        Mockito.when(referencePriceStore.get()).thenReturn(Optional.of(new ReferencePrice()));
         naiveFlowTask = getNaiveFlowTask(true);
         boolean result = naiveFlowTask.isInitialized();
         Assertions.assertTrue(result);
@@ -129,6 +139,7 @@ public class NaiveFlowTaskTest {
         Mockito.when(webSocketInitializer.isVegaWebSocketsInitialized()).thenReturn(true);
         Mockito.when(webSocketInitializer.isBinanceWebSocketInitialized()).thenReturn(true);
         Mockito.when(webSocketInitializer.isPolygonWebSocketInitialized()).thenReturn(true);
+        Mockito.when(referencePriceStore.get()).thenReturn(Optional.of(new ReferencePrice()));
         naiveFlowTask = getNaiveFlowTask(true);
         boolean result = naiveFlowTask.isInitialized();
         Assertions.assertTrue(result);

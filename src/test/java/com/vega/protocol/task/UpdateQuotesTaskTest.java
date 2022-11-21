@@ -189,7 +189,7 @@ public class UpdateQuotesTaskTest {
     }
 
     @Test
-    public void testExecuteAppConfigNotFound() {
+    public void testExecuteTradingConfigNotFound() {
         Mockito.when(dataInitializer.isInitialized()).thenReturn(true);
         Mockito.when(webSocketInitializer.isVegaWebSocketsInitialized()).thenReturn(true);
         Mockito.when(webSocketInitializer.isBinanceWebSocketInitialized()).thenReturn(true);
@@ -202,7 +202,7 @@ public class UpdateQuotesTaskTest {
             updateQuotesTask.execute(new MarketConfig());
             Assertions.fail();
         } catch(Exception e) {
-            Assertions.assertEquals(e.getMessage(), ErrorCode.APP_CONFIG_NOT_FOUND);
+            Assertions.assertEquals(e.getMessage(), ErrorCode.TRADING_CONFIG_NOT_FOUND);
         }
     }
 

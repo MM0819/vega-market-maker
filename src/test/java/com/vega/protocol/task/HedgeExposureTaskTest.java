@@ -2,6 +2,7 @@ package com.vega.protocol.task;
 
 import com.vega.protocol.api.BinanceApiClient;
 import com.vega.protocol.api.IGApiClient;
+import com.vega.protocol.constant.ReferencePriceSource;
 import com.vega.protocol.entity.MarketConfig;
 import com.vega.protocol.initializer.DataInitializer;
 import com.vega.protocol.initializer.WebSocketInitializer;
@@ -62,7 +63,10 @@ public class HedgeExposureTaskTest {
         Mockito.when(webSocketInitializer.isBinanceWebSocketInitialized()).thenReturn(true);
         Mockito.when(positionService.getExposure(MARKET_ID)).thenReturn(BigDecimal.ONE);
         Mockito.when(referencePriceStore.get()).thenReturn(Optional.of(referencePrice()));
-        hedgeExposureTask.execute(new MarketConfig());
+        MarketConfig marketConfig = new MarketConfig()
+                .setMarketId(MARKET_ID)
+                .setReferencePriceSource(ReferencePriceSource.BINANCE);
+        hedgeExposureTask.execute(marketConfig);
     }
 
     @Test
