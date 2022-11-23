@@ -4,6 +4,7 @@ import com.vega.protocol.api.VegaApiClient;
 import com.vega.protocol.constant.*;
 import com.vega.protocol.entity.MarketConfig;
 import com.vega.protocol.entity.TradingConfig;
+import com.vega.protocol.exception.TradingException;
 import com.vega.protocol.initializer.DataInitializer;
 import com.vega.protocol.initializer.WebSocketInitializer;
 import com.vega.protocol.model.*;
@@ -86,6 +87,7 @@ public class UpdateQuotesTaskTest {
                 .setTargetEdge(0.001)
                 .setHedgeFee(0.0005);
         TradingConfig tradingConfig = new TradingConfig()
+                .setMarketConfig(marketConfig)
                 .setCommitmentBalanceRatio(0.1)
                 .setStakeBuffer(0.2)
                 .setCommitmentOrderCount(10)
@@ -134,20 +136,20 @@ public class UpdateQuotesTaskTest {
         }
         Mockito.when(orderStore.getItems()).thenReturn(currentOrders);
         if(exposure > 0) {
-            Mockito.when(pricingUtils.getDistribution(19999d, 0.1d, tradingConfig.getBidQuoteRange(),
+            Mockito.when(pricingUtils.getDistribution(19999d, 0.15d, tradingConfig.getBidQuoteRange(),
                             MarketSide.BUY, tradingConfig.getQuoteOrderCount()))
                     .thenReturn(bidDistribution);
         } else {
-            Mockito.when(pricingUtils.getDistribution(19999d, 0.2d, tradingConfig.getBidQuoteRange(),
+            Mockito.when(pricingUtils.getDistribution(19999d, 0.25d, tradingConfig.getBidQuoteRange(),
                             MarketSide.BUY, tradingConfig.getQuoteOrderCount()))
                     .thenReturn(bidDistribution);
         }
         if(exposure < 0) {
-            Mockito.when(pricingUtils.getDistribution(20001d, 0.1d, tradingConfig.getAskQuoteRange(),
+            Mockito.when(pricingUtils.getDistribution(20001d, 0.15d, tradingConfig.getAskQuoteRange(),
                             MarketSide.SELL, tradingConfig.getQuoteOrderCount()))
                     .thenReturn(askDistribution);
         } else {
-            Mockito.when(pricingUtils.getDistribution(20001d, 0.2d, tradingConfig.getAskQuoteRange(),
+            Mockito.when(pricingUtils.getDistribution(20001d, 0.25d, tradingConfig.getAskQuoteRange(),
                             MarketSide.SELL, tradingConfig.getQuoteOrderCount()))
                     .thenReturn(askDistribution);
         }
@@ -179,12 +181,22 @@ public class UpdateQuotesTaskTest {
 
     @Test
     public void testExecuteMissingBidDistribution() {
-        execute(0, 100000, MarketTradingMode.CONTINUOUS, 0, 1);
+        try {
+            execute(0, 100000, MarketTradingMode.CONTINUOUS, 0, 1);
+            Assertions.fail();
+        } catch(TradingException e) {
+            Assertions.assertEquals(ErrorCode.EMPTY_DISTRIBUTION, e.getMessage());
+        }
     }
 
     @Test
     public void testExecuteMissingAskDistribution() {
-        execute(0, 100000, MarketTradingMode.CONTINUOUS, 3, 0);
+        try {
+            execute(0, 100000, MarketTradingMode.CONTINUOUS, 3, 0);
+            Assertions.fail();
+        } catch(TradingException e) {
+            Assertions.assertEquals(ErrorCode.EMPTY_DISTRIBUTION, e.getMessage());
+        }
     }
 
     @Test

@@ -2,6 +2,7 @@ package com.vega.protocol.task;
 
 import com.vega.protocol.api.BinanceApiClient;
 import com.vega.protocol.api.IGApiClient;
+import com.vega.protocol.constant.MarketSide;
 import com.vega.protocol.constant.ReferencePriceSource;
 import com.vega.protocol.entity.MarketConfig;
 import com.vega.protocol.initializer.DataInitializer;
@@ -76,9 +77,9 @@ public class HedgeExposureTaskTest {
         Mockito.when(positionService.getExposure(MARKET_ID)).thenReturn(0.0);
         hedgeExposureTask.execute(new MarketConfig());
         Mockito.verify(binanceApiClient, Mockito.times(0))
-                .submitMarketOrder(Mockito.any(), Mockito.any(), Mockito.any());
+                .submitMarketOrder(Mockito.anyString(), Mockito.anyDouble(), Mockito.any(MarketSide.class));
         Mockito.verify(igApiClient, Mockito.times(0))
-                .submitMarketOrder(Mockito.any(), Mockito.any(), Mockito.any());
+                .submitMarketOrder(Mockito.anyString(), Mockito.anyDouble(), Mockito.any(MarketSide.class));
     }
 
     @Test
@@ -86,9 +87,9 @@ public class HedgeExposureTaskTest {
         hedgeExposureTask.execute(new MarketConfig());
         Mockito.when(dataInitializer.isInitialized()).thenReturn(false);
         Mockito.verify(binanceApiClient, Mockito.times(0))
-                .submitMarketOrder(Mockito.any(), Mockito.any(), Mockito.any());
+                .submitMarketOrder(Mockito.anyString(), Mockito.anyDouble(), Mockito.any(MarketSide.class));
         Mockito.verify(igApiClient, Mockito.times(0))
-                .submitMarketOrder(Mockito.any(), Mockito.any(), Mockito.any());
+                .submitMarketOrder(Mockito.anyString(), Mockito.anyDouble(), Mockito.any(MarketSide.class));
     }
 
     @Test
@@ -99,8 +100,8 @@ public class HedgeExposureTaskTest {
         Mockito.when(webSocketInitializer.isBinanceWebSocketInitialized()).thenReturn(true);
         hedgeExposureTask.execute(new MarketConfig());
         Mockito.verify(binanceApiClient, Mockito.times(0))
-                .submitMarketOrder(Mockito.any(), Mockito.any(), Mockito.any());
+                .submitMarketOrder(Mockito.anyString(), Mockito.anyDouble(), Mockito.any(MarketSide.class));
         Mockito.verify(igApiClient, Mockito.times(0))
-                .submitMarketOrder(Mockito.any(), Mockito.any(), Mockito.any());
+                .submitMarketOrder(Mockito.anyString(), Mockito.anyDouble(), Mockito.any(MarketSide.class));
     }
 }

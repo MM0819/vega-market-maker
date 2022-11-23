@@ -102,13 +102,15 @@ public class VegaWebSocketClientTest {
 
     private void handleLiquidityCommitments(int count) {
         if(count > 0) {
-            Mockito.when(marketStore.getById(Mockito.any())).thenReturn(Optional.of(new Market()));
+            Mockito.when(marketStore.getById(Mockito.any())).thenReturn(
+                    Optional.of(new Market().setSettlementAsset("BTC")));
         }
         Mockito.when(assetStore.getById(Mockito.any())).thenReturn(Optional.of(new Asset().setDecimalPlaces(1)));
+        Mockito.when(assetStore.getItems()).thenReturn(List.of(new Asset().setDecimalPlaces(1).setSymbol("BTC")));
         try(InputStream is = getClass().getClassLoader()
                 .getResourceAsStream("vega-liquidity-provisions-ws.json")) {
-            String accountsJson = IOUtils.toString(Objects.requireNonNull(is), StandardCharsets.UTF_8);
-            vegaWebSocketClient.onMessage(accountsJson);
+            String json = IOUtils.toString(Objects.requireNonNull(is), StandardCharsets.UTF_8);
+            vegaWebSocketClient.onMessage(json);
             Mockito.verify(liquidityCommitmentStore, Mockito.times(count))
                     .update(Mockito.any(LiquidityCommitment.class));
         } catch (Exception e) {
