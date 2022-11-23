@@ -5,7 +5,6 @@ import com.vega.protocol.model.Position;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.math.BigDecimal;
 import java.util.Optional;
 
 @Slf4j
@@ -18,7 +17,7 @@ public class IGApiClient implements ExchangeApiClient {
     @Override
     public void submitMarketOrder(
             final String symbol,
-            final BigDecimal size,
+            final double size,
             final MarketSide side
     ) {
 

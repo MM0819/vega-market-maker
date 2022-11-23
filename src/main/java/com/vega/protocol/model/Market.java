@@ -6,8 +6,6 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 
-import java.math.BigDecimal;
-
 @Data
 @Accessors(chain = true)
 @EqualsAndHashCode(callSuper = true)
@@ -19,18 +17,18 @@ public class Market extends UniqueItem {
     private String settlementAsset;
     private int decimalPlaces;
     private int positionDecimalPlaces;
-    private BigDecimal targetStake;
-    private BigDecimal suppliedStake;
-    private BigDecimal markPrice;
-    private BigDecimal bestBidPrice;
-    private BigDecimal bestAskPrice;
-    private BigDecimal bestBidSize;
-    private BigDecimal bestAskSize;
-    private BigDecimal openInterest;
+    private double targetStake;
+    private double suppliedStake;
+    private double markPrice;
+    private double bestBidPrice;
+    private double bestAskPrice;
+    private double bestBidSize;
+    private double bestAskSize;
+    private double openInterest;
     private double tau;
     private double mu;
     private double sigma;
-    private BigDecimal minValidPrice;
-    private BigDecimal maxValidPrice;
+    private double minValidPrice;
+    private double maxValidPrice;
     private double liquidityFee;
 }

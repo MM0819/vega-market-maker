@@ -363,7 +363,7 @@ public class VegaWebSocketClient extends WebSocketClient {
                     .setPartyId(partyId)
                     .setMarket(market)
                     .setSide(side)
-                    .setIsPeggedOrder(orderObject.has("liquidityProvisionId") &&
+                    .setPeggedOrder(orderObject.has("liquidityProvisionId") &&
                             orderObject.getString("liquidityProvisionId").length() > 0);
                 if(status.equals(OrderStatus.CANCELLED)) {
                     orderStore.remove(order);
@@ -392,7 +392,7 @@ public class VegaWebSocketClient extends WebSocketClient {
                 String id = liquidityCommitmentObject.getString("id");
                 BigDecimal commitmentAmount = new BigDecimal(
                         liquidityCommitmentObject.getString("commitmentAmount"));
-                BigDecimal fee = BigDecimal.valueOf(liquidityCommitmentObject.getDouble("fee"));
+                double fee = liquidityCommitmentObject.getDouble("fee");
                 LiquidityCommitmentStatus status = LiquidityCommitmentStatus.valueOf(liquidityCommitmentObject
                         .getString("status").replace("STATUS_", ""));
                 JSONArray buysArray = liquidityCommitmentObject.getJSONArray("buys");
@@ -400,12 +400,15 @@ public class VegaWebSocketClient extends WebSocketClient {
                 String marketId = liquidityCommitmentObject.getString("marketId");
                 Market market = marketStore.getById(marketId)
                         .orElseThrow(() -> new TradingException(ErrorCode.MARKET_NOT_FOUND));
+                Asset asset = assetStore.getItems().stream()
+                        .filter(a -> a.getSymbol().equals(market.getSettlementAsset())).findFirst()
+                        .orElseThrow(() -> new TradingException(ErrorCode.ASSET_NOT_FOUND));
                 List<LiquidityCommitmentOffset> bids = orderService.parseLiquidityOrders(
                         buysArray, market.getDecimalPlaces());
                 List<LiquidityCommitmentOffset> asks = orderService.parseLiquidityOrders(
                         sellsArray, market.getDecimalPlaces());
                 LiquidityCommitment liquidityCommitment = new LiquidityCommitment()
-                        .setCommitmentAmount(commitmentAmount)
+                        .setCommitmentAmount(decimalUtils.convertToDecimals(asset.getDecimalPlaces(), commitmentAmount))
                         .setFee(fee)
                         .setStatus(status)
                         .setId(id)

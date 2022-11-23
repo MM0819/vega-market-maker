@@ -15,7 +15,7 @@ public interface ExchangeApiClient {
      * @param size the order size
      * @param side {@link MarketSide}
      */
-    void submitMarketOrder(String symbol, BigDecimal size, MarketSide side);
+    void submitMarketOrder(String symbol, double size, MarketSide side);
 
     /**
      * Get active positon for given market

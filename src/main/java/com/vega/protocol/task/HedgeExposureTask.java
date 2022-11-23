@@ -54,19 +54,19 @@ public class HedgeExposureTask extends TradingTask {
             log.warn("Cannot execute {} because data is not initialized", getClass().getSimpleName());
             return;
         }
-        BigDecimal exposure = positionService.getExposure(marketConfig.getMarketId());
-        if(exposure.doubleValue() != 0) {
+        double exposure = positionService.getExposure(marketConfig.getMarketId());
+        if(exposure != 0) {
             log.info("Hedging exposure...");
             ExchangeApiClient exchangeApiClient = marketConfig.getReferencePriceSource()
                     .equals(ReferencePriceSource.BINANCE) ? binanceApiClient : igApiClient;
-            BigDecimal hedgeExposure = exchangeApiClient.getPosition(marketConfig.getHedgeSymbol())
-                    .orElse(new Position().setSize(BigDecimal.ZERO)).getSize();
-            BigDecimal diff = hedgeExposure.subtract(exposure).abs();
-            if(hedgeExposure.abs().doubleValue() < exposure.abs().doubleValue()) {
-                MarketSide side = exposure.doubleValue() < 0 ? MarketSide.BUY : MarketSide.SELL;
+            double hedgeExposure = exchangeApiClient.getPosition(marketConfig.getHedgeSymbol())
+                    .orElse(new Position().setSize(0)).getSize();
+            double diff = Math.abs(hedgeExposure - exposure);
+            if(Math.abs(hedgeExposure) < Math.abs(exposure)) {
+                MarketSide side = exposure < 0 ? MarketSide.BUY : MarketSide.SELL;
                 executeTwap(side, marketConfig.getHedgeSymbol(), diff, exchangeApiClient);
-            } else if(hedgeExposure.abs().doubleValue() > exposure.abs().doubleValue()) {
-                MarketSide side = exposure.doubleValue() < 0 ? MarketSide.SELL : MarketSide.BUY;
+            } else if(Math.abs(hedgeExposure) > Math.abs(exposure)) {
+                MarketSide side = exposure < 0 ? MarketSide.SELL : MarketSide.BUY;
                 executeTwap(side, marketConfig.getHedgeSymbol(), diff, exchangeApiClient);
             }
         }
@@ -83,20 +83,20 @@ public class HedgeExposureTask extends TradingTask {
     private void executeTwap(
         final MarketSide side,
         final String symbol,
-        final BigDecimal totalSize,
+        final double totalSize,
         final ExchangeApiClient exchangeApiClient
     ) {
         log.info("TWAP >> {} {} {}", side, totalSize, symbol);
-        BigDecimal remainingSize = totalSize;
-        while(remainingSize.doubleValue() > 0) {
+        double remainingSize = totalSize;
+        while(remainingSize > 0) {
             ReferencePrice referencePrice = referencePriceStore.get()
                     .orElseThrow(() -> new TradingException(ErrorCode.REFERENCE_PRICE_NOT_FOUND));
-            BigDecimal size = side.equals(MarketSide.BUY) ? referencePrice.getAskSize() : referencePrice.getBidSize();
-            if(size.doubleValue() > remainingSize.doubleValue()) {
+            double size = side.equals(MarketSide.BUY) ? referencePrice.getAskSize() : referencePrice.getBidSize();
+            if(size > remainingSize) {
                 size = remainingSize;
-                remainingSize = BigDecimal.ZERO;
+                remainingSize = 0.0;
             } else {
-                remainingSize = remainingSize.subtract(size);
+                remainingSize = remainingSize - size;
             }
             exchangeApiClient.submitMarketOrder(symbol, size, side);
             log.info("TWAP >> Remaining size = {}", remainingSize);

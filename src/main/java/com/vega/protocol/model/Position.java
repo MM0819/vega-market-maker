@@ -14,9 +14,9 @@ public class Position extends UniqueItem {
     private String id;
     private String partyId;
     private Market market;
-    private BigDecimal size;
+    private double size;
     private MarketSide side;
-    private BigDecimal entryPrice;
-    private BigDecimal unrealisedPnl;
-    private BigDecimal realisedPnl;
+    private double entryPrice;
+    private double unrealisedPnl;
+    private double realisedPnl;
 }

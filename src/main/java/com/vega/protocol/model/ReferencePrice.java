@@ -8,9 +8,9 @@ import java.math.BigDecimal;
 @Data
 @Accessors(chain = true)
 public class ReferencePrice {
-    private BigDecimal bidPrice;
-    private BigDecimal askPrice;
-    private BigDecimal bidSize;
-    private BigDecimal askSize;
-    private BigDecimal midPrice;
+    private double bidPrice;
+    private double askPrice;
+    private double bidSize;
+    private double askSize;
+    private double midPrice;
 }

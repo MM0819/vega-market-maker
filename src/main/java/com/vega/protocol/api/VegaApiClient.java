@@ -126,7 +126,7 @@ public class VegaApiClient {
                 LiquidityCommitmentStatus status = LiquidityCommitmentStatus.valueOf(
                         liquidityProvisionObject.getString("status").replace("STATUS_", ""));
                 String id = liquidityProvisionObject.getString("id");
-                BigDecimal fee = BigDecimal.valueOf(liquidityProvisionObject.getDouble("fee"));
+                double fee = liquidityProvisionObject.getDouble("fee");
                 JSONArray sellsArray = liquidityProvisionObject.getJSONArray("sells");
                 JSONArray buysArray = liquidityProvisionObject.getJSONArray("buys");
                 List<LiquidityCommitmentOffset> bids = orderService.parseLiquidityOrders(
@@ -387,7 +387,7 @@ public class VegaApiClient {
                         .setPrice(decimalUtils.convertToDecimals(market.getDecimalPlaces(), price))
                         .setSide(side)
                         .setId(id)
-                        .setIsPeggedOrder(orderObject.has("liquidityProvisionId") &&
+                        .setPeggedOrder(orderObject.has("liquidityProvisionId") &&
                                 orderObject.getString("liquidityProvisionId").length() > 0);
                 if(order.getStatus().equals(OrderStatus.ACTIVE)) {
                     orders.add(order);
@@ -460,8 +460,8 @@ public class VegaApiClient {
      */
     public Optional<String> amendOrder(
             final String orderId,
-            final BigDecimal sizeDelta,
-            final BigDecimal price,
+            final double sizeDelta,
+            final double price,
             final Market market,
             final String partyId
     ) {
@@ -482,8 +482,8 @@ public class VegaApiClient {
      */
     private Optional<String> amendOrder(
             final String orderId,
-            final BigDecimal sizeDelta,
-            final BigDecimal price,
+            final double sizeDelta,
+            final double price,
             final Market market,
             final String partyId,
             final int attempt
@@ -685,12 +685,12 @@ public class VegaApiClient {
             Asset asset = assetStore.getItems().stream()
                     .filter(a -> a.getSymbol().equals(market.getSettlementAsset())).findFirst()
                     .orElseThrow(() -> new TradingException(ErrorCode.ASSET_NOT_FOUND));
-            BigDecimal commitmentAmount = liquidityCommitment.getCommitmentAmount();
+            double commitmentAmount = liquidityCommitment.getCommitmentAmount();
             JSONObject liquidityProvisionSubmission = new JSONObject()
                     .put("marketId", market.getId())
                     .put("commitmentAmount", decimalUtils.convertFromDecimals(
                             asset.getDecimalPlaces(), commitmentAmount).toBigInteger().toString())
-                    .put("fee", liquidityCommitment.getFee().toString())
+                    .put("fee", String.valueOf(liquidityCommitment.getFee()))
                     .put("buys", orderService.buildLiquidityOrders(
                             market.getDecimalPlaces(), liquidityCommitment.getBids()))
                     .put("sells", orderService.buildLiquidityOrders(

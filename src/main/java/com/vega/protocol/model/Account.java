@@ -14,6 +14,6 @@ public class Account extends UniqueItem {
     private String id;
     private String partyId;
     private AccountType type;
-    private BigDecimal balance;
+    private double balance;
     private String asset;
 }

@@ -5,7 +5,6 @@ import com.vega.protocol.model.Position;
 import com.vega.protocol.store.PositionStore;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
 import java.util.Optional;
 
 @Service
@@ -22,20 +21,20 @@ public class PositionService {
      *
      * @return exposure for given market ID
      */
-    public BigDecimal getExposure(
+    public double getExposure(
             final String marketId
     ) {
         Optional<Position> positionOptional = positionStore.getItems().stream()
                 .filter(p -> p.getMarket().getId().equals(marketId)).findFirst();
         if(positionOptional.isPresent()) {
             Position position = positionOptional.get();
-            BigDecimal exposure = position.getSize();
-            if(exposure.doubleValue() == 0) return BigDecimal.ZERO;
+            double exposure = position.getSize();
+            if(exposure == 0) return 0.0;
             if(position.getSide().equals(MarketSide.SELL)) {
-                return exposure.multiply(BigDecimal.valueOf(-1));
+                return exposure * -1;
             }
             return exposure;
         }
-        return BigDecimal.ZERO;
+        return 0.0;
     }
 }

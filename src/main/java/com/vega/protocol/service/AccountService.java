@@ -4,8 +4,6 @@ import com.vega.protocol.model.Account;
 import com.vega.protocol.store.AccountStore;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
-
 @Service
 public class AccountService {
 
@@ -22,10 +20,10 @@ public class AccountService {
      *
      * @return the user's total balance
      */
-    public BigDecimal getTotalBalance(
+    public double getTotalBalance(
             final String settlementAsset
     ) {
         return accountStore.getItems().stream().filter(a -> a.getAsset().equals(settlementAsset))
-                .map(Account::getBalance).reduce(BigDecimal.ZERO, BigDecimal::add);
+                .mapToDouble(Account::getBalance).sum();
     }
 }

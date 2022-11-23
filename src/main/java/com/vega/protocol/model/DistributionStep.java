@@ -6,6 +6,6 @@ import lombok.experimental.Accessors;
 @Data
 @Accessors(chain = true)
 public class DistributionStep {
-    private Double price;
-    private Double size;
+    private double price;
+    private double size;
 }

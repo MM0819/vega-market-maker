@@ -17,13 +17,13 @@ public class DecimalUtilsTest {
 
     @Test
     public void testToDecimal() {
-        BigDecimal number = decimalUtils.convertToDecimals(5, BigDecimal.valueOf(1234567899));
-        Assertions.assertEquals(number, BigDecimal.valueOf(12345.67899));
+        double number = decimalUtils.convertToDecimals(5, BigDecimal.valueOf(1234567899));
+        Assertions.assertEquals(number, 12345.67899);
     }
 
     @Test
     public void testFromDecimal() {
-        BigDecimal number = decimalUtils.convertFromDecimals(5, BigDecimal.valueOf(12345.67899));
+        BigDecimal number = decimalUtils.convertFromDecimals(5, 12345.67899);
         Assertions.assertEquals(number, BigDecimal.valueOf(1234567899));
     }
 }

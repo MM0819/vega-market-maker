@@ -18,7 +18,7 @@ public class BinanceApiClient implements ExchangeApiClient {
     @Override
     public void submitMarketOrder(
             final String symbol,
-            final BigDecimal size,
+            final double size,
             final MarketSide side
     ) {
         // TODO - submit market order

@@ -57,8 +57,8 @@ public class VegaApiClientTest {
                 .setMarket(market)
                 .setTimeInForce(TimeInForce.GTC)
                 .setSide(MarketSide.BUY)
-                .setSize(BigDecimal.ONE)
-                .setPrice(BigDecimal.ONE)
+                .setSize(1)
+                .setPrice(1)
                 .setType(OrderType.LIMIT);
     }
 
@@ -70,9 +70,9 @@ public class VegaApiClientTest {
                 .setPositionDecimalPlaces(3);
         return new LiquidityCommitment()
                 .setMarket(market)
-                .setFee(BigDecimal.valueOf(0.001))
+                .setFee(0.001)
                 .setStatus(LiquidityCommitmentStatus.ACTIVE)
-                .setCommitmentAmount(BigDecimal.ONE)
+                .setCommitmentAmount(1)
                 .setAsks(new ArrayList<>())
                 .setBids(new ArrayList<>());
     }
@@ -139,7 +139,7 @@ public class VegaApiClientTest {
             final int expectedAccounts,
             final int statusCode
     ) {
-        Mockito.when(decimalUtils.convertFromDecimals(Mockito.anyInt(), Mockito.any(BigDecimal.class)))
+        Mockito.when(decimalUtils.convertFromDecimals(Mockito.anyInt(), Mockito.anyDouble()))
                 .thenReturn(BigDecimal.ONE);
         if(asset.isPresent()) {
             Mockito.when(assetStore.getItems()).thenReturn(Collections.singletonList(new Asset().setSymbol("USDT")
@@ -294,7 +294,7 @@ public class VegaApiClientTest {
     private Optional<String> submitOrder(
             final JSONObject jsonResponse
     ) {
-        Mockito.when(decimalUtils.convertFromDecimals(Mockito.anyInt(), Mockito.any(BigDecimal.class)))
+        Mockito.when(decimalUtils.convertFromDecimals(Mockito.anyInt(), Mockito.anyDouble()))
                 .thenReturn(BigDecimal.ONE);
         try(MockedStatic<Unirest> mockStatic = Mockito.mockStatic(Unirest.class)) {
             mockGetToken(mockStatic, tokenJson());
@@ -310,7 +310,7 @@ public class VegaApiClientTest {
     private Optional<String> submitBatchInstruction(
             final JSONObject jsonResponse
     ) {
-        Mockito.when(decimalUtils.convertFromDecimals(Mockito.anyInt(), Mockito.any(BigDecimal.class)))
+        Mockito.when(decimalUtils.convertFromDecimals(Mockito.anyInt(), Mockito.anyDouble()))
                 .thenReturn(BigDecimal.ONE);
         try(MockedStatic<Unirest> mockStatic = Mockito.mockStatic(Unirest.class)) {
             mockGetToken(mockStatic, tokenJson());
@@ -329,13 +329,13 @@ public class VegaApiClientTest {
     private Optional<String> amendOrder(
             final JSONObject jsonResponse
     ) {
-        Mockito.when(decimalUtils.convertFromDecimals(Mockito.anyInt(), Mockito.any(BigDecimal.class)))
+        Mockito.when(decimalUtils.convertFromDecimals(Mockito.anyInt(), Mockito.anyDouble()))
                 .thenReturn(BigDecimal.ONE);
         try(MockedStatic<Unirest> mockStatic = Mockito.mockStatic(Unirest.class)) {
             mockGetToken(mockStatic, tokenJson());
             mockSubmitTransaction(mockStatic, jsonResponse);
             Market market = new Market().setDecimalPlaces(1).setPositionDecimalPlaces(1);
-            return vegaApiClient.amendOrder("1", BigDecimal.ONE, BigDecimal.ONE, market, PARTY_ID);
+            return vegaApiClient.amendOrder("1", 1, 1, market, PARTY_ID);
         } catch(Exception e) {
             Assertions.fail();
         }
@@ -361,7 +361,7 @@ public class VegaApiClientTest {
     ) throws JSONException {
         Mockito.when(assetStore.getItems()).thenReturn(Collections.singletonList(
                 new Asset().setSymbol("USDT").setDecimalPlaces(1)));
-        Mockito.when(decimalUtils.convertFromDecimals(Mockito.anyInt(), Mockito.any(BigDecimal.class)))
+        Mockito.when(decimalUtils.convertFromDecimals(Mockito.anyInt(), Mockito.anyDouble()))
                 .thenReturn(BigDecimal.ONE);
         Mockito.when(orderService.buildLiquidityOrders(Mockito.anyInt(), Mockito.anyList())).thenReturn(new JSONArray());
         try(MockedStatic<Unirest> mockStatic = Mockito.mockStatic(Unirest.class)) {
@@ -655,13 +655,12 @@ public class VegaApiClientTest {
 
     @Test
     public void testAmendOrderWithMissingToken() {
-        Mockito.when(decimalUtils.convertFromDecimals(Mockito.anyInt(), Mockito.any(BigDecimal.class)))
+        Mockito.when(decimalUtils.convertFromDecimals(Mockito.anyInt(), Mockito.anyDouble()))
                 .thenReturn(BigDecimal.ONE);
         try(MockedStatic<Unirest> mockStatic = Mockito.mockStatic(Unirest.class)) {
             mockGetToken(mockStatic, new JSONObject());
             Market market = new Market().setDecimalPlaces(1).setPositionDecimalPlaces(1);
-            Optional<String> txHash = vegaApiClient.amendOrder("1",
-                    BigDecimal.ONE, BigDecimal.ONE, market, PARTY_ID);
+            Optional<String> txHash = vegaApiClient.amendOrder("1", 1, 1, market, PARTY_ID);
             Assertions.assertTrue(txHash.isEmpty());
         } catch(Exception e) {
             Assertions.fail();
@@ -670,7 +669,7 @@ public class VegaApiClientTest {
 
     @Test
     public void testSubmitOrderWithMissingToken() {
-        Mockito.when(decimalUtils.convertFromDecimals(Mockito.anyInt(), Mockito.any(BigDecimal.class)))
+        Mockito.when(decimalUtils.convertFromDecimals(Mockito.anyInt(), Mockito.anyDouble()))
                 .thenReturn(BigDecimal.ONE);
         try(MockedStatic<Unirest> mockStatic = Mockito.mockStatic(Unirest.class)) {
             mockGetToken(mockStatic, new JSONObject());
@@ -683,7 +682,7 @@ public class VegaApiClientTest {
 
     @Test
     public void testSubmitLiquidityCommitmentWithMissingToken() {
-        Mockito.when(decimalUtils.convertFromDecimals(Mockito.anyInt(), Mockito.any(BigDecimal.class)))
+        Mockito.when(decimalUtils.convertFromDecimals(Mockito.anyInt(), Mockito.anyDouble()))
                 .thenReturn(BigDecimal.ONE);
         Mockito.when(assetStore.getItems()).thenReturn(List.of(new Asset().setSymbol("USDT").setDecimalPlaces(1)));
         try(MockedStatic<Unirest> mockStatic = Mockito.mockStatic(Unirest.class)) {

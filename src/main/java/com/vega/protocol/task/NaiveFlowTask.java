@@ -70,12 +70,12 @@ public class NaiveFlowTask extends TradingTask {
             return;
         }
         double modifier = ThreadLocalRandom.current().nextDouble(1, 10);
-        BigDecimal size = BigDecimal.valueOf(1 / Math.pow(10, market.getPositionDecimalPlaces()));
+        double size = 1 / Math.pow(10, market.getPositionDecimalPlaces());
         Order order = new Order()
                 .setType(OrderType.MARKET)
                 .setStatus(OrderStatus.ACTIVE)
                 .setSide(side)
-                .setSize(size.multiply(BigDecimal.valueOf(modifier)))
+                .setSize(size * modifier)
                 .setTimeInForce(TimeInForce.IOC)
                 .setMarket(market)
                 .setPartyId(partyId);

@@ -9,7 +9,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 public class PositionServiceTest {
@@ -25,35 +24,35 @@ public class PositionServiceTest {
     @Test
     public void testGetExposureLong() {
         Mockito.when(positionStore.getItems()).thenReturn(List.of(
-                new Position().setMarket(new Market().setId("1")).setSide(MarketSide.BUY).setSize(BigDecimal.TEN),
-                new Position().setMarket(new Market().setId("2")).setSide(MarketSide.BUY).setSize(BigDecimal.TEN)
+                new Position().setMarket(new Market().setId("1")).setSide(MarketSide.BUY).setSize(10.0),
+                new Position().setMarket(new Market().setId("2")).setSide(MarketSide.BUY).setSize(10.0)
         ));
-        BigDecimal exposure = positionService.getExposure("1");
-        Assertions.assertEquals(BigDecimal.TEN, exposure);
+        double exposure = positionService.getExposure("1");
+        Assertions.assertEquals(10.0, exposure);
     }
 
     @Test
     public void testGetExposureShort() {
         Mockito.when(positionStore.getItems()).thenReturn(List.of(
-                new Position().setMarket(new Market().setId("1")).setSide(MarketSide.SELL).setSize(BigDecimal.TEN),
-                new Position().setMarket(new Market().setId("2")).setSide(MarketSide.SELL).setSize(BigDecimal.TEN)
+                new Position().setMarket(new Market().setId("1")).setSide(MarketSide.SELL).setSize(10.0),
+                new Position().setMarket(new Market().setId("2")).setSide(MarketSide.SELL).setSize(10.0)
         ));
-        BigDecimal exposure = positionService.getExposure("1");
-        Assertions.assertEquals(BigDecimal.TEN, exposure.multiply(BigDecimal.valueOf(-1)));
+        double exposure = positionService.getExposure("1");
+        Assertions.assertEquals(10.0, exposure * -1);
     }
 
     @Test
     public void testGetExposureZero() {
         Mockito.when(positionStore.getItems()).thenReturn(List.of());
-        BigDecimal exposure = positionService.getExposure("1");
-        Assertions.assertEquals(BigDecimal.ZERO, exposure);
+        double exposure = positionService.getExposure("1");
+        Assertions.assertEquals(0.0, exposure);
     }
 
     @Test
     public void testGetExposureWithZeroSize() {
         Mockito.when(positionStore.getItems()).thenReturn(List.of(new Position()
-                .setMarket(new Market().setId("1")).setSide(MarketSide.SELL).setSize(BigDecimal.ZERO)));
-        BigDecimal exposure = positionService.getExposure("1");
-        Assertions.assertEquals(BigDecimal.ZERO, exposure);
+                .setMarket(new Market().setId("1")).setSide(MarketSide.SELL).setSize(0.0)));
+        double exposure = positionService.getExposure("1");
+        Assertions.assertEquals(0.0, exposure);
     }
 }

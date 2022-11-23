@@ -66,8 +66,8 @@ public class OrderServiceTest {
         Mockito.when(decimalUtils.convertFromDecimals(Mockito.anyInt(), Mockito.any())).thenReturn(BigDecimal.ONE);
         List<LiquidityCommitmentOffset> offsets = new ArrayList<>();
         offsets.add(new LiquidityCommitmentOffset()
-                .setOffset(BigDecimal.ONE)
-                .setProportion(BigInteger.ONE)
+                .setOffset(1)
+                .setProportion(1)
                 .setReference(PeggedReference.MID));
         JSONArray array = orderService.buildLiquidityOrders(3, offsets);
         Assertions.assertEquals(1, array.length());

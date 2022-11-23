@@ -51,7 +51,7 @@ public class OrderService {
         List<LiquidityCommitmentOffset> liquidityOrders = new ArrayList<>();
         for(int i=0; i<ordersArray.length(); i++) {
             JSONObject object = ordersArray.getJSONObject(i).getJSONObject("liquidityOrder");
-            BigInteger proportion = new BigInteger(object.getString("proportion"));
+            int proportion = new BigInteger(object.getString("proportion")).intValue();
             BigDecimal offset = new BigDecimal(object.getString("offset"));
             PeggedReference reference = PeggedReference.valueOf(object.getString("reference")
                         .replace("PEGGED_REFERENCE_", ""));
@@ -81,7 +81,7 @@ public class OrderService {
             JSONObject order = new JSONObject()
                     .put("offset", decimalUtils.convertFromDecimals(decimalPlaces, offset.getOffset())
                             .toBigInteger().toString())
-                    .put("proportion", offset.getProportion().toString())
+                    .put("proportion", String.valueOf(offset.getProportion()))
                     .put("reference", String.format("PEGGED_REFERENCE_%s", offset.getReference().name()));
             array.put(order);
         }

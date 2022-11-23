@@ -22,9 +22,6 @@ import com.vega.protocol.store.ReferencePriceStore;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -77,42 +74,33 @@ public class UpdateLiquidityCommitmentTask extends TradingTask {
             log.warn("Cannot trade; market state = {}", market.getState());
             return;
         }
-        BigDecimal balance = accountService.getTotalBalance(market.getSettlementAsset());
-        if(balance.doubleValue() == 0) {
+        double balance = accountService.getTotalBalance(market.getSettlementAsset());
+        if(balance == 0) {
             log.info("Cannot update liquidity commitment because balance = {}", balance);
             return;
         }
-        BigDecimal exposure = positionService.getExposure(marketId);
+        double exposure = positionService.getExposure(marketId);
         TradingConfig tradingConfig = tradingConfigRepository.findByMarketConfig(marketConfig)
                 .orElseThrow(() -> new TradingException(ErrorCode.TRADING_CONFIG_NOT_FOUND));
-        ReferencePrice referencePrice = referencePriceStore.get().get();
-        BigDecimal midPrice = referencePrice.getMidPrice();
-        BigDecimal bidPoolSize = balance.multiply(BigDecimal.valueOf(0.5));
-        BigDecimal askPoolSize = bidPoolSize.divide(midPrice, market.getDecimalPlaces(), RoundingMode.HALF_DOWN);
-        BigDecimal commitmentAmount = bidPoolSize.multiply(BigDecimal.valueOf(tradingConfig.getCommitmentBalanceRatio()));
-        BigDecimal requiredStake = (market.getTargetStake().multiply(BigDecimal.valueOf(1 + tradingConfig.getStakeBuffer())));
-        log.info("Exposure = {}\nBid pool size = {}\nAsk pool size = {}; Required stake = {}",
-                exposure, bidPoolSize, askPoolSize, requiredStake);
-        if(requiredStake.doubleValue() > commitmentAmount.doubleValue() &&
-                requiredStake.doubleValue() < bidPoolSize.doubleValue()) {
+        ReferencePrice referencePrice = referencePriceStore.get()
+                .orElseThrow(() -> new TradingException(ErrorCode.REFERENCE_PRICE_NOT_FOUND));
+        double midPrice = referencePrice.getMidPrice();
+        double commitmentAmount = balance * 0.5 * tradingConfig.getCommitmentBalanceRatio();
+        double requiredStake = market.getTargetStake() * (1 + tradingConfig.getStakeBuffer());
+        log.info("Exposure = {}\nRequired stake = {}", exposure, requiredStake);
+        if(requiredStake > commitmentAmount && requiredStake < balance) {
             commitmentAmount = requiredStake;
         }
         List<LiquidityCommitmentOffset> bids = new ArrayList<>();
         List<LiquidityCommitmentOffset> asks = new ArrayList<>();
-        double scalingFactor = exposure.abs().divide(askPoolSize, 8, RoundingMode.HALF_DOWN).doubleValue();
-        int baseProportion = 100000000;
         for(int i=0; i<tradingConfig.getCommitmentOrderCount(); i++) {
-            int bidProportion = (int) (exposure.doubleValue() > 0 ?
-                    Math.max(1, baseProportion * (1 - scalingFactor)) : baseProportion);
-            int askProportion = (int) (exposure.doubleValue() < 0 ?
-                    Math.max(1, baseProportion * (1 - scalingFactor)) : baseProportion);
             LiquidityCommitmentOffset bidOffset = new LiquidityCommitmentOffset()
-                    .setOffset(midPrice.multiply(BigDecimal.valueOf(tradingConfig.getCommitmentSpread() * (i+1))))
-                    .setProportion(BigInteger.valueOf(bidProportion))
+                    .setOffset(midPrice * tradingConfig.getCommitmentSpread() * (i+1))
+                    .setProportion(1)
                     .setReference(PeggedReference.MID);
             LiquidityCommitmentOffset askOffset = new LiquidityCommitmentOffset()
-                    .setOffset(midPrice.multiply(BigDecimal.valueOf(tradingConfig.getCommitmentSpread() * (i+1))))
-                    .setProportion(BigInteger.valueOf(askProportion))
+                    .setOffset(midPrice * tradingConfig.getCommitmentSpread() * (i+1))
+                    .setProportion(1)
                     .setReference(PeggedReference.MID);
             bids.add(bidOffset);
             asks.add(askOffset);
@@ -120,16 +108,15 @@ public class UpdateLiquidityCommitmentTask extends TradingTask {
         LiquidityCommitment liquidityCommitment = new LiquidityCommitment()
                 .setMarket(market)
                 .setCommitmentAmount(commitmentAmount)
-                .setFee(BigDecimal.valueOf(tradingConfig.getFee()))
+                .setFee(tradingConfig.getFee())
                 .setBids(bids)
                 .setAsks(asks);
         Optional<LiquidityCommitment> currentCommitment = liquidityCommitmentStore.getItems().stream()
                 .filter(c -> c.getMarket().getId().equals(marketId)).findFirst();
         boolean hasCommitment = currentCommitment.isPresent();
         if(hasCommitment) {
-            BigDecimal stakeFromOthers = market.getSuppliedStake()
-                    .subtract(currentCommitment.get().getCommitmentAmount());
-            commitmentAmount = commitmentAmount.subtract(stakeFromOthers);
+            double stakeFromOthers = market.getSuppliedStake() - currentCommitment.get().getCommitmentAmount();
+            commitmentAmount = commitmentAmount - stakeFromOthers;
         }
         vegaApiClient.submitLiquidityCommitment(liquidityCommitment, partyId, hasCommitment);
         log.info("Liquidity commitment updated -> {}", commitmentAmount);

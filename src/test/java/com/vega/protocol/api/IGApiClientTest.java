@@ -16,8 +16,8 @@ public class IGApiClientTest {
     }
 
     @Test
-    public void testSubmitMarketORder() {
-        igApiClient.submitMarketOrder("AAPL", BigDecimal.ONE, MarketSide.BUY);
+    public void testSubmitMarketOrder() {
+        igApiClient.submitMarketOrder("AAPL", 1.0, MarketSide.BUY);
     }
 
     @Test

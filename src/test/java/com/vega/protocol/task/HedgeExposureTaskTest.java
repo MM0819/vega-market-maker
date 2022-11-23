@@ -14,7 +14,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
-import java.math.BigDecimal;
 import java.util.Optional;
 
 public class HedgeExposureTaskTest {
@@ -37,11 +36,11 @@ public class HedgeExposureTaskTest {
 
     private ReferencePrice referencePrice() {
         return new ReferencePrice()
-                .setAskPrice(BigDecimal.ONE)
-                .setBidPrice(BigDecimal.ONE)
-                .setAskSize(BigDecimal.ONE)
-                .setBidSize(BigDecimal.ONE)
-                .setMidPrice(BigDecimal.ONE);
+                .setAskPrice(1.0)
+                .setBidPrice(1.0)
+                .setAskSize(1.0)
+                .setBidSize(1.0)
+                .setMidPrice(1.0);
     }
 
     @BeforeEach
@@ -61,7 +60,7 @@ public class HedgeExposureTaskTest {
         Mockito.when(dataInitializer.isInitialized()).thenReturn(true);
         Mockito.when(webSocketInitializer.isVegaWebSocketsInitialized()).thenReturn(true);
         Mockito.when(webSocketInitializer.isBinanceWebSocketInitialized()).thenReturn(true);
-        Mockito.when(positionService.getExposure(MARKET_ID)).thenReturn(BigDecimal.ONE);
+        Mockito.when(positionService.getExposure(MARKET_ID)).thenReturn(1.0);
         Mockito.when(referencePriceStore.get()).thenReturn(Optional.of(referencePrice()));
         MarketConfig marketConfig = new MarketConfig()
                 .setMarketId(MARKET_ID)
@@ -74,7 +73,7 @@ public class HedgeExposureTaskTest {
         Mockito.when(dataInitializer.isInitialized()).thenReturn(true);
         Mockito.when(webSocketInitializer.isVegaWebSocketsInitialized()).thenReturn(true);
         Mockito.when(webSocketInitializer.isBinanceWebSocketInitialized()).thenReturn(true);
-        Mockito.when(positionService.getExposure(MARKET_ID)).thenReturn(BigDecimal.ZERO);
+        Mockito.when(positionService.getExposure(MARKET_ID)).thenReturn(0.0);
         hedgeExposureTask.execute(new MarketConfig());
         Mockito.verify(binanceApiClient, Mockito.times(0))
                 .submitMarketOrder(Mockito.any(), Mockito.any(), Mockito.any());

@@ -8,7 +8,6 @@ import org.java_websocket.handshake.ServerHandshake;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.math.BigDecimal;
 import java.net.URI;
 import java.util.Locale;
 
@@ -51,11 +50,11 @@ public class BinanceWebSocketClient extends WebSocketClient {
             JSONObject jsonObject = new JSONObject(message);
             if(jsonObject.has("stream")) {
                 JSONObject data = jsonObject.getJSONObject("data");
-                BigDecimal askPrice = BigDecimal.valueOf(data.getDouble("a"));
-                BigDecimal bidPrice = BigDecimal.valueOf(data.getDouble("b"));
-                BigDecimal askSize = BigDecimal.valueOf(data.getDouble("A"));
-                BigDecimal bidSize = BigDecimal.valueOf(data.getDouble("B"));
-                BigDecimal midPrice = askPrice.add(bidPrice).multiply(BigDecimal.valueOf(0.5));
+                double askPrice = data.getDouble("a");
+                double bidPrice = data.getDouble("b");
+                double askSize = data.getDouble("A");
+                double bidSize = data.getDouble("B");
+                double midPrice = (askPrice + bidPrice) / 2.0;
                 ReferencePrice referencePrice = new ReferencePrice()
                         .setAskPrice(askPrice)
                         .setBidPrice(bidPrice)

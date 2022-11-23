@@ -13,8 +13,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-import java.math.BigDecimal;
-
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @AutoConfigureMockMvc
@@ -30,11 +28,11 @@ public class ReferencePriceControllerTest {
     @Test
     public void testGetReferencePrice() throws Exception {
         ReferencePrice referencePrice = new ReferencePrice()
-                .setMidPrice(BigDecimal.ONE)
-                .setBidPrice(BigDecimal.ONE)
-                .setAskPrice(BigDecimal.ONE)
-                .setBidSize(BigDecimal.ONE)
-                .setAskSize(BigDecimal.ONE);
+                .setMidPrice(1)
+                .setBidPrice(1)
+                .setAskPrice(1)
+                .setBidSize(1)
+                .setAskSize(1);
         store.update(referencePrice);
         MvcResult result = mvc.perform(MockMvcRequestBuilders.get("/reference-price"))
                 .andExpect(status().isOk())

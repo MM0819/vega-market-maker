@@ -16,8 +16,8 @@ public class BinanceApiClientTest {
     }
 
     @Test
-    public void testSubmitMarketORder() {
-        binanceApiClient.submitMarketOrder("BTCUSDT", BigDecimal.ONE, MarketSide.BUY);
+    public void testSubmitMarketOrder() {
+        binanceApiClient.submitMarketOrder("BTCUSDT", 1.0, MarketSide.BUY);
     }
 
     @Test

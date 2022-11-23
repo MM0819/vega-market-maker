@@ -12,7 +12,7 @@ import java.math.BigDecimal;
 @Accessors(chain = true)
 public class Hedge extends UniqueItem {
     private String id;
-    private BigDecimal entryPrice;
-    private BigDecimal size;
+    private double entryPrice;
+    private double size;
     private MarketSide side;
 }

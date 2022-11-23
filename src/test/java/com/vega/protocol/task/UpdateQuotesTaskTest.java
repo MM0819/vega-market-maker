@@ -10,9 +10,9 @@ import com.vega.protocol.model.*;
 import com.vega.protocol.repository.TradingConfigRepository;
 import com.vega.protocol.service.AccountService;
 import com.vega.protocol.service.MarketService;
+import com.vega.protocol.service.NetworkParameterService;
 import com.vega.protocol.service.PositionService;
 import com.vega.protocol.store.LiquidityCommitmentStore;
-import com.vega.protocol.store.NetworkParameterStore;
 import com.vega.protocol.store.OrderStore;
 import com.vega.protocol.store.ReferencePriceStore;
 import com.vega.protocol.utils.PricingUtils;
@@ -22,7 +22,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -50,14 +49,14 @@ public class UpdateQuotesTaskTest {
     private final DataInitializer dataInitializer = Mockito.mock(DataInitializer.class);
     private final WebSocketInitializer webSocketInitializer = Mockito.mock(WebSocketInitializer.class);
     private final LiquidityCommitmentStore liquidityCommitmentStore = Mockito.mock(LiquidityCommitmentStore.class);
-    private final NetworkParameterStore networkParameterStore = Mockito.mock(NetworkParameterStore.class);
+    private final NetworkParameterService networkParameterService = Mockito.mock(NetworkParameterService.class);
     private final TradingConfigRepository tradingConfigRepository = Mockito.mock(TradingConfigRepository.class);
 
     private UpdateQuotesTask getTask(
             final boolean enabled
     ) {
         return new UpdateQuotesTask(referencePriceStore, orderStore,
-                liquidityCommitmentStore, networkParameterStore, vegaApiClient, marketService, accountService,
+                liquidityCommitmentStore, networkParameterService, vegaApiClient, marketService, accountService,
                 positionService, pricingUtils, quantUtils, dataInitializer, webSocketInitializer,
                 tradingConfigRepository);
     }
@@ -68,8 +67,8 @@ public class UpdateQuotesTaskTest {
     }
 
     private void execute(
-            final BigDecimal exposure,
-            final BigDecimal balance,
+            final double exposure,
+            final double balance,
             final MarketTradingMode tradingMode,
             final int bidDistributionSize,
             final int askDistributionSize
@@ -101,30 +100,28 @@ public class UpdateQuotesTaskTest {
         Mockito.when(accountService.getTotalBalance(USDT)).thenReturn(balance);
         Mockito.when(positionService.getExposure(MARKET_ID)).thenReturn(exposure);
         Mockito.when(referencePriceStore.get()).thenReturn(Optional.of(new ReferencePrice()
-                .setAskPrice(BigDecimal.valueOf(20001))
-                .setBidPrice(BigDecimal.valueOf(19999))
-                .setMidPrice(BigDecimal.valueOf(20000))));
-        Mockito.when(networkParameterStore.getById(MAKER_FEE_PARAM))
-                .thenReturn(Optional.of(new NetworkParameter().setValue("0.0002").setId(MAKER_FEE_PARAM)));
-        Mockito.when(networkParameterStore.getById(MAX_BATCH_SIZE_PARAM))
-                .thenReturn(Optional.of(new NetworkParameter().setValue("100").setId(MAX_BATCH_SIZE_PARAM)));
+                .setAskPrice(20001)
+                .setBidPrice(19999)
+                .setMidPrice(20000)));
+        Mockito.when(networkParameterService.getAsDouble(MAKER_FEE_PARAM)).thenReturn(0.0002);
+        Mockito.when(networkParameterService.getAsInt(MAX_BATCH_SIZE_PARAM)).thenReturn(100);
         List<Order> currentOrders = new ArrayList<>();
         for(int i=0; i<4; i++) {
             currentOrders.add(new Order()
                     .setSide(MarketSide.SELL)
                     .setId(String.valueOf(i+1))
-                    .setPrice(BigDecimal.ONE)
-                    .setSize(BigDecimal.TEN)
-                    .setIsPeggedOrder(false)
+                    .setPrice(1)
+                    .setSize(10)
+                    .setPeggedOrder(false)
                     .setStatus(i % 2 == 0 ? OrderStatus.ACTIVE : OrderStatus.CANCELLED));
         }
         for(int i=0; i<4; i++) {
             currentOrders.add(new Order()
                     .setSide(MarketSide.BUY)
                     .setId(String.valueOf(i+4))
-                    .setPrice(BigDecimal.ONE)
-                    .setSize(BigDecimal.TEN)
-                    .setIsPeggedOrder(false)
+                    .setPrice(1)
+                    .setSize(10)
+                    .setPeggedOrder(false)
                     .setStatus(i % 2 == 0 ? OrderStatus.ACTIVE : OrderStatus.CANCELLED));
         }
         List<DistributionStep> bidDistribution = new ArrayList<>();
@@ -136,7 +133,7 @@ public class UpdateQuotesTaskTest {
             askDistribution.add(new DistributionStep().setPrice(4d).setSize(1d));
         }
         Mockito.when(orderStore.getItems()).thenReturn(currentOrders);
-        if(exposure.doubleValue() > 0) {
+        if(exposure > 0) {
             Mockito.when(pricingUtils.getDistribution(19999d, 0.1d, tradingConfig.getBidQuoteRange(),
                             MarketSide.BUY, tradingConfig.getQuoteOrderCount()))
                     .thenReturn(bidDistribution);
@@ -145,7 +142,7 @@ public class UpdateQuotesTaskTest {
                             MarketSide.BUY, tradingConfig.getQuoteOrderCount()))
                     .thenReturn(bidDistribution);
         }
-        if(exposure.doubleValue() < 0) {
+        if(exposure < 0) {
             Mockito.when(pricingUtils.getDistribution(20001d, 0.1d, tradingConfig.getAskQuoteRange(),
                             MarketSide.SELL, tradingConfig.getQuoteOrderCount()))
                     .thenReturn(askDistribution);
@@ -156,7 +153,7 @@ public class UpdateQuotesTaskTest {
         }
         updateQuotesTask.execute(marketConfig);
         int modifier = 1;
-        if(balance.doubleValue() == 0 || bidDistributionSize == 0 || askDistributionSize == 0) {
+        if(balance == 0 || bidDistributionSize == 0 || askDistributionSize == 0) {
             modifier = 0;
         }
         Mockito.verify(vegaApiClient, Mockito.times(modifier))
@@ -177,38 +174,32 @@ public class UpdateQuotesTaskTest {
 
     @Test
     public void testExecute() {
-        execute(BigDecimal.ZERO, BigDecimal.valueOf(100000),
-                MarketTradingMode.CONTINUOUS, 3, 1);
+        execute(0, 100000, MarketTradingMode.CONTINUOUS, 3, 1);
     }
 
     @Test
     public void testExecuteMissingBidDistribution() {
-        execute(BigDecimal.ZERO, BigDecimal.valueOf(100000),
-                MarketTradingMode.CONTINUOUS, 0, 1);
+        execute(0, 100000, MarketTradingMode.CONTINUOUS, 0, 1);
     }
 
     @Test
     public void testExecuteMissingAskDistribution() {
-        execute(BigDecimal.ZERO, BigDecimal.valueOf(100000),
-                MarketTradingMode.CONTINUOUS, 3, 0);
+        execute(0, 100000, MarketTradingMode.CONTINUOUS, 3, 0);
     }
 
     @Test
     public void testExecuteZeroBalance() {
-        execute(BigDecimal.ZERO, BigDecimal.ZERO,
-                MarketTradingMode.CONTINUOUS, 3, 1);
+        execute(0, 0, MarketTradingMode.CONTINUOUS, 3, 1);
     }
 
     @Test
     public void testExecuteLongPosition() {
-        execute(BigDecimal.valueOf(1), BigDecimal.valueOf(100000),
-                MarketTradingMode.MONITORING_AUCTION, 3, 1);
+        execute(1, 100000, MarketTradingMode.MONITORING_AUCTION, 3, 1);
     }
 
     @Test
     public void testExecuteShortPosition() {
-        execute(BigDecimal.valueOf(-1), BigDecimal.valueOf(100000),
-                MarketTradingMode.CONTINUOUS, 3, 1);
+        execute(-1, 100000, MarketTradingMode.CONTINUOUS, 3, 1);
     }
 
     @Test
@@ -223,8 +214,8 @@ public class UpdateQuotesTaskTest {
                 .setState(MarketState.ACTIVE));
         MarketConfig marketConfig = new MarketConfig().setMarketId(MARKET_ID);
         Mockito.when(tradingConfigRepository.findByMarketConfig(marketConfig)).thenReturn(Optional.empty());
-        Mockito.when(accountService.getTotalBalance(USDT)).thenReturn(BigDecimal.valueOf(100000));
-        Mockito.when(positionService.getExposure(MARKET_ID)).thenReturn(BigDecimal.ZERO);
+        Mockito.when(accountService.getTotalBalance(USDT)).thenReturn(100000.0);
+        Mockito.when(positionService.getExposure(MARKET_ID)).thenReturn(0.0);
         try {
             updateQuotesTask.execute(marketConfig);
             Assertions.fail();

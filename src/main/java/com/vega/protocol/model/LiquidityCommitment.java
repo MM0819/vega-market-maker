@@ -16,8 +16,8 @@ public class LiquidityCommitment extends UniqueItem {
     private String id;
     private Market market;
     private String partyId;
-    private BigDecimal fee;
-    private BigDecimal commitmentAmount;
+    private double fee;
+    private double commitmentAmount;
     private List<LiquidityCommitmentOffset> bids = new ArrayList<>();
     private List<LiquidityCommitmentOffset> asks = new ArrayList<>();
     private LiquidityCommitmentStatus status;
