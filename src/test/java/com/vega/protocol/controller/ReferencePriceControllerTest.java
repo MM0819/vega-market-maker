@@ -1,7 +1,7 @@
 package com.vega.protocol.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.vega.protocol.model.ReferencePrice;
+import com.vega.protocol.model.trading.ReferencePrice;
 import com.vega.protocol.store.ReferencePriceStore;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;

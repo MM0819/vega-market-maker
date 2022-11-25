@@ -1,7 +1,7 @@
 package com.vega.protocol.api;
 
 import com.vega.protocol.constant.MarketSide;
-import com.vega.protocol.model.Position;
+import com.vega.protocol.model.exchange.Position;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 

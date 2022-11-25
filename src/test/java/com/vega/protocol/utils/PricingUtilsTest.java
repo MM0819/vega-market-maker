@@ -1,10 +1,11 @@
 package com.vega.protocol.utils;
 
 import com.vega.protocol.constant.MarketSide;
-import com.vega.protocol.model.DistributionStep;
+import com.vega.protocol.model.trading.DistributionStep;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 import java.util.Comparator;
 import java.util.List;
@@ -12,10 +13,12 @@ import java.util.List;
 public class PricingUtilsTest {
 
     private PricingUtils pricingUtils;
+    private DecimalUtils decimalUtils;
 
     @BeforeEach
     public void setup() {
-        pricingUtils = new PricingUtils();
+        decimalUtils = Mockito.mock(DecimalUtils.class);
+        pricingUtils = new PricingUtils(decimalUtils);
     }
 
 

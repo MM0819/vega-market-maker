@@ -1,6 +1,6 @@
 package com.vega.protocol.store;
 
-import com.vega.protocol.model.Hedge;
+import com.vega.protocol.model.trading.Hedge;
 import org.springframework.stereotype.Repository;
 
 @Repository

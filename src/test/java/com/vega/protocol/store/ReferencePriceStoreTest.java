@@ -1,6 +1,6 @@
 package com.vega.protocol.store;
 
-import com.vega.protocol.model.ReferencePrice;
+import com.vega.protocol.model.trading.ReferencePrice;
 
 public class ReferencePriceStoreTest extends SingleItemStoreTest<ReferencePrice, ReferencePriceStore> {
 

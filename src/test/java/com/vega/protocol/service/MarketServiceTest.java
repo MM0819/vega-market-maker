@@ -2,7 +2,9 @@ package com.vega.protocol.service;
 
 import com.vega.protocol.constant.ErrorCode;
 import com.vega.protocol.helper.TestingHelper;
+import com.vega.protocol.store.ReferencePriceStore;
 import com.vega.protocol.store.VegaStore;
+import com.vega.protocol.utils.DecimalUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,17 +17,22 @@ import java.util.Optional;
 public class MarketServiceTest {
 
     private MarketService marketService;
-    private final VegaStore store = Mockito.mock(VegaStore.class);
+    private VegaStore vegaStore;
+    private DecimalUtils decimalUtils;
+    private ReferencePriceStore referencePriceStore;
 
     @BeforeEach
     public void setup() {
-        Mockito.when(store.getMarkets()).thenReturn(List.of());
-        marketService = new MarketService(store);
+        vegaStore = Mockito.mock(VegaStore.class);
+        decimalUtils = Mockito.mock(DecimalUtils.class);
+        referencePriceStore = Mockito.mock(ReferencePriceStore.class);
+        Mockito.when(vegaStore.getMarkets()).thenReturn(List.of());
+        marketService = new MarketService(vegaStore, decimalUtils, referencePriceStore);
     }
 
     @Test
     public void testGetById() {
-        Mockito.when(store.getMarketById(TestingHelper.ID)).thenReturn(Optional.of(
+        Mockito.when(vegaStore.getMarketById(TestingHelper.ID)).thenReturn(Optional.of(
                 TestingHelper.getMarket(Markets.Market.State.STATE_ACTIVE,
                         Markets.Market.TradingMode.TRADING_MODE_CONTINUOUS, "USDT")
         ));

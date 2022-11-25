@@ -7,7 +7,7 @@ import com.vega.protocol.exception.TradingException;
 import com.vega.protocol.grpc.client.VegaGrpcClient;
 import com.vega.protocol.initializer.DataInitializer;
 import com.vega.protocol.initializer.WebSocketInitializer;
-import com.vega.protocol.model.ReferencePrice;
+import com.vega.protocol.model.trading.ReferencePrice;
 import com.vega.protocol.repository.TradingConfigRepository;
 import com.vega.protocol.service.*;
 import com.vega.protocol.store.ReferencePriceStore;

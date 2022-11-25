@@ -1,6 +1,7 @@
-package com.vega.protocol.model;
+package com.vega.protocol.model.trading;
 
 import com.vega.protocol.constant.MarketSide;
+import com.vega.protocol.model.UniqueItem;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;

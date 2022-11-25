@@ -1,6 +1,6 @@
 package com.vega.protocol.controller;
 
-import com.vega.protocol.model.ReferencePrice;
+import com.vega.protocol.model.trading.ReferencePrice;
 import com.vega.protocol.store.ReferencePriceStore;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;

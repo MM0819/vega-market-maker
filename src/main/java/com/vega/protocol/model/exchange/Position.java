@@ -1,4 +1,4 @@
-package com.vega.protocol.model;
+package com.vega.protocol.model.exchange;
 
 import lombok.Data;
 import lombok.experimental.Accessors;

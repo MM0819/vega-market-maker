@@ -1,6 +1,6 @@
 package com.vega.protocol.ws;
 
-import com.vega.protocol.model.ReferencePrice;
+import com.vega.protocol.model.trading.ReferencePrice;
 import com.vega.protocol.store.ReferencePriceStore;
 import lombok.extern.slf4j.Slf4j;
 import org.java_websocket.client.WebSocketClient;

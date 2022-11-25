@@ -7,7 +7,7 @@ import com.vega.protocol.constant.ReferencePriceSource;
 import com.vega.protocol.entity.MarketConfig;
 import com.vega.protocol.initializer.DataInitializer;
 import com.vega.protocol.initializer.WebSocketInitializer;
-import com.vega.protocol.model.ReferencePrice;
+import com.vega.protocol.model.trading.ReferencePrice;
 import com.vega.protocol.service.PositionService;
 import com.vega.protocol.store.ReferencePriceStore;
 import com.vega.protocol.utils.SleepUtils;

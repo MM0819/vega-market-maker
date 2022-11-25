@@ -1,6 +1,11 @@
 package com.vega.protocol.service;
 
+import com.vega.protocol.grpc.client.VegaGrpcClient;
+import com.vega.protocol.store.ReferencePriceStore;
 import com.vega.protocol.store.VegaStore;
+import com.vega.protocol.utils.DecimalUtils;
+import com.vega.protocol.utils.PricingUtils;
+import com.vega.protocol.utils.QuantUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -12,12 +17,34 @@ import vega.Vega;
 public class OrderServiceTest {
 
     private OrderService orderService;
-    private VegaStore store;
+    private VegaStore vegaStore;
+    private ReferencePriceStore referencePriceStore;
+    private LiquidityProvisionService liquidityProvisionService;
+    private AssetService assetService;
+    private MarketService marketService;
+    private NetworkParameterService networkParameterService;
+    private PositionService positionService;
+    private DecimalUtils decimalUtils;
+    private QuantUtils quantUtils;
+    private PricingUtils pricingUtils;
+    private VegaGrpcClient vegaGrpcClient;
 
     @BeforeEach
     public void setup() {
-        store = Mockito.mock(VegaStore.class);
-        orderService = new OrderService(store);
+        vegaStore = Mockito.mock(VegaStore.class);
+        referencePriceStore = Mockito.mock(ReferencePriceStore.class);
+        liquidityProvisionService = Mockito.mock(LiquidityProvisionService.class);
+        assetService = Mockito.mock(AssetService.class);
+        marketService = Mockito.mock(MarketService.class);
+        networkParameterService = Mockito.mock(NetworkParameterService.class);
+        positionService = Mockito.mock(PositionService.class);
+        decimalUtils = Mockito.mock(DecimalUtils.class);
+        quantUtils = Mockito.mock(QuantUtils.class);
+        pricingUtils = Mockito.mock(PricingUtils.class);
+        vegaGrpcClient = Mockito.mock(VegaGrpcClient.class);
+        orderService = new OrderService(vegaStore, referencePriceStore, liquidityProvisionService, assetService,
+                marketService, networkParameterService, positionService, decimalUtils, quantUtils, pricingUtils,
+                vegaGrpcClient);
     }
 
     @Test
