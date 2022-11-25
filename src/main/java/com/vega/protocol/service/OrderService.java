@@ -1,5 +1,6 @@
 package com.vega.protocol.service;
 
+import com.vega.protocol.api.ExchangeApiClient;
 import com.vega.protocol.constant.ErrorCode;
 import com.vega.protocol.constant.MarketSide;
 import com.vega.protocol.entity.TradingConfig;
@@ -12,6 +13,7 @@ import com.vega.protocol.store.VegaStore;
 import com.vega.protocol.utils.DecimalUtils;
 import com.vega.protocol.utils.PricingUtils;
 import com.vega.protocol.utils.QuantUtils;
+import com.vega.protocol.utils.SleepUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -48,6 +50,7 @@ public class OrderService {
     private final DecimalUtils decimalUtils;
     private final QuantUtils quantUtils;
     private final PricingUtils pricingUtils;
+    private final SleepUtils sleepUtils;
     private final VegaGrpcClient vegaGrpcClient;
 
     public OrderService(
@@ -61,6 +64,7 @@ public class OrderService {
             final DecimalUtils decimalUtils,
             final QuantUtils quantUtils,
             final PricingUtils pricingUtils,
+            final SleepUtils sleepUtils,
             final VegaGrpcClient vegaGrpcClient) {
         this.vegaStore = vegaStore;
         this.referencePriceStore = referencePriceStore;
@@ -72,6 +76,7 @@ public class OrderService {
         this.decimalUtils = decimalUtils;
         this.quantUtils = quantUtils;
         this.pricingUtils = pricingUtils;
+        this.sleepUtils = sleepUtils;
         this.vegaGrpcClient = vegaGrpcClient;
     }
 
@@ -294,5 +299,38 @@ public class OrderService {
             }
         }
         log.info("Quotes successfully updated!");
+    }
+
+
+    /**
+     * Execute a TWAP trade
+     *
+     * @param side {@link MarketSide}
+     * @param symbol the market symbol
+     * @param totalSize the total trade size
+     * @param exchangeApiClient {@link ExchangeApiClient}
+     */
+    public void executeTwap(
+            final MarketSide side,
+            final String symbol,
+            final double totalSize,
+            final ExchangeApiClient exchangeApiClient
+    ) {
+        log.info("TWAP >> {} {} {}", side, totalSize, symbol);
+        double remainingSize = totalSize;
+        while(remainingSize > 0) {
+            ReferencePrice referencePrice = referencePriceStore.get()
+                    .orElseThrow(() -> new TradingException(ErrorCode.REFERENCE_PRICE_NOT_FOUND));
+            double size = side.equals(MarketSide.BUY) ? referencePrice.getAskSize() : referencePrice.getBidSize();
+            if(size > remainingSize) {
+                size = remainingSize;
+                remainingSize = 0.0;
+            } else {
+                remainingSize = remainingSize - size;
+            }
+            exchangeApiClient.submitMarketOrder(symbol, size, side);
+            log.info("TWAP >> Remaining size = {}", remainingSize);
+            sleepUtils.sleep(500L);
+        }
     }
 }

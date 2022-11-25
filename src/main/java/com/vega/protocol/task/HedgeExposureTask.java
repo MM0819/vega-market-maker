@@ -3,15 +3,13 @@ package com.vega.protocol.task;
 import com.vega.protocol.api.BinanceApiClient;
 import com.vega.protocol.api.ExchangeApiClient;
 import com.vega.protocol.api.IGApiClient;
-import com.vega.protocol.constant.ErrorCode;
 import com.vega.protocol.constant.MarketSide;
 import com.vega.protocol.constant.ReferencePriceSource;
 import com.vega.protocol.entity.MarketConfig;
-import com.vega.protocol.exception.TradingException;
 import com.vega.protocol.initializer.DataInitializer;
 import com.vega.protocol.initializer.WebSocketInitializer;
 import com.vega.protocol.model.exchange.Position;
-import com.vega.protocol.model.trading.ReferencePrice;
+import com.vega.protocol.service.OrderService;
 import com.vega.protocol.service.PositionService;
 import com.vega.protocol.store.ReferencePriceStore;
 import com.vega.protocol.utils.SleepUtils;
@@ -25,20 +23,20 @@ public class HedgeExposureTask extends TradingTask {
     private final PositionService positionService;
     private final IGApiClient igApiClient;
     private final BinanceApiClient binanceApiClient;
-    private final SleepUtils sleepUtils;
+    private final OrderService orderService;
 
-    public HedgeExposureTask(DataInitializer dataInitializer,
-                             WebSocketInitializer webSocketInitializer,
-                             PositionService positionService,
-                             IGApiClient igApiClient,
-                             BinanceApiClient binanceApiClient,
-                             ReferencePriceStore referencePriceStore,
-                             SleepUtils sleepUtils) {
+    public HedgeExposureTask(final DataInitializer dataInitializer,
+                             final WebSocketInitializer webSocketInitializer,
+                             final PositionService positionService,
+                             final IGApiClient igApiClient,
+                             final BinanceApiClient binanceApiClient,
+                             final ReferencePriceStore referencePriceStore,
+                             final OrderService orderService) {
         super(dataInitializer, webSocketInitializer, referencePriceStore);
         this.positionService = positionService;
         this.igApiClient = igApiClient;
         this.binanceApiClient = binanceApiClient;
-        this.sleepUtils = sleepUtils;
+        this.orderService = orderService;
     }
 
     /**
@@ -62,43 +60,11 @@ public class HedgeExposureTask extends TradingTask {
             double diff = Math.abs(hedgeExposure - exposure);
             if(Math.abs(hedgeExposure) < Math.abs(exposure)) {
                 MarketSide side = exposure < 0 ? MarketSide.BUY : MarketSide.SELL;
-                executeTwap(side, marketConfig.getHedgeSymbol(), diff, exchangeApiClient);
+                orderService.executeTwap(side, marketConfig.getHedgeSymbol(), diff, exchangeApiClient);
             } else if(Math.abs(hedgeExposure) > Math.abs(exposure)) {
                 MarketSide side = exposure < 0 ? MarketSide.SELL : MarketSide.BUY;
-                executeTwap(side, marketConfig.getHedgeSymbol(), diff, exchangeApiClient);
+                orderService.executeTwap(side, marketConfig.getHedgeSymbol(), diff, exchangeApiClient);
             }
-        }
-    }
-
-    /**
-     * Execute a TWAP trade
-     *
-     * @param side {@link MarketSide}
-     * @param symbol the market symbol
-     * @param totalSize the total trade size
-     * @param exchangeApiClient {@link ExchangeApiClient}
-     */
-    private void executeTwap(
-        final MarketSide side,
-        final String symbol,
-        final double totalSize,
-        final ExchangeApiClient exchangeApiClient
-    ) {
-        log.info("TWAP >> {} {} {}", side, totalSize, symbol);
-        double remainingSize = totalSize;
-        while(remainingSize > 0) {
-            ReferencePrice referencePrice = referencePriceStore.get()
-                    .orElseThrow(() -> new TradingException(ErrorCode.REFERENCE_PRICE_NOT_FOUND));
-            double size = side.equals(MarketSide.BUY) ? referencePrice.getAskSize() : referencePrice.getBidSize();
-            if(size > remainingSize) {
-                size = remainingSize;
-                remainingSize = 0.0;
-            } else {
-                remainingSize = remainingSize - size;
-            }
-            exchangeApiClient.submitMarketOrder(symbol, size, side);
-            log.info("TWAP >> Remaining size = {}", remainingSize);
-            sleepUtils.sleep(500L);
         }
     }
 }

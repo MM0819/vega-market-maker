@@ -6,6 +6,7 @@ import com.vega.protocol.store.VegaStore;
 import com.vega.protocol.utils.DecimalUtils;
 import com.vega.protocol.utils.PricingUtils;
 import com.vega.protocol.utils.QuantUtils;
+import com.vega.protocol.utils.SleepUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,6 +28,7 @@ public class OrderServiceTest {
     private DecimalUtils decimalUtils;
     private QuantUtils quantUtils;
     private PricingUtils pricingUtils;
+    private SleepUtils sleepUtils;
     private VegaGrpcClient vegaGrpcClient;
 
     @BeforeEach
@@ -41,10 +43,11 @@ public class OrderServiceTest {
         decimalUtils = Mockito.mock(DecimalUtils.class);
         quantUtils = Mockito.mock(QuantUtils.class);
         pricingUtils = Mockito.mock(PricingUtils.class);
+        sleepUtils = Mockito.mock(SleepUtils.class);
         vegaGrpcClient = Mockito.mock(VegaGrpcClient.class);
         orderService = new OrderService(vegaStore, referencePriceStore, liquidityProvisionService, assetService,
                 marketService, networkParameterService, positionService, decimalUtils, quantUtils, pricingUtils,
-                vegaGrpcClient);
+                sleepUtils, vegaGrpcClient);
     }
 
     @Test

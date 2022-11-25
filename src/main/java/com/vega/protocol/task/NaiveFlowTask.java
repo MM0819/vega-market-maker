@@ -60,7 +60,10 @@ public class NaiveFlowTask extends TradingTask {
             log.warn("Cannot execute {} because data is not initialized", getClass().getSimpleName());
             return;
         }
-        updateBias();
+        if(LocalDateTime.now().isAfter(nextBiasUpdate)) {
+            bias = orderService.getOtherSide(bias);
+            nextBiasUpdate = LocalDateTime.now().plusHours((int) (30 + (240 - 30) * new Random().nextDouble()));
+        }
         double threshold = new Random().nextDouble();
         Vega.Side side = bias;
         if(threshold > 0.7) {
@@ -77,12 +80,5 @@ public class NaiveFlowTask extends TradingTask {
         sleepUtils.sleep(ThreadLocalRandom.current().nextInt(100, 1000));
         vegaGrpcClient.submitOrder(null, vegaSize, side,
                 Vega.Order.TimeInForce.TIME_IN_FORCE_IOC, Vega.Order.Type.TYPE_MARKET, market.getId(), partyId);
-    }
-
-    private void updateBias() {
-        if(LocalDateTime.now().isAfter(nextBiasUpdate)) {
-            bias = orderService.getOtherSide(bias);
-            nextBiasUpdate = LocalDateTime.now().plusHours((int) (30 + (240 - 30) * new Random().nextDouble()));
-        }
     }
 }

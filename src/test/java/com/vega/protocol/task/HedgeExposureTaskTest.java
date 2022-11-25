@@ -8,9 +8,9 @@ import com.vega.protocol.entity.MarketConfig;
 import com.vega.protocol.initializer.DataInitializer;
 import com.vega.protocol.initializer.WebSocketInitializer;
 import com.vega.protocol.model.trading.ReferencePrice;
+import com.vega.protocol.service.OrderService;
 import com.vega.protocol.service.PositionService;
 import com.vega.protocol.store.ReferencePriceStore;
-import com.vega.protocol.utils.SleepUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -23,17 +23,17 @@ public class HedgeExposureTaskTest {
     private DataInitializer dataInitializer;
     private WebSocketInitializer webSocketInitializer;
     private PositionService positionService;
+    private OrderService orderService;
     private IGApiClient igApiClient;
     private BinanceApiClient binanceApiClient;
     private ReferencePriceStore referencePriceStore;
-    private SleepUtils sleepUtils;
 
     private static final String MARKET_ID = "1";
     private static final String PARTY_ID = "1";
 
     private HedgeExposureTask getHedgeExposureTask() {
         return new HedgeExposureTask(dataInitializer, webSocketInitializer, positionService, igApiClient,
-                binanceApiClient, referencePriceStore, sleepUtils);
+                binanceApiClient, referencePriceStore, orderService);
     }
 
     private ReferencePrice referencePrice() {
@@ -53,7 +53,7 @@ public class HedgeExposureTaskTest {
         igApiClient = Mockito.mock(IGApiClient.class);
         binanceApiClient = Mockito.mock(BinanceApiClient.class);
         referencePriceStore = Mockito.mock(ReferencePriceStore.class);
-        sleepUtils = Mockito.mock(SleepUtils.class);
+        orderService = Mockito.mock(OrderService.class);
         hedgeExposureTask = getHedgeExposureTask();
     }
 
