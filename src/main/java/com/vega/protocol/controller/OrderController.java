@@ -1,13 +1,12 @@
 package com.vega.protocol.controller;
 
-import com.vega.protocol.constant.OrderStatus;
-import com.vega.protocol.model.Order;
-import com.vega.protocol.store.OrderStore;
+import com.vega.protocol.store.VegaStore;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import vega.Vega;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -16,22 +15,22 @@ import java.util.stream.Collectors;
 @RequestMapping("/order")
 public class OrderController {
 
-    private final OrderStore orderStore;
+    private final VegaStore vegaStore;
 
-    public OrderController(OrderStore orderStore) {
-        this.orderStore = orderStore;
+    public OrderController(VegaStore vegaStore) {
+        this.vegaStore = vegaStore;
     }
 
     @GetMapping
-    public ResponseEntity<List<Order>> get() {
-        return ResponseEntity.ok(orderStore.getItems());
+    public ResponseEntity<List<Vega.Order>> get() {
+        return ResponseEntity.ok(vegaStore.getOrders());
     }
 
     @GetMapping("/status/{status}")
-    public ResponseEntity<List<Order>> getByStatus(
-            @PathVariable("status") OrderStatus status
+    public ResponseEntity<List<Vega.Order>> getByStatus(
+            @PathVariable("status") Vega.Order.Status status
     ) {
-        return ResponseEntity.ok(orderStore.getItems().stream()
+        return ResponseEntity.ok(vegaStore.getOrders().stream()
                 .filter(o -> o.getStatus().equals(status))
                 .collect(Collectors.toList()));
     }

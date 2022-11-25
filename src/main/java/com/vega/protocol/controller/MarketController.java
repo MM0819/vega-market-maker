@@ -1,11 +1,11 @@
 package com.vega.protocol.controller;
 
-import com.vega.protocol.model.Market;
-import com.vega.protocol.store.MarketStore;
+import com.vega.protocol.store.VegaStore;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import vega.Markets;
 
 import java.util.List;
 
@@ -13,14 +13,14 @@ import java.util.List;
 @RequestMapping("/market")
 public class MarketController {
 
-    private final MarketStore marketStore;
+    private final VegaStore vegaStore;
 
-    public MarketController(MarketStore marketStore) {
-        this.marketStore = marketStore;
+    public MarketController(VegaStore vegaStore) {
+        this.vegaStore = vegaStore;
     }
 
     @GetMapping
-    public ResponseEntity<List<Market>> get() {
-        return ResponseEntity.ok(marketStore.getItems());
+    public ResponseEntity<List<Markets.Market>> get() {
+        return ResponseEntity.ok(vegaStore.getMarkets());
     }
 }

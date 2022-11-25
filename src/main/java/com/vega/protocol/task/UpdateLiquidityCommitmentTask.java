@@ -1,30 +1,26 @@
 package com.vega.protocol.task;
 
-import com.vega.protocol.api.VegaApiClient;
 import com.vega.protocol.constant.ErrorCode;
-import com.vega.protocol.constant.MarketState;
-import com.vega.protocol.constant.PeggedReference;
 import com.vega.protocol.entity.MarketConfig;
 import com.vega.protocol.entity.TradingConfig;
 import com.vega.protocol.exception.TradingException;
+import com.vega.protocol.grpc.client.VegaGrpcClient;
 import com.vega.protocol.initializer.DataInitializer;
 import com.vega.protocol.initializer.WebSocketInitializer;
-import com.vega.protocol.model.LiquidityCommitment;
-import com.vega.protocol.model.LiquidityCommitmentOffset;
-import com.vega.protocol.model.Market;
 import com.vega.protocol.model.ReferencePrice;
 import com.vega.protocol.repository.TradingConfigRepository;
-import com.vega.protocol.service.AccountService;
-import com.vega.protocol.service.MarketService;
-import com.vega.protocol.service.PositionService;
-import com.vega.protocol.store.LiquidityCommitmentStore;
+import com.vega.protocol.service.*;
 import com.vega.protocol.store.ReferencePriceStore;
+import com.vega.protocol.utils.DecimalUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import vega.Assets;
+import vega.Markets;
+import vega.Vega;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @Slf4j
 @Component
@@ -33,25 +29,31 @@ public class UpdateLiquidityCommitmentTask extends TradingTask {
     private final MarketService marketService;
     private final AccountService accountService;
     private final PositionService positionService;
-    private final LiquidityCommitmentStore liquidityCommitmentStore;
-    private final VegaApiClient vegaApiClient;
+    private final AssetService assetService;
+    private final LiquidityProvisionService liquidityProvisionService;
+    private final VegaGrpcClient vegaGrpcClient;
+    private final DecimalUtils decimalUtils;
     private final TradingConfigRepository tradingConfigRepository;
 
     public UpdateLiquidityCommitmentTask(MarketService marketService,
                                          AccountService accountService,
                                          PositionService positionService,
-                                         VegaApiClient vegaApiClient,
+                                         AssetService assetService,
+                                         LiquidityProvisionService liquidityProvisionService,
+                                         VegaGrpcClient vegaGrpcClient,
                                          ReferencePriceStore referencePriceStore,
-                                         LiquidityCommitmentStore liquidityCommitmentStore,
                                          DataInitializer dataInitializer,
                                          WebSocketInitializer webSocketInitializer,
+                                         DecimalUtils decimalUtils,
                                          TradingConfigRepository tradingConfigRepository) {
         super(dataInitializer, webSocketInitializer, referencePriceStore);
         this.marketService = marketService;
         this.accountService = accountService;
         this.positionService = positionService;
-        this.liquidityCommitmentStore = liquidityCommitmentStore;
-        this.vegaApiClient = vegaApiClient;
+        this.assetService = assetService;
+        this.liquidityProvisionService = liquidityProvisionService;
+        this.vegaGrpcClient = vegaGrpcClient;
+        this.decimalUtils = decimalUtils;
         this.tradingConfigRepository = tradingConfigRepository;
     }
 
@@ -69,56 +71,67 @@ public class UpdateLiquidityCommitmentTask extends TradingTask {
         String marketId = marketConfig.getMarketId();
         String partyId = marketConfig.getPartyId();
         log.info("Updating liquidity commitment...");
-        Market market = marketService.getById(marketId);
-        if(!market.getState().equals(MarketState.ACTIVE)) {
+        Markets.Market market = marketService.getById(marketId);
+        if(!market.getState().equals(Markets.Market.State.STATE_ACTIVE)) {
             log.warn("Cannot trade; market state = {}", market.getState());
             return;
         }
-        double balance = accountService.getTotalBalance(market.getSettlementAsset());
+        Assets.Asset asset = assetService.getById(market.getTradableInstrument()
+                .getInstrument().getFuture().getSettlementAsset());
+        Vega.MarketData marketData = marketService.getDataById(marketId);
+        double balance = accountService.getTotalBalance(market.getTradableInstrument()
+                .getInstrument().getFuture().getSettlementAsset());
         if(balance == 0) {
             log.info("Cannot update liquidity commitment because balance = {}", balance);
             return;
         }
-        double exposure = positionService.getExposure(marketId);
+        double exposure = positionService.getExposure(marketId, partyId);
         TradingConfig tradingConfig = tradingConfigRepository.findByMarketConfig(marketConfig)
                 .orElseThrow(() -> new TradingException(ErrorCode.TRADING_CONFIG_NOT_FOUND));
         ReferencePrice referencePrice = referencePriceStore.get()
                 .orElseThrow(() -> new TradingException(ErrorCode.REFERENCE_PRICE_NOT_FOUND));
         double midPrice = referencePrice.getMidPrice();
         double commitmentAmount = balance * 0.5 * tradingConfig.getCommitmentBalanceRatio();
-        double requiredStake = market.getTargetStake() * (1 + tradingConfig.getStakeBuffer());
+        double targetStake = decimalUtils.convertToDecimals(asset.getDetails().getDecimals(),
+                new BigDecimal(marketData.getTargetStake()));
+        double suppliedStake = decimalUtils.convertToDecimals(asset.getDetails().getDecimals(),
+                new BigDecimal(marketData.getSuppliedStake()));
+        double requiredStake = targetStake * (1 + tradingConfig.getStakeBuffer());
         log.info("Exposure = {}\nRequired stake = {}", exposure, requiredStake);
         if(requiredStake > commitmentAmount && requiredStake < balance) {
             commitmentAmount = requiredStake;
         }
-        List<LiquidityCommitmentOffset> bids = new ArrayList<>();
-        List<LiquidityCommitmentOffset> asks = new ArrayList<>();
+        List<Vega.LiquidityOrder> buys = new ArrayList<>();
+        List<Vega.LiquidityOrder> sells = new ArrayList<>();
         for(int i=0; i<tradingConfig.getCommitmentOrderCount(); i++) {
-            LiquidityCommitmentOffset bidOffset = new LiquidityCommitmentOffset()
-                    .setOffset(midPrice * tradingConfig.getCommitmentSpread() * (i+1))
+            double offset = midPrice * tradingConfig.getCommitmentSpread() * (i+1);
+            String vegaOffset = decimalUtils.convertFromDecimals(
+                    market.getDecimalPlaces(), offset).toBigInteger().toString();
+            var buyOrder = Vega.LiquidityOrder.newBuilder()
+                    .setOffset(vegaOffset)
                     .setProportion(1)
-                    .setReference(PeggedReference.MID);
-            LiquidityCommitmentOffset askOffset = new LiquidityCommitmentOffset()
-                    .setOffset(midPrice * tradingConfig.getCommitmentSpread() * (i+1))
+                    .setReference(Vega.PeggedReference.PEGGED_REFERENCE_BEST_BID)
+                    .build();
+            var sellOrder = Vega.LiquidityOrder.newBuilder()
+                    .setOffset(vegaOffset)
                     .setProportion(1)
-                    .setReference(PeggedReference.MID);
-            bids.add(bidOffset);
-            asks.add(askOffset);
+                    .setReference(Vega.PeggedReference.PEGGED_REFERENCE_BEST_ASK)
+                    .build();
+            buys.add(buyOrder);
+            sells.add(sellOrder);
         }
-        LiquidityCommitment liquidityCommitment = new LiquidityCommitment()
-                .setMarket(market)
-                .setCommitmentAmount(commitmentAmount)
-                .setFee(tradingConfig.getFee())
-                .setBids(bids)
-                .setAsks(asks);
-        Optional<LiquidityCommitment> currentCommitment = liquidityCommitmentStore.getItems().stream()
-                .filter(c -> c.getMarket().getId().equals(marketId)).findFirst();
-        boolean hasCommitment = currentCommitment.isPresent();
+        var lp = liquidityProvisionService.getByMarketIdAndPartyId(marketId, partyId);
+        boolean hasCommitment = lp.isPresent();
         if(hasCommitment) {
-            double stakeFromOthers = market.getSuppliedStake() - currentCommitment.get().getCommitmentAmount();
+            double currentCommitment = decimalUtils.convertToDecimals(asset.getDetails().getDecimals(),
+                    new BigDecimal(lp.get().getCommitmentAmount()));
+            double stakeFromOthers = suppliedStake - currentCommitment;
             commitmentAmount = commitmentAmount - stakeFromOthers;
         }
-        vegaApiClient.submitLiquidityCommitment(liquidityCommitment, partyId, hasCommitment);
+        String vegaCommitmentAmount = decimalUtils.convertFromDecimals(
+                asset.getDetails().getDecimals(), commitmentAmount).toBigInteger().toString();
+        String vegaFee = String.valueOf(tradingConfig.getFee());
+        vegaGrpcClient.submitLiquidityProvision(buys, sells, vegaCommitmentAmount, vegaFee, marketId, partyId);
         log.info("Liquidity commitment updated -> {}", commitmentAmount);
     }
 }

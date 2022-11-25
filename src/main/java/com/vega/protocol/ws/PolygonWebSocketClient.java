@@ -10,14 +10,11 @@ import java.net.URI;
 @Slf4j
 public class PolygonWebSocketClient extends WebSocketClient {
 
-    private final String symbol;
     private final ReferencePriceStore referencePriceStore;
 
     public PolygonWebSocketClient(URI uri,
-                                  String symbol,
                                   ReferencePriceStore referencePriceStore) {
         super(uri);
-        this.symbol = symbol;
         this.referencePriceStore = referencePriceStore;
     }
 

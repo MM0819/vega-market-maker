@@ -9,17 +9,16 @@ import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
-public class BalanceCollateralTask extends TradingTask {
+public class ProofOfWorkTask extends TradingTask {
 
-    public BalanceCollateralTask(DataInitializer dataInitializer,
-                                 WebSocketInitializer webSocketInitializer,
-                                 ReferencePriceStore referencePriceStore) {
+    public ProofOfWorkTask(DataInitializer dataInitializer,
+                              WebSocketInitializer webSocketInitializer,
+                              ReferencePriceStore referencePriceStore) {
         super(dataInitializer, webSocketInitializer, referencePriceStore);
     }
 
     @Override
     public void execute(MarketConfig marketConfig) {
-        // TODO - this will re-balance the collateral across Vega and the hedging account
-        //  (after taking into account the unrealised PNL)
+        log.info("Generate as many PoW as possible");
     }
 }

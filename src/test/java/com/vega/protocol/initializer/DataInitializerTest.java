@@ -1,28 +1,23 @@
 package com.vega.protocol.initializer;
 
-import com.vega.protocol.api.VegaApiClient;
-import com.vega.protocol.model.Market;
+import com.vega.protocol.grpc.client.VegaGrpcClient;
+import com.vega.protocol.helper.TestingHelper;
 import com.vega.protocol.repository.GlobalConfigRepository;
 import com.vega.protocol.repository.MarketConfigRepository;
-import com.vega.protocol.store.*;
+import com.vega.protocol.store.VegaStore;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import vega.Markets;
 
 import java.util.List;
 
 public class DataInitializerTest {
 
     private DataInitializer dataInitializer;
-    private OrderStore orderStore;
-    private MarketStore marketStore;
-    private PositionStore positionStore;
-    private AccountStore accountStore;
-    private LiquidityCommitmentStore liquidityCommitmentStore;
-    private AssetStore assetStore;
-    private NetworkParameterStore networkParameterStore;
-    private VegaApiClient vegaApiClient;
+    private VegaStore vegaStore;
+    private VegaGrpcClient vegaGrpcClient;
     private GlobalConfigRepository globalConfigRepository;
     private MarketConfigRepository marketConfigRepository;
 
@@ -47,27 +42,21 @@ public class DataInitializerTest {
 
     @BeforeEach
     public void setup() {
-        orderStore = Mockito.mock(OrderStore.class);
-        marketStore = Mockito.mock(MarketStore.class);
-        positionStore = Mockito.mock(PositionStore.class);
-        accountStore = Mockito.mock(AccountStore.class);
-        vegaApiClient = Mockito.mock(VegaApiClient.class);
-        liquidityCommitmentStore = Mockito.mock(LiquidityCommitmentStore.class);
-        assetStore = Mockito.mock(AssetStore.class);
-        networkParameterStore = Mockito.mock(NetworkParameterStore.class);
+        vegaStore = Mockito.mock(VegaStore.class);
+        vegaGrpcClient = Mockito.mock(VegaGrpcClient.class);
         globalConfigRepository = Mockito.mock(GlobalConfigRepository.class);
         marketConfigRepository = Mockito.mock(MarketConfigRepository.class);
-        dataInitializer = new DataInitializer(orderStore, marketStore, positionStore, globalConfigRepository,
-                marketConfigRepository, accountStore, liquidityCommitmentStore, assetStore, networkParameterStore,
-                vegaApiClient, binanceApiKey, binanceApiSecret, binanceWebSocketUrl, binanceWebSocketEnabled, igApiKey,
-                igUsername, igPassword, polygonApiKey, polygonWebSocketUrl, polygonWebSocketEnabled, vegaApiUrl,
-                vegaWalletUrl, vegaWebSocketUrl, vegaWalletUser, vegaWalletPassword, vegaWebSocketEnabled,
-                naiveFlowPartyId);
+        dataInitializer = new DataInitializer(vegaStore, globalConfigRepository, marketConfigRepository, vegaGrpcClient,
+                binanceApiKey, binanceApiSecret, binanceWebSocketUrl, binanceWebSocketEnabled, igApiKey, igUsername,
+                igPassword, polygonApiKey, polygonWebSocketUrl, polygonWebSocketEnabled, vegaApiUrl, vegaWalletUrl,
+                vegaWebSocketUrl, vegaWalletUser, vegaWalletPassword, vegaWebSocketEnabled, naiveFlowPartyId);
     }
 
     @Test
     public void testInitialize() {
-        Mockito.when(vegaApiClient.getMarkets()).thenReturn(List.of(new Market()));
+        var market = TestingHelper.getMarket(Markets.Market.State.STATE_ACTIVE,
+                Markets.Market.TradingMode.TRADING_MODE_CONTINUOUS, "USDT");
+        Mockito.when(vegaGrpcClient.getMarkets()).thenReturn(List.of(market));
         Assertions.assertFalse(dataInitializer.isInitialized());
         dataInitializer.initialize();
         try {
@@ -75,7 +64,8 @@ public class DataInitializerTest {
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
-        Mockito.verify(marketStore, Mockito.times(1)).update(Mockito.any(Market.class));
+        Mockito.verify(vegaStore, Mockito.times(1))
+                .updateMarket(Mockito.any(Markets.Market.class));
         Assertions.assertTrue(dataInitializer.isInitialized());
     }
 }

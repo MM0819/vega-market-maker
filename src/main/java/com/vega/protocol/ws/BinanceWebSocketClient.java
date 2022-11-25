@@ -5,23 +5,18 @@ import com.vega.protocol.store.ReferencePriceStore;
 import lombok.extern.slf4j.Slf4j;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
-import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.net.URI;
-import java.util.Locale;
 
 @Slf4j
 public class BinanceWebSocketClient extends WebSocketClient {
 
-    private final String symbol;
     private final ReferencePriceStore referencePriceStore;
 
     public BinanceWebSocketClient(URI uri,
-                                  String symbol,
                                   ReferencePriceStore referencePriceStore) {
         super(uri);
-        this.symbol = symbol;
         this.referencePriceStore = referencePriceStore;
     }
 
@@ -31,11 +26,12 @@ public class BinanceWebSocketClient extends WebSocketClient {
     @Override
     public void onOpen(ServerHandshake handshake) {
         try {
-            JSONObject sub = new JSONObject()
-                    .put("method", "SUBSCRIBE")
-                    .put("params", new JSONArray().put(String.format("%s@ticker", symbol.toLowerCase(Locale.ROOT))))
-                    .put("id", 1);
-            this.send(sub.toString());
+            // TODO - fix this (sub to all symbols??)
+//            JSONObject sub = new JSONObject()
+//                    .put("method", "SUBSCRIBE")
+//                    .put("params", new JSONArray().put(String.format("%s@ticker", symbol.toLowerCase(Locale.ROOT))))
+//                    .put("id", 1);
+//            this.send(sub.toString());
         } catch (Exception e) {
             log.error(e.getMessage(), e);
         }

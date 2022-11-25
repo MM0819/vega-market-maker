@@ -1,27 +1,28 @@
 package com.vega.protocol.task;
 
-import com.vega.protocol.api.VegaApiClient;
-import com.vega.protocol.constant.*;
+import com.vega.protocol.constant.ErrorCode;
+import com.vega.protocol.constant.MarketSide;
 import com.vega.protocol.entity.MarketConfig;
 import com.vega.protocol.entity.TradingConfig;
 import com.vega.protocol.exception.TradingException;
+import com.vega.protocol.grpc.client.VegaGrpcClient;
+import com.vega.protocol.helper.TestingHelper;
 import com.vega.protocol.initializer.DataInitializer;
 import com.vega.protocol.initializer.WebSocketInitializer;
-import com.vega.protocol.model.*;
+import com.vega.protocol.model.DistributionStep;
+import com.vega.protocol.model.ReferencePrice;
 import com.vega.protocol.repository.TradingConfigRepository;
-import com.vega.protocol.service.AccountService;
-import com.vega.protocol.service.MarketService;
-import com.vega.protocol.service.NetworkParameterService;
-import com.vega.protocol.service.PositionService;
-import com.vega.protocol.store.LiquidityCommitmentStore;
-import com.vega.protocol.store.OrderStore;
+import com.vega.protocol.service.*;
 import com.vega.protocol.store.ReferencePriceStore;
+import com.vega.protocol.utils.DecimalUtils;
 import com.vega.protocol.utils.PricingUtils;
 import com.vega.protocol.utils.QuantUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import vega.Markets;
+import vega.Vega;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,8 +41,7 @@ public class UpdateQuotesTaskTest {
 
     private UpdateQuotesTask updateQuotesTask;
     private final ReferencePriceStore referencePriceStore = Mockito.mock(ReferencePriceStore.class);
-    private final OrderStore orderStore = Mockito.mock(OrderStore.class);
-    private final VegaApiClient vegaApiClient = Mockito.mock(VegaApiClient.class);
+    private final VegaGrpcClient vegaGrpcClient = Mockito.mock(VegaGrpcClient.class);
     private final MarketService marketService = Mockito.mock(MarketService.class);
     private final AccountService accountService = Mockito.mock(AccountService.class);
     private final PositionService positionService = Mockito.mock(PositionService.class);
@@ -49,38 +49,35 @@ public class UpdateQuotesTaskTest {
     private final QuantUtils quantUtils = Mockito.mock(QuantUtils.class);
     private final DataInitializer dataInitializer = Mockito.mock(DataInitializer.class);
     private final WebSocketInitializer webSocketInitializer = Mockito.mock(WebSocketInitializer.class);
-    private final LiquidityCommitmentStore liquidityCommitmentStore = Mockito.mock(LiquidityCommitmentStore.class);
+    private final LiquidityProvisionService liquidityProvisionService = Mockito.mock(LiquidityProvisionService.class);
     private final NetworkParameterService networkParameterService = Mockito.mock(NetworkParameterService.class);
     private final TradingConfigRepository tradingConfigRepository = Mockito.mock(TradingConfigRepository.class);
+    private final AssetService assetService = Mockito.mock(AssetService.class);
+    private final OrderService orderService = Mockito.mock(OrderService.class);
+    private final DecimalUtils decimalUtils = Mockito.mock(DecimalUtils.class);
 
-    private UpdateQuotesTask getTask(
-            final boolean enabled
-    ) {
-        return new UpdateQuotesTask(referencePriceStore, orderStore,
-                liquidityCommitmentStore, networkParameterService, vegaApiClient, marketService, accountService,
-                positionService, pricingUtils, quantUtils, dataInitializer, webSocketInitializer,
-                tradingConfigRepository);
+    private UpdateQuotesTask getTask() {
+        return new UpdateQuotesTask(referencePriceStore, networkParameterService, vegaGrpcClient, marketService,
+                accountService, positionService, orderService, assetService, pricingUtils, quantUtils, dataInitializer,
+                webSocketInitializer, liquidityProvisionService, decimalUtils, tradingConfigRepository);
     }
 
     @BeforeEach
     public void setup() {
-        updateQuotesTask = getTask(true);
+        updateQuotesTask = getTask();
     }
 
     private void execute(
             final double exposure,
             final double balance,
-            final MarketTradingMode tradingMode,
+            final Markets.Market.TradingMode tradingMode,
             final int bidDistributionSize,
             final int askDistributionSize
     ) {
+        var market = TestingHelper.getMarket(Markets.Market.State.STATE_ACTIVE, tradingMode, USDT);
         Mockito.when(dataInitializer.isInitialized()).thenReturn(true);
-        Mockito.when(webSocketInitializer.isVegaWebSocketsInitialized()).thenReturn(true);
         Mockito.when(webSocketInitializer.isBinanceWebSocketInitialized()).thenReturn(true);
-        Mockito.when(marketService.getById(MARKET_ID)).thenReturn(new Market()
-                .setSettlementAsset(USDT)
-                .setTradingMode(tradingMode)
-                .setState(MarketState.ACTIVE));
+        Mockito.when(marketService.getById(MARKET_ID)).thenReturn(market);
         MarketConfig marketConfig = new MarketConfig()
                 .setMarketId(MARKET_ID)
                 .setPartyId(PARTY_ID)
@@ -100,31 +97,27 @@ public class UpdateQuotesTaskTest {
                 .setAskSizeFactor(1.0);
         Mockito.when(tradingConfigRepository.findByMarketConfig(marketConfig)).thenReturn(Optional.of(tradingConfig));
         Mockito.when(accountService.getTotalBalance(USDT)).thenReturn(balance);
-        Mockito.when(positionService.getExposure(MARKET_ID)).thenReturn(exposure);
+        Mockito.when(positionService.getExposure(MARKET_ID, PARTY_ID)).thenReturn(exposure);
         Mockito.when(referencePriceStore.get()).thenReturn(Optional.of(new ReferencePrice()
                 .setAskPrice(20001)
                 .setBidPrice(19999)
                 .setMidPrice(20000)));
         Mockito.when(networkParameterService.getAsDouble(MAKER_FEE_PARAM)).thenReturn(0.0002);
         Mockito.when(networkParameterService.getAsInt(MAX_BATCH_SIZE_PARAM)).thenReturn(100);
-        List<Order> currentOrders = new ArrayList<>();
+        List<Vega.Order> currentOrders = new ArrayList<>();
         for(int i=0; i<4; i++) {
-            currentOrders.add(new Order()
-                    .setSide(MarketSide.SELL)
-                    .setId(String.valueOf(i+1))
-                    .setPrice(1)
-                    .setSize(10)
-                    .setPeggedOrder(false)
-                    .setStatus(i % 2 == 0 ? OrderStatus.ACTIVE : OrderStatus.CANCELLED));
+            String id = String.valueOf(i+1);
+            Vega.Order.Status status = Vega.Order.Status.STATUS_ACTIVE;
+            Vega.Order order = TestingHelper.getOrder(id, "1", 10L,
+                    Vega.Side.SIDE_SELL, status, null);
+            currentOrders.add(order);
         }
         for(int i=0; i<4; i++) {
-            currentOrders.add(new Order()
-                    .setSide(MarketSide.BUY)
-                    .setId(String.valueOf(i+4))
-                    .setPrice(1)
-                    .setSize(10)
-                    .setPeggedOrder(false)
-                    .setStatus(i % 2 == 0 ? OrderStatus.ACTIVE : OrderStatus.CANCELLED));
+            String id = String.valueOf(i+1);
+            Vega.Order.Status status = Vega.Order.Status.STATUS_ACTIVE;
+            Vega.Order order = TestingHelper.getOrder(id, "1", 10L,
+                    Vega.Side.SIDE_BUY, status, null);
+            currentOrders.add(order);
         }
         List<DistributionStep> bidDistribution = new ArrayList<>();
         List<DistributionStep> askDistribution = new ArrayList<>();
@@ -134,7 +127,8 @@ public class UpdateQuotesTaskTest {
         for(int i=0; i<askDistributionSize; i++) {
             askDistribution.add(new DistributionStep().setPrice(4d).setSize(1d));
         }
-        Mockito.when(orderStore.getItems()).thenReturn(currentOrders);
+        Mockito.when(orderService.getByMarketIdAndStatus(MARKET_ID,
+                Vega.Order.Status.STATUS_ACTIVE)).thenReturn(currentOrders);
         if(exposure > 0) {
             Mockito.when(pricingUtils.getDistribution(19999d, 0.15d, tradingConfig.getBidQuoteRange(),
                             MarketSide.BUY, tradingConfig.getQuoteOrderCount()))
@@ -158,31 +152,33 @@ public class UpdateQuotesTaskTest {
         if(balance == 0 || bidDistributionSize == 0 || askDistributionSize == 0) {
             modifier = 0;
         }
-        Mockito.verify(vegaApiClient, Mockito.times(modifier))
-                .submitBulkInstruction(Mockito.anyList(), Mockito.anyList(),
-                        Mockito.any(Market.class), Mockito.anyString());
+        Mockito.verify(vegaGrpcClient, Mockito.times(modifier))
+                .batchMarketInstruction(Mockito.anyList(), Mockito.anyList(),
+                        Mockito.anyList(), Mockito.anyString());
     }
 
     @Test
     public void testExecuteDisabled() {
-        updateQuotesTask = getTask(false);
+        updateQuotesTask = getTask();
         Mockito.when(dataInitializer.isInitialized()).thenReturn(true);
-        Mockito.when(webSocketInitializer.isVegaWebSocketsInitialized()).thenReturn(true);
         Mockito.when(webSocketInitializer.isBinanceWebSocketInitialized()).thenReturn(true);
         updateQuotesTask.execute(new MarketConfig());
-        Mockito.verify(vegaApiClient, Mockito.times(0)).submitLiquidityCommitment(
-                Mockito.any(LiquidityCommitment.class), Mockito.anyString(), Mockito.anyBoolean());
+        Mockito.verify(vegaGrpcClient, Mockito.times(0)).submitLiquidityProvision(
+                Mockito.anyList(), Mockito.anyList(), Mockito.anyString(), Mockito.anyString(),
+                Mockito.anyString(), Mockito.anyString());
     }
 
     @Test
     public void testExecute() {
-        execute(0, 100000, MarketTradingMode.CONTINUOUS, 3, 1);
+        execute(0, 100000,
+                Markets.Market.TradingMode.TRADING_MODE_CONTINUOUS, 3, 1);
     }
 
     @Test
     public void testExecuteMissingBidDistribution() {
         try {
-            execute(0, 100000, MarketTradingMode.CONTINUOUS, 0, 1);
+            execute(0, 100000,
+                    Markets.Market.TradingMode.TRADING_MODE_CONTINUOUS, 0, 1);
             Assertions.fail();
         } catch(TradingException e) {
             Assertions.assertEquals(ErrorCode.EMPTY_DISTRIBUTION, e.getMessage());
@@ -192,7 +188,8 @@ public class UpdateQuotesTaskTest {
     @Test
     public void testExecuteMissingAskDistribution() {
         try {
-            execute(0, 100000, MarketTradingMode.CONTINUOUS, 3, 0);
+            execute(0, 100000,
+                    Markets.Market.TradingMode.TRADING_MODE_CONTINUOUS, 3, 0);
             Assertions.fail();
         } catch(TradingException e) {
             Assertions.assertEquals(ErrorCode.EMPTY_DISTRIBUTION, e.getMessage());
@@ -201,33 +198,34 @@ public class UpdateQuotesTaskTest {
 
     @Test
     public void testExecuteZeroBalance() {
-        execute(0, 0, MarketTradingMode.CONTINUOUS, 3, 1);
+        execute(0, 0,
+                Markets.Market.TradingMode.TRADING_MODE_CONTINUOUS, 3, 1);
     }
 
     @Test
     public void testExecuteLongPosition() {
-        execute(1, 100000, MarketTradingMode.MONITORING_AUCTION, 3, 1);
+        execute(1, 100000,
+                Markets.Market.TradingMode.TRADING_MODE_MONITORING_AUCTION, 3, 1);
     }
 
     @Test
     public void testExecuteShortPosition() {
-        execute(-1, 100000, MarketTradingMode.CONTINUOUS, 3, 1);
+        execute(-1, 100000,
+                Markets.Market.TradingMode.TRADING_MODE_CONTINUOUS, 3, 1);
     }
 
     @Test
     public void testExecuteTradingConfigNotFound() {
+        var market = TestingHelper.getMarket(Markets.Market.State.STATE_ACTIVE,
+                Markets.Market.TradingMode.TRADING_MODE_CONTINUOUS, USDT);
         Mockito.when(dataInitializer.isInitialized()).thenReturn(true);
-        Mockito.when(webSocketInitializer.isVegaWebSocketsInitialized()).thenReturn(true);
         Mockito.when(webSocketInitializer.isBinanceWebSocketInitialized()).thenReturn(true);
         Mockito.when(referencePriceStore.get()).thenReturn(Optional.of(new ReferencePrice()));
-        Mockito.when(marketService.getById(MARKET_ID)).thenReturn(new Market()
-                .setSettlementAsset(USDT)
-                .setTradingMode(MarketTradingMode.CONTINUOUS)
-                .setState(MarketState.ACTIVE));
+        Mockito.when(marketService.getById(MARKET_ID)).thenReturn(market);
         MarketConfig marketConfig = new MarketConfig().setMarketId(MARKET_ID);
         Mockito.when(tradingConfigRepository.findByMarketConfig(marketConfig)).thenReturn(Optional.empty());
         Mockito.when(accountService.getTotalBalance(USDT)).thenReturn(100000.0);
-        Mockito.when(positionService.getExposure(MARKET_ID)).thenReturn(0.0);
+        Mockito.when(positionService.getExposure(MARKET_ID, PARTY_ID)).thenReturn(0.0);
         try {
             updateQuotesTask.execute(marketConfig);
             Assertions.fail();
@@ -240,7 +238,9 @@ public class UpdateQuotesTaskTest {
     public void testExecuteNotInitialized() {
         Mockito.when(dataInitializer.isInitialized()).thenReturn(false);
         updateQuotesTask.execute(new MarketConfig());
-        Mockito.verify(vegaApiClient, Mockito.times(0))
-                .submitOrder(Mockito.any(Order.class), Mockito.anyString());
+        Mockito.verify(vegaGrpcClient, Mockito.times(0))
+                .submitOrder(Mockito.anyString(), Mockito.anyLong(), Mockito.any(Vega.Side.class),
+                        Mockito.any(Vega.Order.TimeInForce.class), Mockito.any(Vega.Order.Type.class),
+                        Mockito.anyString(), Mockito.anyString());
     }
 }

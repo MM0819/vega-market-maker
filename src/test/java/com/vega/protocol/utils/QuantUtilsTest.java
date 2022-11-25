@@ -1,10 +1,10 @@
 package com.vega.protocol.utils;
 
-import com.vega.protocol.constant.MarketSide;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import vega.Vega;
 
 @Slf4j
 public class QuantUtilsTest {
@@ -24,7 +24,7 @@ public class QuantUtilsTest {
         double sigma = 1.2;
         double lowerBound = 95.0;
         double upperBound = 100.0;
-        MarketSide side = MarketSide.BUY;
+        Vega.Side side = Vega.Side.SIDE_BUY;
         double price = 99.999;
         double result = quantUtils.getProbabilityOfTrading(mu, sigma, bestBid, tau, lowerBound, upperBound, price, side);
         Assertions.assertEquals(result, 0.9997857769969329);
@@ -38,7 +38,7 @@ public class QuantUtilsTest {
         double sigma = 1.2;
         double lowerBound = 95.0;
         double upperBound = 100.0;
-        MarketSide side = MarketSide.SELL;
+        Vega.Side side = Vega.Side.SIDE_SELL;
         double price = 95.001;
         double result = quantUtils.getProbabilityOfTrading(mu, sigma, bestAsk, tau, lowerBound, upperBound, price, side);
         Assertions.assertEquals(result, 0.9997689694868312);
@@ -52,7 +52,7 @@ public class QuantUtilsTest {
         double sigma = 1.2;
         double lowerBound = 95.0;
         double upperBound = 100.0;
-        MarketSide side = MarketSide.SELL;
+        Vega.Side side = Vega.Side.SIDE_SELL;
         double price = 101;
         double result = quantUtils.getProbabilityOfTrading(mu, sigma, bestAsk, tau, lowerBound, upperBound, price, side);
         Assertions.assertEquals(result, 0);
@@ -66,7 +66,7 @@ public class QuantUtilsTest {
         double sigma = 1.2;
         double lowerBound = 95.0;
         double upperBound = 100.0;
-        MarketSide side = MarketSide.SELL;
+        Vega.Side side = Vega.Side.SIDE_SELL;
         double price = 94;
         double result = quantUtils.getProbabilityOfTrading(mu, sigma, bestAsk, tau, lowerBound, upperBound, price, side);
         Assertions.assertEquals(result, 0);

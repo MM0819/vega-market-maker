@@ -1,19 +1,23 @@
 package com.vega.protocol.service;
 
-import com.vega.protocol.constant.MarketSide;
-import com.vega.protocol.model.Position;
-import com.vega.protocol.store.PositionStore;
+import com.vega.protocol.store.VegaStore;
+import com.vega.protocol.utils.DecimalUtils;
 import org.springframework.stereotype.Service;
+import vega.Markets;
+import vega.Vega;
 
-import java.util.Optional;
+import java.math.BigDecimal;
 
 @Service
 public class PositionService {
 
-    private final PositionStore positionStore;
+    private final VegaStore vegaStore;
+    private final DecimalUtils decimalUtils;
 
-    public PositionService(PositionStore positionStore) {
-        this.positionStore = positionStore;
+    public PositionService(VegaStore vegaStore,
+                           DecimalUtils decimalUtils) {
+        this.vegaStore = vegaStore;
+        this.decimalUtils = decimalUtils;
     }
 
     /**
@@ -22,17 +26,17 @@ public class PositionService {
      * @return exposure for given market ID
      */
     public double getExposure(
-            final String marketId
+            final String marketId,
+            final String partyId
     ) {
-        Optional<Position> positionOptional = positionStore.getItems().stream()
-                .filter(p -> p.getMarket().getId().equals(marketId)).findFirst();
-        if(positionOptional.isPresent()) {
-            Position position = positionOptional.get();
-            double exposure = position.getSize();
+        var positionOptional = vegaStore.getPositionByMarketIdAndPartyId(marketId, partyId);
+        var marketOptional = vegaStore.getMarketById(marketId);
+        if(positionOptional.isPresent() && marketOptional.isPresent()) {
+            Vega.Position position = positionOptional.get();
+            Markets.Market market = marketOptional.get();
+            double exposure = decimalUtils.convertToDecimals(market.getPositionDecimalPlaces(),
+                    new BigDecimal(position.getOpenVolume()));
             if(exposure == 0) return 0.0;
-            if(position.getSide().equals(MarketSide.SELL)) {
-                return exposure * -1;
-            }
             return exposure;
         }
         return 0.0;

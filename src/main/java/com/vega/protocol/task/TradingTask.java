@@ -23,9 +23,9 @@ public abstract class TradingTask {
 
     public boolean isInitialized() {
         return dataInitializer.isInitialized() &&
-                webSocketInitializer.isVegaWebSocketsInitialized() &&
                 referencePriceStore.get().isPresent() &&
-                (webSocketInitializer.isPolygonWebSocketInitialized() || webSocketInitializer.isBinanceWebSocketInitialized());
+                (webSocketInitializer.isPolygonWebSocketInitialized() ||
+                        webSocketInitializer.isBinanceWebSocketInitialized());
     }
 
     /**

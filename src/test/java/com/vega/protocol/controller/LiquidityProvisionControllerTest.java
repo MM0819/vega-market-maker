@@ -2,8 +2,8 @@ package com.vega.protocol.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.vega.protocol.model.LiquidityCommitment;
-import com.vega.protocol.store.LiquidityCommitmentStore;
+import com.vega.protocol.helper.TestingHelper;
+import com.vega.protocol.store.VegaStore;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,30 +13,35 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import vega.Markets;
+import vega.Vega;
 
 import java.util.List;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @AutoConfigureMockMvc
-@ContextConfiguration(classes = {LiquidityCommitmentController.class, LiquidityCommitmentStore.class})
+@ContextConfiguration(classes = {LiquidityProvisionController.class, VegaStore.class})
 @WebMvcTest
-public class LiquidityCommitmentControllerTest {
+public class LiquidityProvisionControllerTest {
 
     @Autowired
     private MockMvc mvc;
     @Autowired
-    private LiquidityCommitmentStore store;
+    private VegaStore store;
 
     @Test
-    public void testGetLiquidityCommitment() throws Exception {
-        LiquidityCommitment liquidityCommitment = new LiquidityCommitment().setId("12345");
-        store.update(liquidityCommitment);
-        MvcResult result = mvc.perform(MockMvcRequestBuilders.get("/liquidity-commitment"))
+    public void testGetLiquidityProvision() throws Exception {
+        var market = TestingHelper.getMarket(Markets.Market.State.STATE_ACTIVE,
+                Markets.Market.TradingMode.TRADING_MODE_CONTINUOUS, "USDT");
+        var liquidityProvision = TestingHelper.getLiquidityProvision("1", market);
+        store.updateLiquidityProvision(liquidityProvision);
+        MvcResult result = mvc.perform(MockMvcRequestBuilders.get("/liquidity-provision"))
                 .andExpect(status().isOk())
                 .andReturn();
         String body = result.getResponse().getContentAsString();
-        List<LiquidityCommitment> commitments = new ObjectMapper().readValue(body, new TypeReference<>() {});
-        Assertions.assertEquals(commitments.get(0).getId(), "12345");
+        List<Vega.LiquidityProvision> provisions = new ObjectMapper().readValue(body, new TypeReference<>() {});
+        Assertions.assertTrue(provisions.size() > 0);
+        Assertions.assertEquals(provisions.get(0).getId(), TestingHelper.ID);
     }
 }

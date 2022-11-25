@@ -1,29 +1,25 @@
 package com.vega.protocol.initializer;
 
-import com.vega.protocol.api.VegaApiClient;
 import com.vega.protocol.entity.GlobalConfig;
+import com.vega.protocol.grpc.client.VegaGrpcClient;
 import com.vega.protocol.repository.GlobalConfigRepository;
 import com.vega.protocol.repository.MarketConfigRepository;
-import com.vega.protocol.store.*;
+import com.vega.protocol.store.VegaStore;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 @Slf4j
 @Component
 public class DataInitializer {
 
-    private final OrderStore orderStore;
-    private final MarketStore marketStore;
-    private final PositionStore positionStore;
     private final GlobalConfigRepository globalConfigRepository;
     private final MarketConfigRepository marketConfigRepository;
-    private final AccountStore accountStore;
-    private final LiquidityCommitmentStore liquidityCommitmentStore;
-    private final AssetStore assetStore;
-    private final NetworkParameterStore networkParameterStore;
-    private final VegaApiClient vegaApiClient;
+    private final VegaStore vegaStore;
+    private final VegaGrpcClient vegaGrpcClient;
     private final String binanceApiKey;
     private final String binanceApiSecret;
     private final String binanceWebSocketUrl;
@@ -45,16 +41,10 @@ public class DataInitializer {
     @Getter
     private boolean initialized = false;
 
-    public DataInitializer(OrderStore orderStore,
-                           MarketStore marketStore,
-                           PositionStore positionStore,
+    public DataInitializer(VegaStore vegaStore,
                            GlobalConfigRepository globalConfigRepository,
                            MarketConfigRepository marketConfigRepository,
-                           AccountStore accountStore,
-                           LiquidityCommitmentStore liquidityCommitmentStore,
-                           AssetStore assetStore,
-                           NetworkParameterStore networkParameterStore,
-                           VegaApiClient vegaApiClient,
+                           VegaGrpcClient vegaGrpcClient,
                            @Value("${binance.api.key}") String binanceApiKey,
                            @Value("${binance.api.secret}") String binanceApiSecret,
                            @Value("${binance.ws.url}") String binanceWebSocketUrl,
@@ -72,16 +62,10 @@ public class DataInitializer {
                            @Value("${vega.wallet.password}") String vegaWalletPassword,
                            @Value("${vega.ws.enabled}") Boolean vegaWebSocketEnabled,
                            @Value("${naive.flow.party.id}") String naiveFlowPartyId) {
-        this.orderStore = orderStore;
-        this.marketStore = marketStore;
-        this.positionStore = positionStore;
+        this.vegaStore = vegaStore;
         this.globalConfigRepository = globalConfigRepository;
         this.marketConfigRepository = marketConfigRepository;
-        this.accountStore = accountStore;
-        this.liquidityCommitmentStore = liquidityCommitmentStore;
-        this.assetStore = assetStore;
-        this.networkParameterStore = networkParameterStore;
-        this.vegaApiClient = vegaApiClient;
+        this.vegaGrpcClient = vegaGrpcClient;
         this.binanceApiKey = binanceApiKey;
         this.binanceApiSecret = binanceApiSecret;
         this.binanceWebSocketUrl = binanceWebSocketUrl;
@@ -127,19 +111,46 @@ public class DataInitializer {
                     .setNaiveFlowPartyId(naiveFlowPartyId);
             globalConfigRepository.save(globalConfig);
         }
-        updateState();
+        initializeState();
         initialized = true;
     }
 
-    private void updateState() {
-        vegaApiClient.getNetworkParameters().forEach(networkParameterStore::update);
-        vegaApiClient.getAssets().forEach(assetStore::update);
-        vegaApiClient.getMarkets().forEach(marketStore::update);
+    /**
+     * Initialize gRPC streams
+     */
+    private void initializeStreaming() {
         marketConfigRepository.findAll().forEach(marketConfig -> {
-            vegaApiClient.getAccounts(marketConfig.getPartyId()).forEach(accountStore::update);
-            vegaApiClient.getPositions(marketConfig.getPartyId()).forEach(positionStore::update);
-            vegaApiClient.getOpenOrders(marketConfig.getPartyId()).forEach(orderStore::update);
-            vegaApiClient.getLiquidityCommitments(marketConfig.getPartyId()).forEach(liquidityCommitmentStore::update);
+            String partyId = marketConfig.getPartyId();
+            String marketId = marketConfig.getMarketId();
+            vegaGrpcClient.streamAccounts(partyId, (items) -> items.stream()
+                    .filter(i -> i.getMarketId().equals(marketId)).forEach(vegaStore::updateAccount));
+            vegaGrpcClient.streamPositions(partyId, (items) -> items.stream()
+                    .filter(i -> i.getMarketId().equals(marketId)).forEach(vegaStore::updatePosition));
+            vegaGrpcClient.streamOrders(partyId, (items) -> items.stream()
+                    .filter(i -> i.getMarketId().equals(marketId)).forEach(vegaStore::updateOrder));
+            vegaGrpcClient.streamLiquidityProvisions(partyId, (items) -> items.stream()
+                    .filter(i -> i.getMarketId().equals(marketId)).forEach(vegaStore::updateLiquidityProvision));
+            vegaGrpcClient.streamMarketData(List.of(marketId), (items) -> items.forEach(vegaStore::updateMarketData));
         });
+    }
+
+    /**
+     * Initialize state
+     */
+    private void initializeState() {
+        vegaGrpcClient.getNetworkParameters().forEach(vegaStore::updateNetworkParameter);
+        vegaGrpcClient.getAssets().forEach(vegaStore::updateAsset);
+        vegaGrpcClient.getMarkets().forEach(vegaStore::updateMarket);
+        marketConfigRepository.findAll().forEach(marketConfig -> {
+            vegaGrpcClient.getAccounts(List.of(marketConfig.getPartyId()))
+                    .forEach(vegaStore::updateAccount);
+            vegaGrpcClient.getPositions(marketConfig.getPartyId(), marketConfig.getMarketId())
+                    .forEach(vegaStore::updatePosition);
+            vegaGrpcClient.getOrders(marketConfig.getPartyId(), marketConfig.getMarketId(), true)
+                    .forEach(vegaStore::updateOrder);
+            vegaGrpcClient.getLiquidityProvisions(marketConfig.getPartyId(), marketConfig.getMarketId())
+                    .forEach(vegaStore::updateLiquidityProvision);
+        });
+        initializeStreaming();
     }
 }

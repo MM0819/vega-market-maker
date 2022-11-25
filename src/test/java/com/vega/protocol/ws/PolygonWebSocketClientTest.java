@@ -10,14 +10,13 @@ import java.net.URI;
 
 public class PolygonWebSocketClientTest {
 
-    private static final String SYMBOL = "AAPL";
     private PolygonWebSocketClient polygonWebSocketClient;
     private final ReferencePriceStore referencePriceStore = Mockito.mock(ReferencePriceStore.class);
 
     @BeforeEach
     public void setup() {
         polygonWebSocketClient = new PolygonWebSocketClient(
-                URI.create("wss://socket.polygon.io/stocks"), SYMBOL, referencePriceStore);
+                URI.create("wss://socket.polygon.io/stocks"), referencePriceStore);
     }
 
     @Test

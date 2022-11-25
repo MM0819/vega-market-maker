@@ -1,8 +1,8 @@
 package com.vega.protocol.utils;
 
-import com.vega.protocol.constant.MarketSide;
 import org.apache.commons.math3.special.Erf;
 import org.springframework.stereotype.Component;
+import vega.Vega;
 
 @Component
 public class QuantUtils {
@@ -17,7 +17,7 @@ public class QuantUtils {
      * @param lowerBound the lower price monitoring bound
      * @param upperBound the upper price monitoring bound
      * @param price the price to calculate the probability of trading for
-     * @param side the side of the book {@link MarketSide}
+     * @param side the side of the book {@link vega.Vega.Side}
      *
      * @return the probability of this price trading
      */
@@ -29,7 +29,7 @@ public class QuantUtils {
             final double lowerBound,
             final double upperBound,
             final double price,
-            final MarketSide side
+            final Vega.Side side
     ) {
         double stdev = sigma * Math.sqrt(tau);
         double m = Math.log(bestPrice) + (mu - 0.5 * sigma * sigma) * tau;
@@ -39,7 +39,7 @@ public class QuantUtils {
         double min = cdf(m, stdev, lowerBound);
         double max = cdf(m, stdev, upperBound);
         double z = max - min;
-        if(side.equals(MarketSide.BUY)) {
+        if(side.equals(Vega.Side.SIDE_BUY)) {
             return (cdf(m, stdev, price) - min) / z;
         }
         return (max - cdf(m, stdev, price)) / z;

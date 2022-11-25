@@ -16,12 +16,13 @@ public class DecimalUtils {
      *
      * @return decimal representation
      */
-    public double convertToDecimals(
-            final int decimalPlaces,
+    public Double convertToDecimals(
+            final long decimalPlaces,
             final BigDecimal number
     ) {
-        return number.divide(BigDecimal.valueOf(Math.pow(10, decimalPlaces)), decimalPlaces, RoundingMode.HALF_DOWN)
-                .setScale(decimalPlaces, RoundingMode.HALF_DOWN).doubleValue();
+        if(number == null) return null;
+        return number.divide(BigDecimal.valueOf(Math.pow(10, decimalPlaces)), (int) decimalPlaces, RoundingMode.HALF_DOWN)
+                .setScale((int) decimalPlaces, RoundingMode.HALF_DOWN).doubleValue();
     }
 
     /**
@@ -33,9 +34,10 @@ public class DecimalUtils {
      * @return integer representation
      */
     public BigDecimal convertFromDecimals(
-            final int decimalPlaces,
-            final double number
+            final long decimalPlaces,
+            final Double number
     ) {
+        if(number == null) return null;
         return BigDecimal.valueOf(Math.pow(10, decimalPlaces)).multiply(BigDecimal.valueOf(number))
                 .setScale(0, RoundingMode.HALF_DOWN);
     }

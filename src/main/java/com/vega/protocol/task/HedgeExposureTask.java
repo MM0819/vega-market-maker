@@ -18,8 +18,6 @@ import com.vega.protocol.utils.SleepUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.math.BigDecimal;
-
 @Slf4j
 @Component
 public class HedgeExposureTask extends TradingTask {
@@ -54,7 +52,7 @@ public class HedgeExposureTask extends TradingTask {
             log.warn("Cannot execute {} because data is not initialized", getClass().getSimpleName());
             return;
         }
-        double exposure = positionService.getExposure(marketConfig.getMarketId());
+        double exposure = positionService.getExposure(marketConfig.getMarketId(), marketConfig.getPartyId());
         if(exposure != 0) {
             log.info("Hedging exposure...");
             ExchangeApiClient exchangeApiClient = marketConfig.getReferencePriceSource()

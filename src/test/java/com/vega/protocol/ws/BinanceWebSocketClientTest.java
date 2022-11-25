@@ -10,15 +10,13 @@ import java.net.URI;
 
 public class BinanceWebSocketClientTest {
 
-    private static final String SYMBOL = "BTCUSDT";
-
     private BinanceWebSocketClient binanceWebSocketClient;
     private final ReferencePriceStore referencePriceStore = Mockito.mock(ReferencePriceStore.class);
 
     @BeforeEach
     public void setup() {
         binanceWebSocketClient = new BinanceWebSocketClient(
-                URI.create("wss://stream.binance.com:9443/stream"), SYMBOL, referencePriceStore);
+                URI.create("wss://stream.binance.com:9443/stream"), referencePriceStore);
     }
 
     @Test

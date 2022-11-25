@@ -29,6 +29,7 @@ public class HedgeExposureTaskTest {
     private SleepUtils sleepUtils;
 
     private static final String MARKET_ID = "1";
+    private static final String PARTY_ID = "1";
 
     private HedgeExposureTask getHedgeExposureTask() {
         return new HedgeExposureTask(dataInitializer, webSocketInitializer, positionService, igApiClient,
@@ -59,9 +60,8 @@ public class HedgeExposureTaskTest {
     @Test
     public void testExecute() {
         Mockito.when(dataInitializer.isInitialized()).thenReturn(true);
-        Mockito.when(webSocketInitializer.isVegaWebSocketsInitialized()).thenReturn(true);
         Mockito.when(webSocketInitializer.isBinanceWebSocketInitialized()).thenReturn(true);
-        Mockito.when(positionService.getExposure(MARKET_ID)).thenReturn(1.0);
+        Mockito.when(positionService.getExposure(MARKET_ID, PARTY_ID)).thenReturn(1.0);
         Mockito.when(referencePriceStore.get()).thenReturn(Optional.of(referencePrice()));
         MarketConfig marketConfig = new MarketConfig()
                 .setMarketId(MARKET_ID)
@@ -72,9 +72,8 @@ public class HedgeExposureTaskTest {
     @Test
     public void testExecuteWithZeroExposure() {
         Mockito.when(dataInitializer.isInitialized()).thenReturn(true);
-        Mockito.when(webSocketInitializer.isVegaWebSocketsInitialized()).thenReturn(true);
         Mockito.when(webSocketInitializer.isBinanceWebSocketInitialized()).thenReturn(true);
-        Mockito.when(positionService.getExposure(MARKET_ID)).thenReturn(0.0);
+        Mockito.when(positionService.getExposure(MARKET_ID, PARTY_ID)).thenReturn(0.0);
         hedgeExposureTask.execute(new MarketConfig());
         Mockito.verify(binanceApiClient, Mockito.times(0))
                 .submitMarketOrder(Mockito.anyString(), Mockito.anyDouble(), Mockito.any(MarketSide.class));
@@ -96,7 +95,6 @@ public class HedgeExposureTaskTest {
     public void testExecuteDisabled() {
         hedgeExposureTask = getHedgeExposureTask();
         Mockito.when(dataInitializer.isInitialized()).thenReturn(true);
-        Mockito.when(webSocketInitializer.isVegaWebSocketsInitialized()).thenReturn(true);
         Mockito.when(webSocketInitializer.isBinanceWebSocketInitialized()).thenReturn(true);
         hedgeExposureTask.execute(new MarketConfig());
         Mockito.verify(binanceApiClient, Mockito.times(0))

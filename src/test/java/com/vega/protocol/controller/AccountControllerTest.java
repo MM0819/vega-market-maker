@@ -2,8 +2,9 @@ package com.vega.protocol.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.vega.protocol.model.Account;
-import com.vega.protocol.store.AccountStore;
+import com.vega.protocol.helper.TestingHelper;
+import com.vega.protocol.store.VegaStore;
+import datanode.api.v2.TradingData;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,25 +20,25 @@ import java.util.List;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @AutoConfigureMockMvc
-@ContextConfiguration(classes = {AccountController.class, AccountStore.class})
+@ContextConfiguration(classes = {AccountController.class, VegaStore.class})
 @WebMvcTest
 public class AccountControllerTest {
 
     @Autowired
     private MockMvc mvc;
     @Autowired
-    private AccountStore store;
+    private VegaStore store;
 
     @Test
     public void testGetAccounts() throws Exception {
-        Account account = new Account().setId("12345");
-        store.update(account);
+        var account = TestingHelper.getAccount("12345", "100", "USDT");
+        store.updateAccount(account);
         MvcResult result = mvc.perform(MockMvcRequestBuilders.get("/account"))
                 .andExpect(status().isOk())
                 .andReturn();
         String body = result.getResponse().getContentAsString();
-        List<Account> accounts = new ObjectMapper().readValue(body, new TypeReference<>() {});
+        List<TradingData.AccountBalance> accounts = new ObjectMapper().readValue(body, new TypeReference<>() {});
         Assertions.assertEquals(accounts.size(), 1);
-        Assertions.assertEquals(accounts.get(0).getId(), "12345");
+        Assertions.assertEquals(accounts.get(0).getMarketId(), "12345");
     }
 }

@@ -1,9 +1,7 @@
 package com.vega.protocol.initializer;
 
 import com.vega.protocol.constant.ReferencePriceSource;
-import com.vega.protocol.service.OrderService;
-import com.vega.protocol.store.*;
-import com.vega.protocol.utils.DecimalUtils;
+import com.vega.protocol.store.ReferencePriceStore;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -13,25 +11,12 @@ public class WebSocketInitializerTest {
 
     private WebSocketInitializer webSocketInitializer;
     private final ReferencePriceStore referencePriceStore = Mockito.mock(ReferencePriceStore.class);
-    private final MarketStore marketStore = Mockito.mock(MarketStore.class);
-    private final OrderStore orderStore = Mockito.mock(OrderStore.class);
-    private final PositionStore positionStore = Mockito.mock(PositionStore.class);
-    private final AccountStore accountStore = Mockito.mock(AccountStore.class);
-    private final AssetStore assetStore = Mockito.mock(AssetStore.class);
-    private final LiquidityCommitmentStore liquidityCommitmentStore = Mockito.mock(LiquidityCommitmentStore.class);
-    private final DecimalUtils decimalUtils = Mockito.mock(DecimalUtils.class);
-    private final OrderService orderService = Mockito.mock(OrderService.class);
-    private static final String PARTY_ID = "1";
-    private static final String MARKET_ID = "1";
 
     private WebSocketInitializer getWebSocketInitializer(boolean enabled, ReferencePriceSource source) {
         return new WebSocketInitializer(
-                "wss://api.n10.testnet.vega.xyz/graphql",
                 "wss://stream.binance.com:9443/stream",
                 "wss://socket.polygon.io/stocks",
-                enabled, enabled, enabled, "BTCUSDT", source, PARTY_ID, MARKET_ID,
-                referencePriceStore, marketStore, orderStore, positionStore, accountStore, assetStore,
-                liquidityCommitmentStore, decimalUtils, orderService
+                enabled, enabled, referencePriceStore
         );
     }
 
@@ -45,7 +30,6 @@ public class WebSocketInitializerTest {
         webSocketInitializer.initialize();
         Thread.sleep(3000L);
         Assertions.assertNull(webSocketInitializer.getPolygonWebSocketClient());
-        Assertions.assertTrue(webSocketInitializer.getVegaWebSocketClient().isOpen());
         Assertions.assertTrue(webSocketInitializer.getBinanceWebSocketClient().isOpen());
         Assertions.assertTrue(webSocketInitializer.isBinanceWebSocketInitialized());
     }
@@ -56,7 +40,6 @@ public class WebSocketInitializerTest {
         webSocketInitializer.initialize();
         Thread.sleep(2000L);
         Assertions.assertNull(webSocketInitializer.getBinanceWebSocketClient());
-        Assertions.assertTrue(webSocketInitializer.getVegaWebSocketClient().isOpen());
         Assertions.assertTrue(webSocketInitializer.getPolygonWebSocketClient().isOpen());
         Assertions.assertTrue(webSocketInitializer.isPolygonWebSocketInitialized());
     }
@@ -68,8 +51,6 @@ public class WebSocketInitializerTest {
         Thread.sleep(200L);
         Assertions.assertNull(webSocketInitializer.getPolygonWebSocketClient());
         Assertions.assertNull(webSocketInitializer.getBinanceWebSocketClient());
-        Assertions.assertNull(webSocketInitializer.getVegaWebSocketClient());
-        Assertions.assertFalse(webSocketInitializer.isVegaWebSocketsInitialized());
     }
 
     @Test
@@ -107,16 +88,6 @@ public class WebSocketInitializerTest {
         Thread.sleep(2000L);
         webSocketInitializer.getBinanceWebSocketClient().close();
         Thread.sleep(2000L);
-        webSocketInitializer.keepWebSocketsAlive();
-    }
-
-    @Test
-    public void testKeepAliveVegaClosed() throws InterruptedException {
-        webSocketInitializer = getWebSocketInitializer(true, ReferencePriceSource.BINANCE);
-        webSocketInitializer.initialize();
-        Thread.sleep(500L);
-        webSocketInitializer.getVegaWebSocketClient().close();
-        Thread.sleep(500L);
         webSocketInitializer.keepWebSocketsAlive();
     }
 }

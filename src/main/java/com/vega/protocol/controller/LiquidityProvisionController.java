@@ -10,17 +10,17 @@ import vega.Vega;
 import java.util.List;
 
 @RestController
-@RequestMapping("/position")
-public class PositionController {
+@RequestMapping("/liquidity-provision")
+public class LiquidityProvisionController {
 
     private final VegaStore vegaStore;
 
-    public PositionController(VegaStore vegaStore) {
+    public LiquidityProvisionController(VegaStore vegaStore) {
         this.vegaStore = vegaStore;
     }
 
     @GetMapping
-    public ResponseEntity<List<Vega.Position>> get() {
-        return ResponseEntity.ok(vegaStore.getPositions());
+    public ResponseEntity<List<Vega.LiquidityProvision>> get() {
+        return ResponseEntity.ok(vegaStore.getLiquidityProvisions());
     }
 }

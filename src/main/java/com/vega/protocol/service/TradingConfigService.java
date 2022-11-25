@@ -9,7 +9,7 @@ import com.vega.protocol.repository.MarketConfigRepository;
 import com.vega.protocol.repository.TradingConfigRepository;
 import com.vega.protocol.request.CreateTradingConfigRequest;
 import com.vega.protocol.request.UpdateTradingConfigRequest;
-import com.vega.protocol.store.MarketStore;
+import com.vega.protocol.store.VegaStore;
 import com.vega.protocol.task.HedgeExposureTask;
 import com.vega.protocol.task.NaiveFlowTask;
 import com.vega.protocol.task.UpdateLiquidityCommitmentTask;
@@ -28,7 +28,7 @@ public class TradingConfigService {
     private final MarketConfigRepository marketConfigRepository;
     private final TradingConfigRepository tradingConfigRepository;
     private final TaskInitializer taskInitializer;
-    private final MarketStore marketStore;
+    private final VegaStore vegaStore;
     private final Double fee;
     private final Double askQuoteRange;
     private final Double bidQuoteRange;
@@ -46,7 +46,7 @@ public class TradingConfigService {
     public TradingConfigService(MarketConfigRepository marketConfigRepository,
                                 TradingConfigRepository tradingConfigRepository,
                                 TaskInitializer taskInitializer,
-                                MarketStore marketStore,
+                                VegaStore vegaStore,
                                 @Value("${fee}") Double fee,
                                 @Value("${ask.quote.range}") Double askQuoteRange,
                                 @Value("${bid.quote.range}") Double bidQuoteRange,
@@ -63,7 +63,7 @@ public class TradingConfigService {
         this.marketConfigRepository = marketConfigRepository;
         this.tradingConfigRepository = tradingConfigRepository;
         this.taskInitializer = taskInitializer;
-        this.marketStore = marketStore;
+        this.vegaStore = vegaStore;
         this.fee = fee;
         this.askQuoteRange = askQuoteRange;
         this.bidQuoteRange = bidQuoteRange;
@@ -244,7 +244,7 @@ public class TradingConfigService {
         if(configExists) {
             throw new TradingException(ErrorCode.MARKET_CONFIG_ALREADY_EXISTS);
         }
-        boolean validMarketId = marketStore.getById(request.getMarketId()).isPresent();
+        boolean validMarketId = vegaStore.getMarketById(request.getMarketId()).isPresent();
         if(!validMarketId) {
             throw new TradingException(ErrorCode.INVALID_MARKET_ID);
         }
