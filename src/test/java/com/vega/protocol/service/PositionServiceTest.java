@@ -7,9 +7,12 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import vega.Markets;
 
+import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 public class PositionServiceTest {
 
@@ -24,20 +27,28 @@ public class PositionServiceTest {
 
     @Test
     public void testGetExposureLong() {
-        Mockito.when(vegaStore.getPositions()).thenReturn(List.of(
-                TestingHelper.getPosition(100L, "1", "1", TestingHelper.ID),
-                TestingHelper.getPosition(100L, "1", "2", TestingHelper.ID)
+        Mockito.when(vegaStore.getPositionByMarketIdAndPartyId("1", "1")).thenReturn(Optional.of(
+                TestingHelper.getPosition(100L, "1", "1", TestingHelper.ID)
         ));
+        Mockito.when(vegaStore.getMarketById("1")).thenReturn(Optional.of(
+                TestingHelper.getMarket(Markets.Market.State.STATE_ACTIVE,
+                        Markets.Market.TradingMode.TRADING_MODE_CONTINUOUS, "USDT"))
+        );
+        Mockito.when(decimalUtils.convertToDecimals(0, new BigDecimal("100"))).thenReturn(100.0);
         double exposure = positionService.getExposure("1", "1");
         Assertions.assertEquals(100.0, exposure);
     }
 
     @Test
     public void testGetExposureShort() {
-        Mockito.when(vegaStore.getPositions()).thenReturn(List.of(
-                TestingHelper.getPosition(-100L, "1", "1", TestingHelper.ID),
-                TestingHelper.getPosition(-100L, "1", "2", TestingHelper.ID)
+        Mockito.when(vegaStore.getPositionByMarketIdAndPartyId("1", "1")).thenReturn(Optional.of(
+                TestingHelper.getPosition(-100L, "1", "1", TestingHelper.ID)
         ));
+        Mockito.when(vegaStore.getMarketById("1")).thenReturn(Optional.of(
+                TestingHelper.getMarket(Markets.Market.State.STATE_ACTIVE,
+                        Markets.Market.TradingMode.TRADING_MODE_CONTINUOUS, "USDT"))
+        );
+        Mockito.when(decimalUtils.convertToDecimals(0, new BigDecimal("-100"))).thenReturn(-100.0);
         double exposure = positionService.getExposure("1", "1");
         Assertions.assertEquals(-100.0, exposure);
     }

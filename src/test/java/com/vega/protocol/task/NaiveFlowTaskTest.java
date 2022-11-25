@@ -18,6 +18,7 @@ import org.mockito.Mockito;
 import vega.Markets;
 import vega.Vega;
 
+import java.math.BigDecimal;
 import java.util.Optional;
 
 public class NaiveFlowTaskTest {
@@ -56,6 +57,8 @@ public class NaiveFlowTaskTest {
         Mockito.when(webSocketInitializer.isPolygonWebSocketInitialized()).thenReturn(true);
         Mockito.when(referencePriceStore.get()).thenReturn(Optional.of(new ReferencePrice()));
         Mockito.when(marketService.getById(MARKET_ID)).thenReturn(market);
+        Mockito.when(decimalUtils.convertFromDecimals(Mockito.anyLong(), Mockito.anyDouble()))
+                .thenReturn(new BigDecimal("1"));
         int count = 20;
         for(int i=0; i<count; i++) {
             Mockito.when(orderService.getOtherSide(Mockito.any()))
@@ -64,7 +67,7 @@ public class NaiveFlowTaskTest {
             naiveFlowTask.execute(marketConfig);
         }
         Mockito.verify(vegaGrpcClient, Mockito.times(count)).submitOrder(
-                Mockito.anyString(), Mockito.anyLong(),
+                Mockito.isNull(), Mockito.anyLong(),
                 Mockito.any(Vega.Side.class), Mockito.any(Vega.Order.TimeInForce.class),
                 Mockito.any(Vega.Order.Type.class), Mockito.anyString(), Mockito.anyString()
         );

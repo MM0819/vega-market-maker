@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 @Service
 public class AccountService {
@@ -32,10 +33,9 @@ public class AccountService {
         vegaStore.getAssetById(settlementAsset).ifPresent(asset -> {
             var accounts = vegaStore.getAccountsByAsset(asset.getDetails().getSymbol());
             long dp = asset.getDetails().getDecimals();
-            var total = accounts.stream()
-                    .mapToDouble(a -> decimalUtils.convertToDecimals(dp, new BigDecimal(a.getBalance())))
-                    .sum();
-            balance.set(total);
+            var balances = accounts.stream()
+                    .map(a -> decimalUtils.convertToDecimals(dp, new BigDecimal(a.getBalance()))).toList();
+            balance.set(balances.stream().mapToDouble(Double::doubleValue).sum());
         });
         return balance.get();
     }

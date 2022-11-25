@@ -9,7 +9,9 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import vega.Markets;
 
+import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 
 public class AccountServiceTest {
 
@@ -29,11 +31,13 @@ public class AccountServiceTest {
     public void testGetTotalBalance() {
         var market = TestingHelper.getMarket(Markets.Market.State.STATE_ACTIVE,
                 Markets.Market.TradingMode.TRADING_MODE_CONTINUOUS, USDT);
+        var asset = TestingHelper.getAsset(USDT);
+        Mockito.when(store.getAssetById(USDT)).thenReturn(Optional.of(asset));
+        Mockito.when(decimalUtils.convertToDecimals(0, new BigDecimal("1"))).thenReturn(1.0);
+        Mockito.when(decimalUtils.convertToDecimals(0, new BigDecimal("10"))).thenReturn(10.0);
         Mockito.when(store.getAccountsByAsset(USDT)).thenReturn(List.of(
                 TestingHelper.getAccount(market.getId(), "10", USDT),
-                TestingHelper.getAccount(market.getId(), "10", USDC),
-                TestingHelper.getAccount(market.getId(), "1", USDT),
-                TestingHelper.getAccount(market.getId(), "1", USDC)));
+                TestingHelper.getAccount(market.getId(), "1", USDT)));
         double balance = accountService.getTotalBalance(USDT);
         Assertions.assertEquals(11, balance);
     }

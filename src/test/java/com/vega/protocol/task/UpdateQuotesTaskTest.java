@@ -24,6 +24,7 @@ import org.mockito.Mockito;
 import vega.Markets;
 import vega.Vega;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -78,6 +79,9 @@ public class UpdateQuotesTaskTest {
         Mockito.when(dataInitializer.isInitialized()).thenReturn(true);
         Mockito.when(webSocketInitializer.isBinanceWebSocketInitialized()).thenReturn(true);
         Mockito.when(marketService.getById(MARKET_ID)).thenReturn(market);
+        Mockito.when(decimalUtils.convertToDecimals(Mockito.anyLong(), Mockito.any())).thenReturn(1.0);
+        Mockito.when(decimalUtils.convertFromDecimals(Mockito.anyLong(), Mockito.anyDouble()))
+                .thenReturn(new BigDecimal("1"));
         MarketConfig marketConfig = new MarketConfig()
                 .setMarketId(MARKET_ID)
                 .setPartyId(PARTY_ID)
@@ -109,14 +113,14 @@ public class UpdateQuotesTaskTest {
             String id = String.valueOf(i+1);
             Vega.Order.Status status = Vega.Order.Status.STATUS_ACTIVE;
             Vega.Order order = TestingHelper.getOrder(id, "1", 10L,
-                    Vega.Side.SIDE_SELL, status, null);
+                    Vega.Side.SIDE_SELL, status, "");
             currentOrders.add(order);
         }
         for(int i=0; i<4; i++) {
             String id = String.valueOf(i+1);
             Vega.Order.Status status = Vega.Order.Status.STATUS_ACTIVE;
             Vega.Order order = TestingHelper.getOrder(id, "1", 10L,
-                    Vega.Side.SIDE_BUY, status, null);
+                    Vega.Side.SIDE_BUY, status, "");
             currentOrders.add(order);
         }
         List<DistributionStep> bidDistribution = new ArrayList<>();

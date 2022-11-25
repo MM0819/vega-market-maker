@@ -12,21 +12,25 @@ public class WebSocketInitializerTest {
     private WebSocketInitializer webSocketInitializer;
     private final ReferencePriceStore referencePriceStore = Mockito.mock(ReferencePriceStore.class);
 
-    private WebSocketInitializer getWebSocketInitializer(boolean enabled, ReferencePriceSource source) {
+    private WebSocketInitializer getWebSocketInitializer(
+            final boolean binanceEnabled,
+            final boolean polygonEnabled
+    ) {
         return new WebSocketInitializer(
                 "wss://stream.binance.com:9443/stream",
                 "wss://socket.polygon.io/stocks",
-                enabled, enabled, referencePriceStore
+                binanceEnabled, polygonEnabled, referencePriceStore
         );
     }
 
     @BeforeEach
     public void setup() {
-        webSocketInitializer = getWebSocketInitializer(true, ReferencePriceSource.BINANCE);
+        webSocketInitializer = getWebSocketInitializer(true, true);
     }
 
     @Test
     public void testInitializeBinance() throws InterruptedException {
+        webSocketInitializer = getWebSocketInitializer(true, false);
         webSocketInitializer.initialize();
         Thread.sleep(3000L);
         Assertions.assertNull(webSocketInitializer.getPolygonWebSocketClient());
@@ -36,7 +40,7 @@ public class WebSocketInitializerTest {
 
     @Test
     public void testInitializePolygon() throws InterruptedException {
-        webSocketInitializer = getWebSocketInitializer(true, ReferencePriceSource.POLYGON);
+        webSocketInitializer = getWebSocketInitializer(false, true);
         webSocketInitializer.initialize();
         Thread.sleep(2000L);
         Assertions.assertNull(webSocketInitializer.getBinanceWebSocketClient());
@@ -46,7 +50,7 @@ public class WebSocketInitializerTest {
 
     @Test
     public void testInitializeDisabled() throws InterruptedException {
-        webSocketInitializer = getWebSocketInitializer(false, ReferencePriceSource.BINANCE);
+        webSocketInitializer = getWebSocketInitializer(false, false);
         webSocketInitializer.initialize();
         Thread.sleep(200L);
         Assertions.assertNull(webSocketInitializer.getPolygonWebSocketClient());
@@ -66,14 +70,14 @@ public class WebSocketInitializerTest {
 
     @Test
     public void testKeepAliveInitializedButNotClosedPolygon() {
-        webSocketInitializer = getWebSocketInitializer(true, ReferencePriceSource.POLYGON);
+        webSocketInitializer = getWebSocketInitializer(true, true);
         webSocketInitializer.initialize();
         webSocketInitializer.keepWebSocketsAlive();
     }
 
     @Test
     public void testKeepAlivePolygonClosed() throws InterruptedException {
-        webSocketInitializer = getWebSocketInitializer(true, ReferencePriceSource.POLYGON);
+        webSocketInitializer = getWebSocketInitializer(true, true);
         webSocketInitializer.initialize();
         Thread.sleep(500L);
         webSocketInitializer.getPolygonWebSocketClient().close();
@@ -83,7 +87,7 @@ public class WebSocketInitializerTest {
 
     @Test
     public void testKeepAliveBinanceClosed() throws InterruptedException {
-        webSocketInitializer = getWebSocketInitializer(true, ReferencePriceSource.BINANCE);
+        webSocketInitializer = getWebSocketInitializer(true, true);
         webSocketInitializer.initialize();
         Thread.sleep(2000L);
         webSocketInitializer.getBinanceWebSocketClient().close();

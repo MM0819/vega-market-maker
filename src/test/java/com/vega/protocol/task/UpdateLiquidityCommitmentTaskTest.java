@@ -18,6 +18,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import vega.Markets;
 
+import java.math.BigDecimal;
 import java.util.Optional;
 
 public class UpdateLiquidityCommitmentTaskTest {
@@ -70,6 +71,11 @@ public class UpdateLiquidityCommitmentTaskTest {
         var market = TestingHelper.getMarket(Markets.Market.State.STATE_ACTIVE,
                 Markets.Market.TradingMode.TRADING_MODE_CONTINUOUS, USDT);
         var marketData = TestingHelper.getMarketData("1", "1");
+        var asset = TestingHelper.getAsset(USDT);
+        Mockito.when(decimalUtils.convertToDecimals(Mockito.anyLong(), Mockito.any())).thenReturn(1.0);
+        Mockito.when(decimalUtils.convertFromDecimals(Mockito.anyLong(), Mockito.any()))
+                .thenReturn(new BigDecimal("1"));
+        Mockito.when(assetService.getById(USDT)).thenReturn(asset);
         Mockito.when(dataInitializer.isInitialized()).thenReturn(true);
         Mockito.when(webSocketInitializer.isBinanceWebSocketInitialized()).thenReturn(true);
         Mockito.when(marketService.getById(MARKET_ID)).thenReturn(market);
@@ -109,6 +115,11 @@ public class UpdateLiquidityCommitmentTaskTest {
         var market = TestingHelper.getMarket(Markets.Market.State.STATE_ACTIVE,
                 Markets.Market.TradingMode.TRADING_MODE_CONTINUOUS, USDT);
         var marketData = TestingHelper.getMarketData("9000", "1");
+        var asset = TestingHelper.getAsset(USDT);
+        Mockito.when(decimalUtils.convertToDecimals(Mockito.anyLong(), Mockito.any())).thenReturn(1.0);
+        Mockito.when(decimalUtils.convertFromDecimals(Mockito.anyLong(), Mockito.any()))
+                .thenReturn(new BigDecimal("1"));
+        Mockito.when(assetService.getById(USDT)).thenReturn(asset);
         Mockito.when(dataInitializer.isInitialized()).thenReturn(true);
         Mockito.when(webSocketInitializer.isBinanceWebSocketInitialized()).thenReturn(true);
         Mockito.when(marketService.getById(MARKET_ID)).thenReturn(market);
@@ -134,6 +145,11 @@ public class UpdateLiquidityCommitmentTaskTest {
         var market = TestingHelper.getMarket(Markets.Market.State.STATE_ACTIVE,
                 Markets.Market.TradingMode.TRADING_MODE_CONTINUOUS, USDT);
         var marketData = TestingHelper.getMarketData("1000000000", "1");
+        var asset = TestingHelper.getAsset(USDT);
+        Mockito.when(decimalUtils.convertToDecimals(Mockito.anyLong(), Mockito.any())).thenReturn(1.0);
+        Mockito.when(decimalUtils.convertFromDecimals(Mockito.anyLong(), Mockito.any()))
+                .thenReturn(new BigDecimal("1"));
+        Mockito.when(assetService.getById(USDT)).thenReturn(asset);
         Mockito.when(dataInitializer.isInitialized()).thenReturn(true);
         Mockito.when(webSocketInitializer.isBinanceWebSocketInitialized()).thenReturn(true);
         Mockito.when(marketService.getById(MARKET_ID)).thenReturn(market);

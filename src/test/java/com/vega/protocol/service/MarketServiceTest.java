@@ -10,6 +10,7 @@ import org.mockito.Mockito;
 import vega.Markets;
 
 import java.util.List;
+import java.util.Optional;
 
 public class MarketServiceTest {
 
@@ -24,14 +25,12 @@ public class MarketServiceTest {
 
     @Test
     public void testGetById() {
-        Mockito.when(store.getMarkets()).thenReturn(List.of(
+        Mockito.when(store.getMarketById(TestingHelper.ID)).thenReturn(Optional.of(
                 TestingHelper.getMarket(Markets.Market.State.STATE_ACTIVE,
-                        Markets.Market.TradingMode.TRADING_MODE_CONTINUOUS, "USDT"),
-                TestingHelper.getMarket(Markets.Market.State.STATE_ACTIVE,
-                        Markets.Market.TradingMode.TRADING_MODE_CONTINUOUS, "USDC")
+                        Markets.Market.TradingMode.TRADING_MODE_CONTINUOUS, "USDT")
         ));
-        Markets.Market market = marketService.getById("1");
-        Assertions.assertEquals(market.getId(), "1");
+        Markets.Market market = marketService.getById(TestingHelper.ID);
+        Assertions.assertEquals(market.getId(), TestingHelper.ID);
     }
 
     @Test

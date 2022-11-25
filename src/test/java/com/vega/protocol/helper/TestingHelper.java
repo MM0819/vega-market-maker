@@ -1,6 +1,7 @@
 package com.vega.protocol.helper;
 
 import datanode.api.v2.TradingData;
+import vega.Assets;
 import vega.Markets;
 import vega.Vega;
 
@@ -17,6 +18,11 @@ public class TestingHelper {
                 .setId(ID)
                 .setState(state)
                 .setTradingMode(tradingMode)
+                .setFees(Markets.Fees.newBuilder()
+                        .setFactors(Markets.FeeFactors.newBuilder()
+                                .setLiquidityFee("0.001")
+                                .build())
+                        .build())
                 .setTradableInstrument(Markets.TradableInstrument.newBuilder()
                         .setInstrument(Markets.Instrument.newBuilder()
                                 .setFuture(Markets.Future.newBuilder()
@@ -89,6 +95,14 @@ public class TestingHelper {
                 .setOpenVolume(openVolume)
                 .setPartyId(partyId)
                 .setMarketId(marketId)
+                .build();
+    }
+
+    public static Assets.Asset getAsset(
+            final String symbol
+    ) {
+        return Assets.Asset.newBuilder()
+                .setDetails(Assets.AssetDetails.newBuilder().setSymbol(symbol).build())
                 .build();
     }
 }
